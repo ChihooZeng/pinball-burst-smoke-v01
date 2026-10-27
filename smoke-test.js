@@ -126,4 +126,27 @@ for(let i=0;i<50000;i++){
 assert.ok(passive,"fixed upward aim eventually loses");
 assert.ok(passive.time<finalState.time,"actively changing angles beats fixed aim with this test strategy");
 console.log("PASSIVE RUN",JSON.stringify({seconds:Math.round(passive.time),score:passive.score,level:passive.level}));
-console.log("PASS survival numeric HP, continuous auto-fire, aim-only touch, XP + 2 choice pause, skill activation, bottom-line loss, restart, visible in-arena skill");
+listeners.get("restart:click")();
+assert.ok(state().onScreenBricks>=6,"initial board has two visible rows");
+let maxEmptySeconds=0,emptySeconds=0,emptyStreak=0,playSeconds=0;
+for(let i=0;i<9000;i++){
+  const s=state();
+  if(s.phase==="choosing"){assert.ok(t.chooseById(s.choices[0]));}
+  if(s.phase==="lost")break;
+  if(i%100===0){
+    const x=[180,80,300,145,210,28][Math.floor(i/100)%6];
+    const finger={pointerId:7,clientX:x,clientY:300,preventDefault(){}};
+    listeners.get("game:pointerdown")(finger);listeners.get("game:pointerup")(finger);
+  }
+  step();
+  const nowState=state();
+  if(nowState.phase==="playing"){
+    playSeconds+=1/60;
+    if(nowState.onScreenBricks===0){emptyStreak+=1/60;emptySeconds+=1/60;}
+    else emptyStreak=0;
+    maxEmptySeconds=Math.max(maxEmptySeconds,emptyStreak);
+  }
+}
+console.log("TARGET AVAILABILITY",JSON.stringify({playSeconds:Math.round(playSeconds),emptySeconds:+emptySeconds.toFixed(2),maxEmptySeconds:+maxEmptySeconds.toFixed(2)}));
+assert.ok(maxEmptySeconds<1.5,"no extended empty-board waiting during live play");
+console.log("PASS survival numeric HP, continuous auto-fire, aim-only touch, XP + 2 choice pause, giant, bottom-line loss, restart, target refill");
