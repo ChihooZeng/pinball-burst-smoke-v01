@@ -2,7 +2,7 @@
 (() => {
   const W = 360, H = 560, DANGER_Y = 482, FIRE_INTERVALS = [1, .90, .82];
   const BALL_SPEED = 370, MAX_BALLS = 20, BALL_TTL = 7.5, MAX_CHARGE = 100;
-  const SPAWN_BASE = 7.5, SPAWN_MIN = 4.8;
+  const SPAWN_BASE = 4.2, SPAWN_MIN = 3.4, SPAWN_Y = 12;
   const canvas = document.querySelector("#game"), ctx = canvas.getContext("2d");
   const $ = name => document.querySelector("#" + name);
   const ui = {
@@ -68,9 +68,9 @@
     if(hp>=4)return "#6799c8";
     return "#4a86af";
   }
-  function makeRow(first=false){
+  function makeRow(first=false, startY=SPAWN_Y){
     const stage=Math.floor(time/20)+Math.floor(Math.max(0,time-70)/18);
-    const top=first?45:-42, row=[];
+    const top=startY, row=[];
     // Each row leaves at least one gap; encourage players to consider aiming angle.
     const gap=Math.floor(rng()*5),extraGap=time<85&&rng()<.32?((gap+2)%5):-1;
     const specialCol=((gap+2)%5);
@@ -94,7 +94,7 @@
     charge=0;shootClock=.7;spawnClock=0;spawnId=0;options=[];
     ultUsed=0;ricochetHits=0;
     ui.upgrade.classList.add("hidden");ui.lost.classList.add("hidden");
-    makeRow(true);syncHud();say("自动射击中 · 拖动选择优先攻击目标");
+    makeRow(true,45);makeRow(true,6);syncHud();say("两排数字砖 · 自动射击，拖动瞄准");
   }
   function gainXp(amount){
     xp+=amount;
@@ -233,9 +233,9 @@
     if(phase!=="playing")return;
     time+=dt;
     spawnClock+=dt;
-    const spawnPeriod=Math.max(SPAWN_MIN,SPAWN_BASE-time*.012);
+    const spawnPeriod=Math.max(SPAWN_MIN,SPAWN_BASE-time*.008);
     if(spawnClock>=spawnPeriod){spawnClock-=spawnPeriod;makeRow();}
-    const fallSpeed=Math.min(16.5,8.7+time*.03);
+    const fallSpeed=Math.min(15.5,11.5+time*.018);
     for(const b of bricks){if(b.alive){b.y+=fallSpeed*dt;b.flash=Math.max(0,b.flash-dt);}}
     if(bricks.some(b=>b.alive&&b.y+b.h>=DANGER_Y)){fail();syncHud();return;}
     shootClock+=dt;
@@ -243,6 +243,12 @@
     balls=balls.filter(b=>updateBall(b,dt));
     updateUlt(dt);
     bricks=bricks.filter(b=>b.alive);
+    // Keep targets available, without instant rows overlapping near the top.
+    if(bricks.length===0){
+      spawnClock=Math.max(spawnClock,spawnPeriod-0.42);
+    }else if(bricks.length<=2 && bricks.every(b=>b.y>66)){
+      spawnClock=Math.max(spawnClock,spawnPeriod-1.25);
+    }
     for(const p of particles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=.96;p.vy*=.96;p.life-=dt;}
     particles=particles.filter(p=>p.life>0);
     maybeLevel();syncHud();
@@ -331,7 +337,9 @@
   }
   function state(){return {phase,time,score,xp,xpNeeded,level,damage,rate:interval(),rateLevel,ricochetLevel,
     giantLevel,charge,ballCount:balls.length,bricks:bricks.length,ultActive:!!ultBall,ultUsed,ricochetHits,
-    choices:options.map(x=>x.id),aim,spawnId};}
+    choices:options.map(x=>x.id),aim,spawnId,
+    onScreenBricks:bricks.filter(b=>b.alive&&b.y+b.h>0&&b.y<DANGER_Y).length,
+    spawnClock,spawnPeriod:Math.max(SPAWN_MIN,SPAWN_BASE-time*.008)};}
   window.__pinballState=state;
   if(window.__PINBALL_TEST__===true)window.__pinballTest={
     advance:dt=>update(dt),
