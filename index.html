@@ -4,36 +4,41 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
   <meta name="theme-color" content="#091222"/>
-  <title>弹球暴走 · 手机试玩原型</title>
-  <link rel="stylesheet" href="./style.css"/>
+  <title>弹球暴走 · 连续发射实验</title>
+  <link rel="stylesheet" href="./style.css?v=2"/>
 </head>
 <body>
   <main class="page">
     <header class="heading">
-      <div class="eyebrow">PINBALL BURST / PROTOTYPE 0.1</div>
-      <h1>弹球暴走 <span>试玩原型</span></h1>
-      <p>一颗球、几块砖，先验证手机操作与网页部署。</p>
+      <div class="eyebrow">PINBALL BURST / FEEL TEST 0.2</div>
+      <h1>弹球暴走 <span>连续发射实验</span></h1>
+      <p>炮台自动开火。拖动改变方向，弹球不会因为上一颗尚未回收而停止发射。</p>
     </header>
     <section class="hud" aria-label="游戏统计">
-      <span>已击碎 <strong id="score">0</strong><small> / 15</small></span>
-      <span id="stateText" role="status" aria-live="polite">拖动瞄准，松开发射</span>
+      <span>关卡 <strong id="wave">1</strong><small> / 3</small></span>
+      <span>击碎 <strong id="score">0</strong></span>
+      <span>发射间隔 <strong id="rate">1.00</strong><small>s</small></span>
     </section>
     <div class="game-wrap">
-      <canvas id="game" width="360" height="560" aria-label="弹球打砖块游戏。拖动瞄准并松开发射。"></canvas>
+      <canvas id="game" width="360" height="560" aria-label="弹球自动发射游戏，触摸拖动改变炮台角度。"></canvas>
       <div class="overlay hidden" id="overlay">
         <div class="win-caption">CLEAR!</div>
-        <h2>全部击碎</h2>
-        <p>你的第一局已经完成。</p>
-        <button id="again" type="button">再来一局</button>
+        <h2>三波清空</h2>
+        <p id="finalStats">完成连续发射测试。</p>
+        <button id="again" type="button">再玩一局</button>
       </div>
     </div>
-    <nav class="controls" aria-label="游戏操作">
-      <button id="fire" type="button">发射弹珠</button>
+    <section class="status" aria-live="polite">
+      <span id="stateText">自动发射中 · 左右滑动调整角度</span>
+      <span>在场 <strong id="balls">0</strong> 颗</span>
+    </section>
+    <nav class="controls" aria-label="测试控制">
+      <button id="mode" type="button" title="切换升级方案，将重新开始本局">升级方式：直接升级</button>
       <button id="reset" class="secondary" type="button">重开</button>
     </nav>
-    <p class="tip">在游戏画面里按住并拖动，可预览弹道；松手发射。球回到底部后可再次发射。也可直接点「发射弹珠」。</p>
-    <footer>v0.1 · 仅验证触控、反弹、击砖与公网试玩；暂无增殖、强化和大招。</footer>
+    <p class="tip">每秒自动发射 1 颗，无需按住或松手。打碎绿色 <strong>↑SPEED</strong> 砖后提高射速。点「升级方式」可切换成道具下落到炮台自动领取，再比较两种节奏（切换会重开）。</p>
+    <footer>体验测试 v0.2 · 三波砖块、自动射击、主动瞄准、两种射速升级反馈。暂不含特殊球与诅咒。</footer>
   </main>
-  <script src="./game.js" defer></script>
+  <script src="./game.js?v=2" defer></script>
 </body>
 </html>
