@@ -3,42 +3,65 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-  <meta name="theme-color" content="#091222"/>
-  <title>弹球暴走 · 连续发射实验</title>
-  <link rel="stylesheet" href="./style.css?v=2"/>
+  <meta name="theme-color" content="#071426"/>
+  <title>弹球暴走 v0.3 · 升级测试</title>
+  <link rel="stylesheet" href="./style.css?v=3"/>
 </head>
 <body>
   <main class="page">
     <header class="heading">
-      <div class="eyebrow">PINBALL BURST / FEEL TEST 0.2</div>
-      <h1>弹球暴走 <span>连续发射实验</span></h1>
-      <p>炮台自动开火。拖动改变方向，弹球不会因为上一颗尚未回收而停止发射。</p>
+      <div class="eyebrow">PINBALL BURST / BUILD TEST 0.3</div>
+      <h1>弹球暴走 <span>升级系统试验</span></h1>
+      <p>自动射击、单指瞄准。每波清空后选择不同强化，巨型弹球需要手动释放。</p>
     </header>
-    <section class="hud" aria-label="游戏统计">
-      <span>关卡 <strong id="wave">1</strong><small> / 3</small></span>
-      <span>击碎 <strong id="score">0</strong></span>
-      <span>发射间隔 <strong id="rate">1.00</strong><small>s</small></span>
-    </section>
-    <div class="game-wrap">
-      <canvas id="game" width="360" height="560" aria-label="弹球自动发射游戏，触摸拖动改变炮台角度。"></canvas>
-      <div class="overlay hidden" id="overlay">
-        <div class="win-caption">CLEAR!</div>
-        <h2>三波清空</h2>
-        <p id="finalStats">完成连续发射测试。</p>
-        <button id="again" type="button">再玩一局</button>
+    <div class="hud">
+      <div><span>波次</span><strong id="wave">1 / 3</strong></div>
+      <div><span>击碎</span><strong id="score">0</strong></div>
+      <div><span>发射间隔</span><strong id="rate">1.00s</strong></div>
+      <div><span>弹球</span><strong id="balls">0</strong></div>
+    </div>
+    <div class="arena">
+      <canvas id="game" width="360" height="560" aria-label="弹球自动射击游戏；左右拖动改变方向"></canvas>
+      <div id="choiceOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="choiceTitle">
+        <div class="eyebrow choice-kicker" id="choiceWave">WAVE 1 CLEAR</div>
+        <h2 id="choiceTitle">选择一项强化</h2>
+        <p>两种路线都可以通关，看看哪种更爽。</p>
+        <div class="upgrade-options">
+          <button id="pickRate" class="upgrade-card" type="button">
+            <span class="upgrade-icon">↗</span>
+            <strong>快速装填</strong>
+            <small id="rateDetails">发射间隔 −0.10 秒</small>
+          </button>
+          <button id="pickBounce" class="upgrade-card" type="button">
+            <span class="upgrade-icon">↝</span>
+            <strong>折射强化</strong>
+            <small id="bounceDetails">撞墙后首次击中砖块会溅射</small>
+          </button>
+        </div>
+        <span class="overlay-note">选择后立即进入下一波</span>
+      </div>
+      <div id="winOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="winTitle">
+        <div class="eyebrow choice-kicker">COMPLETE</div>
+        <h2 id="winTitle">三波已清空</h2>
+        <p id="finalStats">获得新的游戏手感</p>
+        <button id="again" class="main-button" type="button">再次试玩</button>
       </div>
     </div>
-    <section class="status" aria-live="polite">
-      <span id="stateText">自动发射中 · 左右滑动调整角度</span>
-      <span>在场 <strong id="balls">0</strong> 颗</span>
-    </section>
-    <nav class="controls" aria-label="测试控制">
-      <button id="mode" type="button" title="切换升级方案，将重新开始本局">升级方式：直接升级</button>
-      <button id="reset" class="secondary" type="button">重开</button>
-    </nav>
-    <p class="tip">每秒自动发射 1 颗，无需按住或松手。打碎绿色 <strong>↑SPEED</strong> 砖后提高射速。点「升级方式」可切换成道具下落到炮台自动领取，再比较两种节奏（切换会重开）。</p>
-    <footer>体验测试 v0.2 · 三波砖块、自动射击、主动瞄准、两种射速升级反馈。暂不含特殊球与诅咒。</footer>
+    <div class="charge">
+      <div class="charge-top">
+        <span>巨型贯穿球 <strong id="chargeText">0%</strong></span>
+        <span id="stateText">自动开火中 · 滑动调整方向</span>
+      </div>
+      <div class="energy-track"><div id="energyFill" class="energy-fill"></div></div>
+      <button id="giant" type="button" disabled>巨型球充能中 · 0%</button>
+    </div>
+    <div class="bottom-row">
+      <span id="buildText">当前强化：无</span>
+      <button id="reset" class="reset" type="button">重新开始</button>
+    </div>
+    <p class="tip">滑动游戏画面改变方向，炮台会持续自动射击；绿色 <b>ENERGY</b> 砖可即时充能。能量满时点下方按钮，朝当前方向发射巨型贯穿球。每波结束选择一次强化。</p>
+    <footer>v0.3｜限速成长：1.00 → 0.90 → 0.82 秒。暂无诅咒、闪电、金币和挂机系统。</footer>
   </main>
-  <script src="./game.js?v=2" defer></script>
+  <script src="./game.js?v=3" defer></script>
 </body>
 </html>
