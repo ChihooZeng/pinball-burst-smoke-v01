@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#081525"><title>弹球暴走 v0.11 · 闪电成长对比</title>
+<style>
+:root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;background:#081525;color:#effbff}*{box-sizing:border-box}
+body{margin:0;min-height:100dvh;background:radial-gradient(ellipse at 50% 0%,#274664,#081525 72%)}
+main{width:min(100%,475px);margin:auto;padding:27px 17px 48px}
+.eyebrow{font-weight:850;color:#92e7df;letter-spacing:.14em;font-size:11px}
+h1{font-size:27px;line-height:1.23;margin:12px 0}
+p{font-size:13px;line-height:1.7;color:#9bb9cb}
+.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:18px 0 23px}
+.summary div{background:#10283f;border:1px solid #34576d;border-radius:11px;text-align:center;padding:13px 7px}
+.summary b{display:block;font-size:20px;color:#eafcff}
+.summary small{font-size:10px;color:#96bed0}
+.card{display:block;text-decoration:none;color:inherit;background:#172b44;border:1px solid #3d647a;border-radius:15px;padding:19px;margin:13px 0}
+.card.prog{border-color:#9679c5;background:linear-gradient(145deg,#202b4e,#1b263e)}
+.card .k{font-weight:800;color:#93eee1;font-size:10px;letter-spacing:.1em}
+.card.prog .k{color:#dfc2ff}
+.card h2{font-size:20px;margin:9px 0 7px}
+.card p{margin:0}
+.card .link{font-size:13px;font-weight:800;color:#9de8dc;margin-top:14px}
+.card.prog .link{color:#e2c7ff}
+.note{border-top:1px solid #2d4c5c;margin-top:25px;padding-top:13px}
+.note a{color:#a5e7de}
+</style></head><body><main>
+<div class="eyebrow">PINBALL BURST / ELECTRIC BUILDUP AB TEST</div>
+<h1>闪电应该突然爆发，还是逐步觉醒？</h1>
+<p>沿用同一套四波、342 块砖、自然反弹、两阶段破甲与四种升级。唯一比较重点：闪电从什么时候开始出现，以及怎样成长到终局超载。</p>
+<div class="summary"><div><b>342</b><small>四波砖块</small></div><div><b>3 阶</b><small>渐进式电流</small></div><div><b>2 版</b><small>同底层对比</small></div></div>
+<a class="card" href="../hybrid-v10b-lightning/">
+<div class="k">CONTROL · v0.11A</div><h2>残局突然触发闪电</h2>
+<p>直接使用已验证的 v0.10B 基线；剩最后 8 块时，一次物理撞击即可产生最多 3 个额外闪电目标。</p>
+<div class="link">试玩对照版 →</div></a>
+<a class="card prog" href="../hybrid-v11b-progressive/">
+<div class="k">EXPERIMENT · v0.11B</div><h2>电流觉醒 → 高压蓄势 → 终局超载</h2>
+<p>剩约 30% 砖块时，每 3 次有效碰撞触发单链；剩 15% 时每 2 次触发双链；最后 8 块进入每次碰撞三链。</p>
+<div class="link">试玩渐进版 →</div></a>
+<div class="note"><p>新版本提供「阶段快速体验」选择器，可以直接体验三种电流强度，不必重复通关。两个版本均保留最大视觉冲击档及完整四波。</p>
+<p><a href="../hybrid-v09b-armor/">查看没有闪电的 v0.9B 基线</a></p></div>
+</main></body></html>
