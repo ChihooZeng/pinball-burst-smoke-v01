@@ -1,0 +1,25 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#081526"/><title>弹球暴走 v0.13 · 全砖块数字阵列</title><style>
+:root{font-family:system-ui,-apple-system,"PingFang SC",sans-serif;color:#eefaff;background:#081526}*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% 0%,#263e62,#081526 75%);min-height:100dvh}
+main{max-width:475px;margin:0 auto;padding:30px 17px 50px}.kicker{color:#8beadf;font-size:10px;font-weight:850;letter-spacing:.12em}
+h1{font-size:27px;line-height:1.2;margin:12px 0}p{font-size:13px;line-height:1.72;color:#a1bdce}
+.card{display:block;border-radius:14px;background:#152a43;border:1px solid #497991;padding:19px;margin:15px 0;color:inherit;text-decoration:none}
+.card.previous{border-color:#54647e}.card strong{font-size:19px;display:block;margin-bottom:8px}.card small{color:#a1c3d2}.card .go{color:#9feee1;margin-top:15px;font-size:13px;font-weight:800}.previous .go{color:#c2c9eb}
+.blocks{display:grid;grid-template-columns:repeat(9,1fr);gap:4px;padding:11px 8px;border:1px solid #34516d;border-radius:11px;background:#102039;margin:22px 0}
+.blocks span{display:flex;align-items:center;justify-content:center;height:24px;border-radius:3px;font-size:10px;font-weight:850;color:white}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:18px 0}
+.stats div{text-align:center;border:1px solid #2b4a63;background:#10253a;border-radius:10px;padding:12px 6px}.stats b{display:block;font-size:20px}.stats small{font-size:10px;color:#8eaabf}
+footer{border-top:1px solid #2b455a;margin-top:23px;padding-top:12px}
+</style></head><body><main>
+<div class="kicker">PINBALL BURST / INDEPENDENT NUMBER FIELD v0.13</div>
+<h1>现在，每块砖都有自己的数字。</h1><p>我们不再只增加少数装甲砖的 HP，而是把整片砖阵变成高低数字混合的可破坏场。低数字容易爆碎，高数字不断反弹，雷链削减附近数字。</p>
+<div class="blocks" aria-label="数字砖块布局示意">
+<span style="background:#3789a8">1</span><span style="background:#5c9ab8">2</span><span style="background:#7c78b8">5</span><span style="background:#b67e54">7</span><span style="background:#5c9ab8">3</span><span style="background:#3789a8">1</span><span style="background:#7c78b8">4</span><span style="background:#5c9ab8">2</span><span style="background:#b67e54">6</span>
+<span style="background:#7c78b8">4</span><span style="background:#3789a8">1</span><span style="background:#5c9ab8">3</span><span style="background:#5c9ab8">2</span><span style="background:#b67e54">7</span><span style="background:#7c78b8">5</span><span style="background:#3789a8">1</span><span style="background:#5c9ab8">2</span><span style="background:#7c78b8">4</span>
+<span style="background:#5c9ab8">2</span><span style="background:#7c78b8">5</span><span style="background:#3789a8">1</span><span style="background:#7c78b8">4</span><span style="background:#5c9ab8">3</span><span style="background:#b67e54">6</span><span style="background:#5c9ab8">2</span><span style="background:#3789a8">1</span><span style="background:#7c78b8">5</span>
+</div>
+<div class="stats"><div><b>342</b><small>总砖块</small></div><div><b>1–12</b><small>全场 HP 范围</small></div><div><b>4</b><small>波次</small></div></div>
+<a class="card" href="../hybrid-v13-numberfield/"><strong>v0.13 · 全数字砖阵</strong><small>每块砖各自分配 HP；数字 1 一击穿透，高数字反弹后破甲，原有渐进闪电保留。</small><div class="go">试玩全数字版 →</div></a>
+<a class="card previous" href="../hybrid-v12-storm/"><strong>v0.12 · 少数数字装甲</strong><small>旧版只有一小部分砖带高 HP，大多数砖直接击碎。用来对比数字砖阵带来的连锁变化。</small><div class="go">打开旧版对照 →</div></a>
+<footer><p>这轮优先验证数字分布和碰撞乐趣。职业仍然是雷链炮台，主动技能仍是巨型球；速度球、激光球和追踪球尚未加入。</p></footer>
+</main></body></html>
