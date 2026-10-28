@@ -1,0 +1,134 @@
+:root{color-scheme:dark;font-family:system-ui,-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:#07101e;color:#ebf7ff}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%}
+body{background:radial-gradient(circle at 50% 0%,#1b304b 0%,#07101e 55%);overscroll-behavior-y:contain}
+.page{width:min(100%,430px);margin:auto;padding:17px 12px 34px}
+.heading{margin-bottom:12px}.eyebrow{font-size:10px;color:#7eeddc;letter-spacing:.13em;font-weight:800}
+.heading h1{font-size:25px;letter-spacing:-.025em;margin:7px 0 5px;font-weight:790}.heading h1 span{font-size:12px;font-weight:550;color:#98b6cf}
+.heading p,.tip,footer{font-size:12px;color:#91aec5;line-height:1.6;margin:0}
+.hud{display:grid;grid-template-columns:1fr 1fr 1.25fr .85fr;background:#13263f;border:1px solid #2a4765;border-bottom:0;border-radius:15px 15px 0 0;padding:11px 9px 10px;gap:5px}
+.hud div{display:flex;flex-direction:column;gap:3px;min-width:0}
+.hud span{font-size:10px;color:#8aa8c4;white-space:nowrap}
+.hud strong{font-size:17px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.hud div:nth-child(3) strong{color:#a5f3dc}
+.arena{position:relative;background:#09172a;border:1px solid #2a4765;border-radius:0 0 15px 15px;overflow:hidden;box-shadow:0 20px 50px #0005}
+canvas{width:100%;display:block;height:auto;touch-action:none;-webkit-user-select:none;user-select:none}
+.charge{background:#10233a;border:1px solid #244763;border-radius:13px;padding:12px;margin-top:12px}
+.charge-top{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;margin-bottom:9px}
+.charge-top strong{color:#ffd782;font-variant-numeric:tabular-nums}
+#stateText{font-size:10px;color:#94b7ce;text-align:right}
+.energy-track{width:100%;height:8px;border-radius:99px;overflow:hidden;background:#31435e}
+.energy-fill{width:0%;height:100%;border-radius:99px;background:linear-gradient(90deg,#d39c47,#ffda7b);transition:width .12s linear}
+#giant{width:100%;border:0;border-radius:10px;padding:13px 8px;background:linear-gradient(105deg,#ffdc86,#e6ab4e);color:#382400;font-size:14px;font-weight:800;margin-top:10px;min-height:46px;touch-action:manipulation}
+#giant:disabled{background:#2d4057;color:#92a5bc;cursor:default}
+#giant:not(:disabled){box-shadow:0 0 16px #ffbf4740}
+.bottom-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:12px 0}
+#buildText{font-size:12px;color:#adc8d7;line-height:1.5}
+.reset{background:#1d344e;color:#d6eafd;border:1px solid #385775;border-radius:10px;padding:10px 13px;white-space:nowrap;min-height:40px;font-weight:650}
+.tip b{color:#7feac5}footer{margin-top:14px;border-top:1px solid #223a54;padding-top:12px;font-size:11px;color:#7895ab}
+.overlay{position:absolute;inset:0;background:#081529f2;backdrop-filter:blur(7px);z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:18px 20px;gap:12px}
+.overlay.hidden{display:none}.overlay h2{font-size:27px;margin:0;letter-spacing:-.02em}.overlay p{font-size:13px;color:#b7ccdf;margin:0;line-height:1.5}
+.choice-kicker{color:#78ead6}.upgrade-options{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;margin-top:6px}
+.upgrade-card{background:#152e4b;color:#e4f3ff;border:1px solid #476a8c;border-radius:13px;padding:18px 9px;display:flex;min-height:155px;flex-direction:column;align-items:center;gap:10px;justify-content:center;touch-action:manipulation}
+.upgrade-card:active{background:#22577c;transform:scale(.99)}
+.upgrade-icon{font-size:30px;color:#83e4ee}.upgrade-card strong{font-size:14px}.upgrade-card small{font-size:11px;line-height:1.45;color:#b6cfe3;font-weight:450}
+.overlay-note{font-size:11px;color:#90adc6}
+.main-button{font-size:15px;font-weight:750;border:none;border-radius:11px;min-height:46px;padding:10px 24px;background:#67d7e8;color:#082e3b;touch-action:manipulation}
+@media(max-width:360px){.page{padding:12px 9px 26px}.hud strong{font-size:15px}.heading h1{font-size:22px}.charge-top{flex-direction:column;align-items:flex-start;gap:3px}}
+
+/* Shared in-arena ultimate control for a fair A/B comparison */
+.ult-wrap{position:absolute;right:10px;bottom:35px;z-index:1;pointer-events:none}
+.ult-wrap #giant{pointer-events:auto;display:flex;justify-content:center;align-items:center;text-align:center;white-space:pre-line;line-height:1.4;width:79px;height:70px;border:2px solid #d7b269;border-radius:12px;background:#4d3a26eb;color:#fff0c5;font-size:12px;font-weight:800;min-height:70px;padding:5px;box-shadow:0 1px 14px #0008;touch-action:manipulation;margin:0}
+.ult-wrap #giant:disabled{border-color:#506b83;background:#152a40e8;color:#91adbf;box-shadow:none}
+.ult-wrap #giant.ready{box-shadow:0 0 18px #ffc64e99;background:#765524}
+.charge #giant{display:none}
+.compare-back{text-align:center;margin-top:9px;font-size:12px}
+.compare-back a,footer a{color:#86ebd6}
+
+/* v0.5: Readable minimal impacts on smaller bricks */
+.overlay h2{letter-spacing:-.025em}
+.ult-wrap{right:8px;bottom:33px}
+.ult-wrap #giant{width:74px;height:70px}
+@media(prefers-reduced-motion:reduce){
+  .energy-fill,.upgrade-card,.ult-wrap #giant{transition:none!important}
+}
+
+.impact-settings{margin:11px 0 0;border:1px solid #34536b;background:#10253d;border-radius:12px;padding:13px}
+.impact-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.impact-head strong{display:block;font-size:13px;color:#e3f7ff}
+.impact-head small{display:block;font-size:10px;color:#9ab6c8;margin-top:4px;line-height:1.4}
+.impact-head select{background:#1b3653;color:#dffbff;border:1px solid #577f99;border-radius:9px;font-size:12px;font-weight:700;min-height:40px;padding:9px 10px;min-width:110px}
+.impact-head select:focus-visible{outline:2px solid #91dfe9;outline-offset:2px}
+.impact-head select:disabled{opacity:.55}
+.impact-help{margin:9px 0 0;font-size:11px;color:#90adc2;line-height:1.55}
+@media(prefers-reduced-motion:reduce){.impact-settings select{transition:none}}
+
+/* Four upgrades must remain legible inside the 560px canvas on narrow iPhones. */
+.upgrade-options{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:3px}
+.upgrade-card{min-height:112px;padding:10px 8px;gap:5px}
+.upgrade-icon{font-size:23px}
+.upgrade-card strong{font-size:13px}
+.upgrade-card small{font-size:10px;line-height:1.35}
+.upgrade-card:disabled{opacity:.45;cursor:default}
+.overlay{gap:9px;padding:14px 13px}
+.overlay h2{font-size:24px}
+.overlay p{font-size:12px}
+
+.preview-finale{display:block;width:100%;padding:11px;border:1px solid #416b80;border-radius:10px;background:#1c3c4d;color:#a9f4ea;font-size:12px;font-weight:750;margin-top:12px;touch-action:manipulation}
+.preview-finale:active{background:#2b5d6a}
+.electric-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:10px 0 10px}
+.electric-steps div{border-radius:9px;padding:9px 7px;text-align:center;
+  background:linear-gradient(150deg,#17394d,#192d4f);border:1px solid #3b6483}
+.electric-steps b{display:block;color:#d5f8ff;font-size:11px}
+.electric-steps span{display:block;color:#94b8d3;font-size:10px;margin-top:3px}
+.stage-preview{display:grid;grid-template-columns:1fr;gap:7px;margin-top:12px}
+.stage-preview select{display:block;width:100%;min-height:42px;background:#132d44;color:#e0fcff;
+  border:1px solid #527891;border-radius:9px;font-size:12px;padding:9px}
+.stage-preview .preview-finale{margin-top:0}
+.final-rush-label.stage-1{background:#17394dc9;border-color:#5dc4d5;color:#b5f3f9}
+.final-rush-label.stage-2{background:#243657d9;border-color:#8c9ff0;color:#d7dbff}
+.final-rush-label.stage-3{background:#492953ed;border-color:#d5a2ff;color:#fff0ff;
+  box-shadow:0 0 16px #b176fa44}
+/* Finale HUD: passive status only, never blocks drag aiming or the giant button. */
+.final-rush-label{position:absolute;left:12px;top:8px;z-index:1;pointer-events:none;
+  background:#2f2349b5;border:1px solid #c5a3ff77;border-radius:999px;
+  color:#f4d6ff;font-size:10px;font-weight:850;letter-spacing:.09em;
+  padding:5px 9px;opacity:0;transition:opacity .14s ease-out}
+.final-rush-label.active{opacity:1}
+@media(prefers-reduced-motion:reduce){.final-rush-label{transition:none}}
+
+.number-legend{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin:0 0 9px}
+.number-legend span{font-size:9px;color:#b9d7e5;display:flex;align-items:center;gap:3px;justify-content:center;white-space:nowrap}
+.number-legend i{width:9px;height:9px;border-radius:2px;display:inline-block;flex-shrink:0}
+.tier-one{background:#3789a8}.tier-low{background:#5c9ab8}.tier-mid{background:#7c78b8}.tier-high{background:#b67e54}
+@media(max-width:350px){.number-legend span{font-size:8px}}
+/* Read-only equip identity; a second class/active skill will unlock selection later. */
+.loadout-label{border:1px solid #4b717a;border-radius:9px;background:#142c3d;
+  color:#b4f4ea;padding:9px 10px;font-size:11px;font-weight:750;margin:8px 0}
+
+.stage-preview.hidden{display:none}
+/* 10-wave progression: six upgrade cards fit a 560px playfield on a small phone. */
+.upgrade-options{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.upgrade-card{min-height:91px;padding:8px 7px;gap:4px}
+.upgrade-icon{font-size:21px;line-height:1}
+.upgrade-card strong{font-size:13px}
+.upgrade-card small{font-size:10px;line-height:1.25}
+.overlay{gap:7px;padding:10px 12px}
+.overlay h2{font-size:23px}
+.overlay p{font-size:11px}
+.overlay-note{font-size:10px}
+.giant-life{position:absolute;right:9px;bottom:113px;z-index:1;width:120px;
+  pointer-events:none;padding:7px 9px;border:1px solid #f1c674aa;
+  border-radius:9px;background:#251d19ed;box-shadow:0 2px 12px #0007}
+.giant-life.hidden{display:none}
+.giant-life-header{font-size:10px;font-weight:800;color:#ffe1a9;
+  display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.giant-life-header b{font-size:11px;font-variant-numeric:tabular-nums}
+.giant-life-track{height:6px;background:#765c36;border-radius:99px;overflow:hidden}
+.giant-time-fill{height:100%;width:100%;border-radius:99px;background:linear-gradient(90deg,#ffc75f,#fff5c0)}
+
+/* v0.15 build primer: visually distinct but compact on narrow phones */
+.synergy-guide{display:flex;flex-wrap:wrap;gap:4px 9px;margin:7px 0 10px;padding:9px 10px;border:1px solid #397084;border-radius:10px;background:#102b3b;color:#b9dcec;font-size:10px;line-height:1.35}
+.synergy-guide strong{color:#8de9e2;width:100%;font-size:11px}
+.synergy-guide span{white-space:normal}
+.bottom-row #buildText{overflow-wrap:anywhere;line-height:1.5}
+@media(max-width:350px){.synergy-guide{font-size:9px;padding:7px}}
