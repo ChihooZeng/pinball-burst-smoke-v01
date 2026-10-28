@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <meta name="theme-color" content="#071426"/>
+  <title>弹球暴走 v0.13 · 全砖块独立数字</title>
+  <link rel="stylesheet" href="./style.css?v=13"/>
+</head>
+<body>
+  <main class="page">
+    <header class="heading">
+      <div class="eyebrow">PINBALL BURST / NUMBER FIELD v0.13</div>
+      <h1>弹球暴走 <span>v0.13 · 全砖块数字版</span></h1>
+      <p>不再只有少数数字砖：整片砖阵每块砖都拥有自己的数字。低数字负责迅速粉碎、高数字持续反弹，渐进闪电协助削减大范围 HP。</p>
+    </header>
+    <div id="loadoutLabel" class="loadout-label">雷链炮台 · 被动：渐进闪电 · 主动：巨型球</div>
+    <div class="number-legend"><span><i class="tier-one"></i>1 · 快速击碎</span><span><i class="tier-low"></i>2–3 · 低耐久</span><span><i class="tier-mid"></i>4–6 · 反弹</span><span><i class="tier-high"></i>7+ · 高耐久</span></div>
+    <div class="electric-steps" aria-label="电流三个成长阶段">
+      <div><b>30% 剩余</b><span>三撞 · 单链</span></div>
+      <div><b>15% 剩余</b><span>双撞 · 双链</span></div>
+      <div><b>最后 8 块</b><span>每撞 · 三链</span></div>
+    </div>
+    <div class="hud">
+      <div><span>波次</span><strong id="wave">1 / 4</strong></div>
+      <div><span>击碎</span><strong id="score">0</strong></div>
+      <div><span>发射间隔</span><strong id="rate">1.00s</strong></div>
+      <div><span>弹球</span><strong id="balls">0</strong></div>
+    </div>
+    <div class="arena">
+      <div id="finalRushLabel" class="final-rush-label" role="status"></div>
+      <canvas id="game" width="360" height="560" aria-label="弹球自动射击游戏；左右拖动改变方向"></canvas>
+      <div class="ult-wrap"><button id="giant" type="button" disabled title="巨型贯穿弹珠，充满能量后可释放">巨型球\n0%</button></div>
+      <div id="choiceOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="choiceTitle">
+        <div class="eyebrow choice-kicker" id="choiceWave">WAVE 1 CLEAR</div>
+        <h2 id="choiceTitle">选择一项强化</h2>
+        <p>选择一条让连续击碎更爽的成长路线。</p>
+        <div class="upgrade-options">
+          <button id="pickRate" class="upgrade-card" type="button">
+            <span class="upgrade-icon">↗</span>
+            <strong>快速装填</strong>
+            <small id="rateDetails">发射间隔 −0.10 秒</small>
+          </button>
+          <button id="pickBounce" class="upgrade-card" type="button">
+            <span class="upgrade-icon">↝</span>
+            <strong>折射强化</strong>
+            <small id="bounceDetails">撞墙后首次击中砖块会溅射</small>
+          </button>
+          <button id="pickSplit" class="upgrade-card" type="button">
+            <span class="upgrade-icon">✣</span>
+            <strong>分裂齐射</strong>
+            <small id="splitDetails">每第 3 次发射额外两颗细弹珠</small>
+          </button>
+          <button id="pickChain" class="upgrade-card" type="button">
+            <span class="upgrade-icon">✦</span>
+            <strong>连锁爆破</strong>
+            <small id="chainDetails">连续击碎达到 5 次时波及周围砖块</small>
+          </button>
+        </div>
+        <span class="overlay-note">从四种强化中选一项，下一波立即生效</span>
+      </div>
+      <div id="winOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="winTitle">
+        <div class="eyebrow choice-kicker">COMPLETE</div>
+        <h2 id="winTitle">四波已清空</h2>
+        <p id="finalStats">获得新的游戏手感</p>
+        <button id="again" class="main-button" type="button">再次试玩</button>
+      </div>
+    </div>
+    <div class="charge">
+      <div class="charge-top">
+        <span>主动技能 · 巨型球 <strong id="chargeText">0%</strong></span>
+        <span id="stateText">自动开火中 · 滑动调整方向</span>
+      </div>
+      <div class="energy-track"><div id="energyFill" class="energy-fill"></div></div>
+      <div class="stage-preview"><select id="previewStage" aria-label="选择要快速体验的电流阶段"><option value="awaken">阶段 1 · 单链觉醒（剩约 30%）</option><option value="build">阶段 2 · 双链蓄势（剩约 15%）</option><option value="finale" selected>阶段 3 · 三链超载（剩 8 块）</option></select><button id="previewFinale" class="preview-finale" type="button">快速体验所选阶段</button></div>
+      <div class="compare-back"><a href="../v13/">v0.13 对照入口</a> · <a href="../hybrid-v12-storm/">对照上版：仅少数数字砖</a></div>
+    </div>
+    <section class="impact-settings" aria-label="视觉打击感强度">
+      <div class="impact-head">
+        <div><strong>视觉冲击强度</strong><small>只影响特效，不影响伤害或物理判定</small></div>
+        <select id="impactMode" aria-label="选择视觉冲击强度">
+          <option value="off">关闭新增效果</option>
+          <option value="balanced">较柔和</option>
+          <option value="bold" selected>更强冲击 · 默认</option>
+        </select>
+      </div>
+      <p class="impact-help">默认使用上一版「更强冲击」，可切换回柔和效果；不调用手机马达。</p>
+    </section>
+    <div class="bottom-row">
+      <span id="buildText">当前强化：无</span>
+      <button id="reset" class="reset" type="button">重新开始</button>
+    </div>
+    <p class="tip">全部 342 块砖都有独立数字，分布会随波次渐进增加。数字 1 一击击碎并贯穿；其他砖每次扣 1，数字归零后先破甲，再下一击消除。闪电优先削弱数字砖，所有弹球仍按接触角度自然反弹。阶段快速体验按钮保留。</p>
+    <footer>v0.13 独立数字砖阵实验：不是单纯提高少数装甲 HP，而是改变整片砖阵的数值分布。<a href="../hybrid-v12-storm/">对比 v0.12</a></footer>
+  </main>
+  <script src="./juice-fx.js?v=13" defer></script>
+  <script src="./game.js?v=13" defer></script>
+</body>
+</html>
