@@ -1,0 +1,23 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#091628"><title>弹球暴走 v0.9 A/B · 持续破坏验证</title><style>
+:root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;color:#effbff;background:#091628}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% 0%,#254560,#091628 68%);min-height:100dvh}
+main{width:min(100%,475px);margin:auto;padding:30px 18px 50px}
+.kicker{color:#80e6d6;font-size:11px;letter-spacing:.13em;font-weight:850}
+h1{font-size:27px;line-height:1.25;margin:12px 0 10px}p{font-size:13px;color:#a8c1d4;line-height:1.75}
+.card{display:block;background:#152a43;border:1px solid #355773;color:inherit;border-radius:15px;padding:20px;text-decoration:none;margin:14px 0}
+.card b{font-size:19px;display:block;margin-bottom:8px}.card small{color:#8de3dc;font-size:11px;font-weight:800;letter-spacing:.04em}
+.card p{margin:9px 0 0}.card .action{color:#93e6e2;margin-top:15px;font-size:13px;font-weight:800}
+.card.b{border-color:#b28d62}.card.b small,.card.b .action{color:#f3cf9b}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:20px 0}
+.stat{background:#10253a;border:1px solid #274258;border-radius:10px;padding:13px 7px;text-align:center}
+.stat b{font-size:21px;display:block}.stat span{font-size:10px;color:#92b3c8}
+.note{border-top:1px solid #2a4560;padding-top:16px;margin-top:24px}
+a.old{color:#98e1df}
+</style></head><body><main><div class="kicker">PINBALL BURST / V0.9 CONTROLLED EXPERIMENT</div>
+<h1>让爽感持续得更久。</h1><p>这轮先不增加速度球和激光球，只比较两个机制：更多可破坏目标，与数字砖的两阶段破甲。两版都有相同的 342 块砖、四波、三次强化机会。</p>
+<div class="stats"><div class="stat"><b>342</b><span>总砖块</span></div><div class="stat"><b>4</b><span>波次</span></div><div class="stat"><b>3</b><span>升级机会</span></div></div>
+<a class="card" href="../hybrid-v09a-longrun/"><small>EXPERIMENT A · CONTROL</small><b>更多砖块，更长连击</b><p>保持 v0.8 数字砖的原有破坏方式；仅延长目标数量与成长阶段。适合作为对照基线。</p><div class="action">开始 A 版试玩 →</div></a>
+<a class="card b" href="../hybrid-v09b-armor/"><small>EXPERIMENT B · TWO-STAGE ARMOR</small><b>先破甲，再击碎</b><p>装甲数字归零时外壳先碎裂，留下普通砖，下一次命中才会消除并贯穿。把装甲砖变成弹道支点。</p><div class="action">开始 B 版试玩 →</div></a>
+<div class="note"><p><b>测试重点：</b>哪一版更容易在一局中不断产生“再打几个就爆发”的期待？破甲过程是在创造更大的奖励，还是打断清屏的节奏？</p>
+<p>速度球、激光球仅作为后续创意保留，本次均未加入。<a class="old" href="../hybrid-v08-ricochet/">查看 v0.8 旧版</a></p></div>
+</main></body></html>
