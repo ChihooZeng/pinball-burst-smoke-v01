@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <meta name="theme-color" content="#071426"/>
+  <title>弹球暴走 v0.5H · 触觉反馈实验</title>
+  <link rel="stylesheet" href="./style.css?v=5h"/>
+</head>
+<body>
+  <main class="page">
+    <header class="heading">
+      <div class="eyebrow">PINBALL BURST / HAPTIC FEEL TEST 0.5H</div>
+      <h1>弹球暴走 <span>v0.5H · 震动实验</span></h1>
+      <p>在 v0.5 原有手感上，只增加可关闭、限频的手机触觉反馈；玩法与数值保持不变。</p>
+    </header>
+    <div class="hud">
+      <div><span>波次</span><strong id="wave">1 / 3</strong></div>
+      <div><span>击碎</span><strong id="score">0</strong></div>
+      <div><span>发射间隔</span><strong id="rate">1.00s</strong></div>
+      <div><span>弹球</span><strong id="balls">0</strong></div>
+    </div>
+    <div class="arena">
+      <canvas id="game" width="360" height="560" aria-label="弹球自动射击游戏；左右拖动改变方向"></canvas>
+      <div class="ult-wrap"><button id="giant" type="button" disabled title="巨型贯穿弹珠，充满能量后可释放">巨型球\n0%</button></div>
+      <div id="choiceOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="choiceTitle">
+        <div class="eyebrow choice-kicker" id="choiceWave">WAVE 1 CLEAR</div>
+        <h2 id="choiceTitle">选择一项强化</h2>
+        <p>两种路线都可以通关，看看哪种更爽。</p>
+        <div class="upgrade-options">
+          <button id="pickRate" class="upgrade-card" type="button">
+            <span class="upgrade-icon">↗</span>
+            <strong>快速装填</strong>
+            <small id="rateDetails">发射间隔 −0.10 秒</small>
+          </button>
+          <button id="pickBounce" class="upgrade-card" type="button">
+            <span class="upgrade-icon">↝</span>
+            <strong>折射强化</strong>
+            <small id="bounceDetails">撞墙后首次击中砖块会溅射</small>
+          </button>
+        </div>
+        <span class="overlay-note">选择后立即进入下一波</span>
+      </div>
+      <div id="winOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="winTitle">
+        <div class="eyebrow choice-kicker">COMPLETE</div>
+        <h2 id="winTitle">三波已清空</h2>
+        <p id="finalStats">获得新的游戏手感</p>
+        <button id="again" class="main-button" type="button">再次试玩</button>
+      </div>
+    </div>
+    <div class="charge">
+      <div class="charge-top">
+        <span>巨型贯穿球 <strong id="chargeText">0%</strong></span>
+        <span id="stateText">自动开火中 · 滑动调整方向</span>
+      </div>
+      <div class="energy-track"><div id="energyFill" class="energy-fill"></div></div>
+      <div class="compare-back"><a href="../hybrid/">回到旧 B 版对照</a></div>
+    </div>
+    <section class="haptic-panel" aria-label="手机触觉反馈实验">
+      <div class="haptic-head">
+        <div><strong>手机触觉反馈</strong><small>默认关闭 · 需主动开启</small></div>
+        <label class="haptic-toggle"><input id="hapticToggle" type="checkbox" aria-label="启用碰撞振动"><span class="switch-track" aria-hidden="true"></span></label>
+      </div>
+      <div class="haptic-bottom">
+        <span id="hapticStatus" role="status">检测设备振动能力中</span>
+        <button id="hapticTest" type="button" disabled>测试轻震</button>
+      </div>
+    </section>
+    <div class="bottom-row">
+      <span id="buildText">当前强化：无</span>
+      <button id="reset" class="reset" type="button">重新开始</button>
+    </div>
+    <p class="tip">7 列密集砖块；普通砖一击破碎，橙色数字装甲砖需要连续命中。滑动瞄准，右下角点击释放巨型球。持续击碎可触发连击提示。三波结束时仍从射速和折射中选择强化。</p>
+    <footer>v0.5H 只加触觉：普通装甲轻震、破碎短震、连击分级、巨型球双段震动；每帧合并和全局节流。iPhone Safari 没有可靠的标准碰撞振动接口，缺失时自动禁用。<a href="../hybrid-v05/">返回无振动 v0.5</a></footer>
+  </main>
+  <script src="./haptics.js?v=5h" defer></script>
+  <script src="./game.js?v=5h" defer></script>
+</body>
+</html>
