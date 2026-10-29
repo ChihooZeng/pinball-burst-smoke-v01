@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no"/>
+  <meta name="theme-color" content="#08182b"/>
+  <title>弹珠超载 · 逐波升级与密集破坏实验 v0.26</title>
+  <link rel="stylesheet" href="./style.css?v=26"/>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand"><span class="mark">◎</span><div><strong>弹珠超载</strong><small>WAVE LEVEL · v0.26 <span id="fpsStat">FPS --</span></small></div></div>
+      <div class="header-actions"><button id="soundTest" class="icon-btn" type="button" aria-label="恢复或试听声音" title="声音：点击可恢复或试听">♪</button><button id="reset" class="icon-btn" type="button" aria-label="重新开始" title="重新开始">↻</button></div>
+    </header>
+    <section class="hud">
+      <div><span id="waveLabel">第1波 · 生存</span><strong id="wave">00:00</strong></div>
+      <div><span>击碎</span><strong id="score">0</strong></div>
+      <div><span>等级</span><strong id="rate">LV.1</strong></div>
+      <div><span>场上砖块</span><strong id="balls">0</strong></div>
+    </section>
+    <div class="xpbar"><div id="xpFill"></div><span id="xpLabel">本波 0 / 78 · 清屏升级</span></div>
+    <section class="arena">
+      <canvas id="game" width="360" height="560" aria-label="弹珠超载：整波砖阵缓慢下降，完全清屏后进入下一波，左右滑动调整弹球角度"></canvas>
+      <div id="finalRushLabel" class="floating-label" role="status"></div>
+      <div class="boss-hud hidden" id="bossHud"><div><span>核心 BOSS</span><strong id="bossText">60 / 60</strong></div><div class="boss-track"><div id="bossFill"></div></div></div>
+      <div class="ult-wrap"><button id="giant" type="button" disabled>超载冲锋 0%</button></div>
+      <div class="overlay" id="startOverlay" role="dialog" aria-modal="true" aria-labelledby="startTitle">
+        <div class="start-icon">◉</div><small class="label">ONE RUN · ENDLESS DESTRUCTION</small>
+        <h2 id="startTitle">一局到底，火力超载</h2>
+        <p>每清空一波即可升一级并三选一强化。砖块加快下落，清屏时回收全部弹球，再召唤下一波。</p>
+        <button class="cta" id="start" type="button">点击开始 · 开启音效</button>
+        <button class="boss-demo-btn" id="bossDemo" type="button">直接试玩召唤型 Boss</button>
+        <small class="overlay-tip">移动端需要首次点击才能启用音效</small>
+      </div>
+      <div class="overlay hidden" id="choiceOverlay" role="dialog" aria-modal="true" aria-labelledby="choiceTitle">
+        <small id="choiceWave" class="label">LEVEL UP!</small>
+        <h2 id="choiceTitle">选择一次强化</h2>
+        <div id="upgradeOptions" class="upgrade-options">
+          <button id="choice0" class="upgrade-card" type="button"><b id="choiceTitle0">射速训练</b><span id="choiceDesc0">缩短发射间隔</span></button>
+          <button id="choice1" class="upgrade-card" type="button"><b id="choiceTitle1">弹速训练</b><span id="choiceDesc1">弹球速度小幅提升</span></button>
+          <button id="choice2" class="upgrade-card" type="button"><b id="choiceTitle2">弹跳续航</b><span id="choiceDesc2">弹球留场时间延长</span></button>
+        </div>
+        <small class="overlay-tip">每波结束升级一次 · 选择后进入下一波</small>
+      </div>
+      <div class="overlay hidden" id="winOverlay" role="dialog" aria-modal="true" aria-labelledby="winTitle">
+        <div class="start-icon">✦</div><small class="label">RUN COMPLETE</small>
+        <h2 id="winTitle">砖阵触及警戒线</h2>
+        <p id="finalStats"></p>
+        <button class="cta" id="again" type="button">重新挑战</button>
+      </div>
+    </section>
+    <footer class="footer">
+      <div class="charge-line"><div class="charge-top"><b>超载能量 <span id="chargeText">0%</span></b><span id="stateText">点击开始游戏</span></div><div class="energy-track"><div id="energyFill"></div></div></div>
+      <div class="build-line"><span id="buildText">LV.1 · 基础弹球</span><span id="loadoutLabel">基础炮台</span></div>
+      <div class="sound-controls" aria-label="音效设置"><span id="soundValue">78%</span><input id="soundVolume" type="range" min="0" max="100" step="1" value="78" aria-label="音量" /><select id="impactMode" aria-label="特效强度"><option value="bold" selected>强反馈</option><option value="balanced">适中</option><option value="off">关闭</option></select></div>
+    </footer>
+    <div class="legacy-hidden" aria-hidden="true">
+      <div id="giantLife" class="hidden"><span id="giantTimeText"></span><div id="giantTimeFill"></div></div>
+      <div id="previewBox" class="hidden"><select id="previewStage"><option value="finale">最终</option></select><button id="previewFinale"></button></div>
+      <div id="pickHunter"></div><div id="pickBounce"></div><div id="pickSplit"></div><div id="pickChain"></div><div id="pickPierce"></div><div id="pickArc"></div>
+      <div id="hunterDetails"></div><div id="bounceDetails"></div><div id="splitDetails"></div><div id="chainDetails"></div><div id="pierceDetails"></div><div id="arcDetails"></div>
+    </div>
+  </main>
+  <script src="./juice-fx.js?v=26" defer></script><script src="./game.js?v=26" defer></script>
+</body>
+</html>
