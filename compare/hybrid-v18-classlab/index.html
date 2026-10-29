@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <meta name="theme-color" content="#071426"/>
+  <title>弹珠超载 v0.18 · 四职业基础机制实验</title>
+  <link rel="stylesheet" href="./style.css?v=18"/>
+</head>
+<body>
+  <main class="page">
+    <header class="heading">
+      <div class="eyebrow">PINBALL OVERLOAD / CANNON CLASS LAB v0.18</div>
+      <h1>弹珠超载 <span>v0.18 · 四职业基础机制实验</span></h1>
+      <p>独立实验版：只比较四种炮台基础攻击与砖阵压线，不含局内升级、局外成长或广告。每次切换职业/场景都会重置本轮。</p>
+    </header>
+    <div id="loadoutLabel" class="loadout-label">均衡炮台 · 单发反弹 · 综合均衡</div>
+    <section class="class-lab-panel" aria-label="四职业基础机制实验">
+      <div class="lab-section-title">选择炮台职业</div>
+      <div class="cannon-options">
+        <button id="class-balanced" class="lab-option active" type="button">均衡</button>
+        <button id="class-scatter" class="lab-option" type="button">散射</button>
+        <button id="class-heavy" class="lab-option" type="button">重炮</button>
+        <button id="class-laser" class="lab-option" type="button">激光</button>
+      </div>
+      <div class="lab-section-title scenario-title">测试场景</div>
+      <div class="scenario-options">
+        <button id="scenario-standard" class="lab-option active" type="button">标准砖阵</button>
+        <button id="scenario-pressure" class="lab-option" type="button">压线挑战</button>
+        <button id="scenario-armor" class="lab-option" type="button">装甲压线</button>
+      </div>
+      <p id="pressureStatus" class="pressure-status">压线规则：每 5 秒下压 8px · 触及红线失败</p>
+      <div id="laserHeatPanel" class="laser-heat hidden">
+        <div><strong>激光热量</strong><span id="laserHeatText">0%</span></div>
+        <div class="laser-heat-track"><div id="laserHeatFill"></div></div>
+        <small>每束增加 20 热量；常规冷却 18%/秒，过热后快速冷却，低于 35% 恢复。</small>
+      </div>
+    </section>
+    <div class="synergy-guide"><strong>Build 联动</strong><span>本实验只比较基础武器，不纳入局内升级。</span></div>
+    <div class="number-legend"><span><i class="tier-one"></i>无数字 · 一击碎</span><span><i class="tier-low"></i>2–3 · 低耐久</span><span><i class="tier-mid"></i>4–6 · 反弹</span><span><i class="tier-high"></i>7+ · 高耐久</span></div>
+    <div class="hud">
+      <div><span>波次</span><strong id="wave">1 / 10</strong></div>
+      <div><span>击碎</span><strong id="score">0</strong></div>
+      <div><span>发射间隔</span><strong id="rate">1.00s</strong></div>
+      <div><span>弹球</span><strong id="balls">0</strong></div>
+    </div>
+    <div class="arena">
+      <div id="finalRushLabel" class="final-rush-label" role="status"></div>
+      <canvas id="game" width="360" height="560" aria-label="弹球自动射击游戏；左右拖动改变方向"></canvas>
+      <div class="ult-wrap"><button id="giant" type="button" disabled title="超载冲锋：最多贯穿10块砖，结束时释放追击弹球">超载冲锋\n0%</button></div>
+      <div id="giantLife" class="giant-life hidden"><div class="giant-life-header">超载剩余 <b id="giantTimeText">0.0s</b></div><div class="giant-life-track"><div id="giantTimeFill" class="giant-time-fill"></div></div></div>
+      <div id="choiceOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="choiceTitle">
+        <div class="eyebrow choice-kicker" id="choiceWave">WAVE 1 CLEAR</div>
+        <h2 id="choiceTitle">选择一项强化</h2>
+        <p>全新技能可以两次进化，优先建立能互相触发的组合。</p>
+        <div class="upgrade-options">
+          <button id="pickHunter" class="upgrade-card" type="button"><span class="upgrade-icon">↗</span><strong>追猎弯弹</strong><small id="hunterDetails">墙壁反弹后，弹球自动转向高耐久目标</small></button>
+          <button id="pickBounce" class="upgrade-card" type="button"><span class="upgrade-icon">◇</span><strong>蓄能弹跳</strong><small id="bounceDetails">侧墙反弹蓄能，下次撞砖爆发额外伤害</small></button>
+          <button id="pickSplit" class="upgrade-card" type="button"><span class="upgrade-icon">✳</span><strong>碎星裂变</strong><small id="splitDetails">首次命中后，从主球分出两颗侧翼弹球</small></button>
+          <button id="pickChain" class="upgrade-card" type="button"><span class="upgrade-icon">✦</span><strong>震荡核心</strong><small id="chainDetails">累计击碎触发范围冲击，对装甲也有效</small></button>
+          <button id="pickPierce" class="upgrade-card" type="button"><span class="upgrade-icon">◆</span><strong>钻头穿阵</strong><small id="pierceDetails">周期性钻头球穿透砖阵，不再被装甲弹开</small></button>
+          <button id="pickArc" class="upgrade-card" type="button"><span class="upgrade-icon">ϟ</span><strong>电弧印记</strong><small id="arcDetails">直接碰撞释放电弧，联动分裂形成弹幕</small></button>
+        </div>
+        <span class="overlay-note">六种进化路线 · 每项最多两级 · 九次选择</span>
+      </div>
+      <div id="winOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="winTitle">
+        <div class="eyebrow choice-kicker">COMPLETE</div>
+        <h2 id="winTitle">基础机制测试完成</h2>
+        <p id="finalStats">获得新的游戏手感</p>
+        <button id="again" class="main-button" type="button">再测一次</button>
+      </div>
+      <div id="loseOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="loseTitle">
+        <div class="eyebrow choice-kicker">PRESSURE TEST</div>
+        <h2 id="loseTitle">砖阵触底</h2>
+        <p id="loseStats">砖阵触及危险线，本轮结束。</p>
+        <button id="retry" class="main-button" type="button">重新测试</button>
+      </div>
+    </div>
+    <div class="charge">
+      <div class="charge-top">
+        <span>主动技能 · 超载冲锋 <strong id="chargeText">0%</strong></span>
+        <span id="stateText">自动开火中 · 滑动调整方向</span>
+      </div>
+      <div class="energy-track"><div id="energyFill" class="energy-fill"></div></div>
+      <div id="previewBox" class="stage-preview hidden"><select id="previewStage" aria-label="选择要快速体验的电流阶段"><option value="awaken">阶段 1 · 单链觉醒（剩约 30%）</option><option value="build">阶段 2 · 双链蓄势（剩约 15%）</option><option value="finale" selected>阶段 3 · 三链超载（剩 8 块）</option></select><button id="previewFinale" class="preview-finale" type="button">快速体验所选阶段</button></div>
+      <div class="compare-back"><a href="../hybrid-v16-sound-build/">v0.16 低耐久对照</a> · <a href="../hybrid-v14-tenwave/">v0.14 初版</a></div>
+    </div>
+    <section class="sound-settings" aria-label="音效音量">
+      <div class="sound-heading"><strong>游戏音效</strong><span id="soundValue">78%</span></div>
+      <div class="sound-control"><input id="soundVolume" type="range" min="0" max="100" step="1" value="78" aria-label="游戏音效音量"/><button id="soundTest" type="button">试听音效</button></div>
+      <p>声音需要首次点击或拖动游戏后才能自动播放；音量 0% 为静音。使用独立限幅，避免连续爆炸过载。</p>
+    </section>
+    <section class="impact-settings" aria-label="视觉打击感强度">
+      <div class="impact-head">
+        <div><strong>视觉冲击强度</strong><small>只影响特效，不影响伤害或物理判定</small></div>
+        <select id="impactMode" aria-label="选择视觉冲击强度">
+          <option value="off">关闭新增效果</option>
+          <option value="balanced">较柔和</option>
+          <option value="bold" selected>更强冲击 · 默认</option>
+        </select>
+      </div>
+      <p class="impact-help">默认使用上一版「更强冲击」，可切换回柔和效果；不调用手机马达。</p>
+    </section>
+    <div class="bottom-row">
+      <span id="buildText">当前强化：无</span>
+      <button id="reset" class="reset" type="button">重新开始</button>
+    </div>
+    <p class="tip">实验规则：每 5 秒，存活砖块下压 8px；任意砖块触及红色危险线即失败。标准、压线、装甲压线三种场景共用相同武器参数。请先不选技能，比较各职业的基础表现。</p>
+    <footer>v0.18 独立实验，不覆盖 v0.17 正式对照版本。</footer>
+  </main>
+  <script src="./juice-fx.js?v=18" defer></script>
+  <script src="./game.js?v=18" defer></script>
+</body>
+</html>
