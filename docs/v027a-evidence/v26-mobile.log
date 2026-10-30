@@ -1,0 +1,13 @@
+VIEWPORT iphone390 {"viewport":[390,844],"pageScrollWidth":390,"pageScrollHeight":844,"bodyScrollHeight":844,"canvas":{"x":11,"y":145.234375,"w":368,"h":573.546875,"bottom":718.78125},"arena":{"w":370,"h":575.546875},"ready":"ready","buttonVisible":true,"footerBottom":839,"soundBottom":839,"top":4} SCREENSHOT /tmp/pinball-v27-qa/v26-iphone390.jpeg.b64 bytes 45660
+READY_FPS 60
+WHOLE_WAVE_RUNTIME {"phase":"playing","time":10.558333333333374,"bursts":0,"tiles":0,"warning":0,"overlap":0,"bricks":70,"overlapPairs":0}
+BOSS_TELEGRAPH 3
+BOSS_DEMO_GESTURE {"phase":"playing","boss":true,"hp":48,"audioRunning":true,"startHidden":true}
+RUNTIME_PERF {"fps":60,"physicsHz":120,"quality":"full","gameTime":4.666666666666688,"bricks":34}
+NO_FX_PERF 60
+WAVE_CLEAR_CHOICE_RUNTIME {"phase":"choosing","level":2,"wave":1,"upgrades":1,"balls":0,"giant":false,"visible":true,"header":"WAVE 1 CLEAR · LV.2 · 选择强化"}
+CLEAR_PREVIEW_RUNTIME {"preview":78,"physical":0,"clears":1}
+CLEAR_BURST_RUNTIME {"phase":"playing","clears":1,"burst":1,"tiles":78,"bricks":78}
+VIEWPORT iphone375 {"viewport":[375,667],"pageScrollWidth":375,"pageScrollHeight":667,"bodyScrollHeight":667,"canvas":{"x":33.25,"y":106.515625,"w":308.484375,"h":480.96875,"bottom":587.484375},"arena":{"w":310.484375,"h":482.96875},"ready":"ready","buttonVisible":true,"footerBottom":664,"soundBottom":664,"top":2} SCREENSHOT /tmp/pinball-v27-qa/v26-iphone375.jpeg.b64 bytes 40892
+VIEWPORT iphone320 {"viewport":[320,568],"pageScrollWidth":320,"pageScrollHeight":568,"bodyScrollHeight":568,"canvas":{"x":37.578125,"y":106.515625,"w":244.84375,"h":381.96875,"bottom":488.484375},"arena":{"w":246.84375,"h":383.96875},"ready":"ready","buttonVisible":true,"footerBottom":565,"soundBottom":565,"top":2} SCREENSHOT /tmp/pinball-v27-qa/v26-iphone320.jpeg.b64 bytes 38132
+RUNTIME_EXCEPTIONS []

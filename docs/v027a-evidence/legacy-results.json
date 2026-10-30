@@ -1,0 +1,177 @@
+[
+  {
+    "script": "smoke-test.js",
+    "exit": 0,
+    "tail": [
+      "PASS survival numeric HP, continuous auto-fire, aim-only touch, XP + 2 choice pause, giant, bottom-line loss, restart, target refill"
+    ]
+  },
+  {
+    "script": "compare/ab-test.js",
+    "exit": 0,
+    "tail": [
+      "PASS: baseline one-hit; hybrid 2/3/4 HP; identical controls, fire interval and upgrade choices; normal ball, giant charge, pause, win, replay, and active simulation"
+    ]
+  },
+  {
+    "script": "compare/v09-comparison-test.js",
+    "exit": 0,
+    "tail": [
+      "PASS: equal four-wave grids, isolated two-stage armor, three upgrades, 342 breaks and full-game simulations"
+    ]
+  },
+  {
+    "script": "compare/v10-final-rush-test.js",
+    "exit": 0,
+    "tail": [
+      "PASS same threshold 8, no automatic activation, A true hit then full chase, B independent lightning from 2 simultaneous balls, real armor reflection, capped visual, 342 full game"
+    ]
+  },
+  {
+    "script": "compare/v11-electric-test.js",
+    "exit": 0,
+    "tail": [
+      "PASS stage0/1/2/3, controlled HP damage, no instant wipe, no free activation, simultaneous independent balls, original reflection, full 342 comparison, reduced motion"
+    ]
+  },
+  {
+    "script": "compare/v12-storm-test.js",
+    "exit": 0,
+    "tail": [
+      "PASS storm cannon loadout + giant active slot, HP [4,7,10,13], two-stage armor, four waves, passive lightning and longer simulated run"
+    ]
+  },
+  {
+    "script": "compare/v13-numberfield-test.js",
+    "exit": 0,
+    "tail": [
+      "PASS every tile independently numbered, low HP breaks at once, per-brick armor cracks, physical rebound, lightning, four waves and comparison"
+    ]
+  },
+  {
+    "script": "compare/v14-tenwave-test.js",
+    "exit": 0,
+    "tail": [
+      "PASS: full independent HP, hidden 1, giant HP5 penetration/HP6+ bounce and 5s timer, 10 waves 900 tiles, 9 upgrades, both new skills, last-eight soften and two ten-wave runs"
+    ]
+  },
+  {
+    "script": "compare/v15-build-test.js",
+    "exit": 0,
+    "tail": [
+      "PASS v0.15: stronger normal balls, instant zero-HP breaks, capped giant, storm/blast builds, 10 waves 900 tiles, 9 upgrades, two full runs"
+    ]
+  },
+  {
+    "script": "compare/v16-sound-build-test.js",
+    "exit": 0,
+    "tail": [
+      "PASS v0.16: six rewritten skills, layered sound audition, no old passive, giant cap, real ten-wave completion in two builds"
+    ]
+  },
+  {
+    "script": "compare/v17-sustain-test.js",
+    "exit": 0,
+    "tail": [
+      "PASS v0.17: progressive HP ramp, intact skills and audio, ten-wave completion"
+    ]
+  },
+  {
+    "script": "compare/v18-classlab-test.js",
+    "exit": 0,
+    "tail": [
+      "PASS v0.18: four weapon base stats, ray laser, pressure failure, three-scenario comparisons"
+    ]
+  },
+  {
+    "script": "compare/v19-survival-test.js",
+    "exit": 0,
+    "tail": [
+      "LONG_RUN_PROBE {\"phase\":\"playing\",\"seconds\":249.8,\"kills\":376,\"level\":9,\"choices\":11,\"bossSeen\":1,\"bossDefeats\":3,\"screenClears\":0,\"alive\":13}"
+    ]
+  },
+  {
+    "script": "compare/v20-denseflow-test.js",
+    "exit": 0,
+    "tail": [
+      "LONG_RUN_PROBE {\"phase\":\"playing\",\"seconds\":249.7,\"kills\":514,\"level\":12,\"choices\":14,\"bossSeen\":1,\"bossDefeats\":3,\"screenClears\":29,\"alive\":0,\"firstChoice\":17.4,\"firstClear\":24.1,\"firstBoss\":78}"
+    ]
+  },
+  {
+    "script": "compare/v21-burstcurve-test.js",
+    "exit": 0,
+    "tail": [
+      "PASS v0.21: palette cycling, visible fast refill, early limited upgrades, advanced-build survival probe"
+    ]
+  },
+  {
+    "script": "compare/v23-clean-grid-test.js",
+    "exit": 0,
+    "tail": [
+      "PASS v0.23: continuous summons, safe-zone reinforcement, scalable Boss summons, clear burst, controlled overlap, palette and progression"
+    ]
+  },
+  {
+    "script": "compare/v24-bridge-flow-test.js",
+    "exit": 0,
+    "tail": [
+      "PASS v0.24: continuous summons, safe-zone reinforcement, scalable Boss summons, clear burst, controlled overlap, palette and progression"
+    ]
+  },
+  {
+    "script": "compare/v25-wave-rush-test.js",
+    "exit": 0,
+    "tail": [
+      "PASS v0.25 full-wave lifecycle"
+    ]
+  },
+  {
+    "script": "compare/v26-wave-level-test.js",
+    "exit": 0,
+    "tail": [
+      "PASS v0.26: one level per completed wave, no mid-wave upgrades, no carried balls, moderate fall pressure"
+    ]
+  },
+  {
+    "script": "compare/hybrid-v061-hitfeel/visual-test.js",
+    "exit": 0,
+    "tail": [
+      "PASS regular brick local hit-afterimage + micro camera shake, armored rebound, physics coordinates stable, limits and expiry"
+    ]
+  },
+  {
+    "script": "compare/hybrid-v05-haptics/haptics-test.js",
+    "exit": 0,
+    "tail": [
+      "PASS opted-in vibration, event merging, type priority, cooldowns, unsupported browser guard, physical interaction and unchanged game flow"
+    ]
+  },
+  {
+    "script": "compare/hybrid-v07-density/density-test.js",
+    "exit": 0,
+    "tail": [
+      "PASS visual default matches previous enhanced, with stronger optional mode"
+    ]
+  },
+  {
+    "script": "compare/hybrid-v08-ricochet/gameplay-test.js",
+    "exit": 0,
+    "tail": [
+      "PASS default bold, slower shots, contact-normal armor bounce, fragile penetration, giant rebounds, split and chain upgrades, replay, reduced motion, multi-hit full runs"
+    ]
+  },
+  {
+    "script": "compare/hybrid-v06-juice/visual-test.js",
+    "exit": 0,
+    "tail": [
+      "PASS effect stress caps, expiry, canvas draw, on/off without gameplay changes"
+    ]
+  },
+  {
+    "script": "compare/hybrid-v05/v05-test.js",
+    "exit": 0,
+    "tail": [
+      "PASS dense waves 35/42/49, armor HP2/3/4, hit FX+caps, reduced motion, aim, auto fire, rate, giant, upgrade, no deadlock"
+    ]
+  }
+]

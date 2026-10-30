@@ -1,0 +1,297 @@
+[
+  {
+    "family": "split",
+    "seed": 2701,
+    "branch": "a",
+    "weak": true,
+    "hz": 60,
+    "phase": "lost",
+    "wave": 4,
+    "clears": 3,
+    "seconds": 133.63,
+    "peak": 12,
+    "shots": 118,
+    "contacts": 567,
+    "splitChildren": 34,
+    "arcReleases": 0,
+    "bossDefeats": 0,
+    "bossTailSeconds": 0,
+    "suppressedShots": 0,
+    "budgetReclaims": 0,
+    "collisionChecks": 1552924,
+    "remainingHp": 50,
+    "history": [
+      {
+        "wave": 0,
+        "id": "split",
+        "kind": "seed"
+      },
+      {
+        "wave": 1,
+        "id": "rate",
+        "kind": "upgrade"
+      },
+      {
+        "wave": 2,
+        "id": "speed",
+        "kind": "upgrade"
+      },
+      {
+        "wave": 3,
+        "id": "life",
+        "kind": "upgrade"
+      }
+    ],
+    "waves": [
+      {
+        "type": "wave_clear",
+        "time": 15.7167,
+        "wave": 1,
+        "duration": 15.717,
+        "build": "split"
+      },
+      {
+        "type": "wave_clear",
+        "time": 29.775,
+        "wave": 2,
+        "duration": 12.55,
+        "build": "split"
+      },
+      {
+        "type": "wave_clear",
+        "time": 74.3583,
+        "wave": 3,
+        "duration": 43.075,
+        "build": "split"
+      }
+    ]
+  },
+  {
+    "family": "split",
+    "scenario": "soloBoss",
+    "seconds": 5.542,
+    "shots": 4,
+    "contacts": 18,
+    "arcReleases": 0,
+    "splitChildren": 9
+  },
+  {
+    "family": "split",
+    "scenario": "tail",
+    "seconds": 7.008,
+    "shots": 6,
+    "contacts": 9,
+    "arcReleases": 0,
+    "splitChildren": 9
+  },
+  {
+    "family": "arc",
+    "seed": 2701,
+    "branch": "a",
+    "weak": true,
+    "hz": 60,
+    "phase": "lost",
+    "wave": 3,
+    "clears": 2,
+    "seconds": 104.87,
+    "peak": 9,
+    "shots": 93,
+    "contacts": 305,
+    "splitChildren": 0,
+    "arcReleases": 59,
+    "bossDefeats": 0,
+    "bossTailSeconds": 0,
+    "suppressedShots": 0,
+    "budgetReclaims": 0,
+    "collisionChecks": 1128525,
+    "remainingHp": 3,
+    "history": [
+      {
+        "wave": 0,
+        "id": "arc",
+        "kind": "seed"
+      },
+      {
+        "wave": 1,
+        "id": "rate",
+        "kind": "upgrade"
+      },
+      {
+        "wave": 2,
+        "id": "speed",
+        "kind": "upgrade"
+      }
+    ],
+    "waves": [
+      {
+        "type": "wave_clear",
+        "time": 18.2167,
+        "wave": 1,
+        "duration": 18.217,
+        "build": "arc"
+      },
+      {
+        "type": "wave_clear",
+        "time": 42.2833,
+        "wave": 2,
+        "duration": 22.558,
+        "build": "arc"
+      }
+    ]
+  },
+  {
+    "family": "arc",
+    "scenario": "soloBoss",
+    "seconds": 17.942,
+    "shots": 15,
+    "contacts": 15,
+    "arcReleases": 7,
+    "splitChildren": 0
+  },
+  {
+    "family": "arc",
+    "scenario": "tail",
+    "seconds": 8.492,
+    "shots": 7,
+    "contacts": 6,
+    "arcReleases": 3,
+    "splitChildren": 0
+  },
+  {
+    "family": "gun",
+    "seed": 2701,
+    "branch": "a",
+    "weak": true,
+    "hz": 60,
+    "phase": "lost",
+    "wave": 7,
+    "clears": 6,
+    "seconds": 253.17,
+    "peak": 14,
+    "shots": 809,
+    "contacts": 1589,
+    "splitChildren": 0,
+    "arcReleases": 0,
+    "bossDefeats": 1,
+    "bossTailSeconds": 0,
+    "suppressedShots": 0,
+    "budgetReclaims": 0,
+    "collisionChecks": 6322145,
+    "remainingHp": 67,
+    "history": [
+      {
+        "wave": 0,
+        "id": "gun",
+        "kind": "seed"
+      },
+      {
+        "wave": 1,
+        "id": "rate",
+        "kind": "upgrade"
+      },
+      {
+        "wave": 2,
+        "id": "speed",
+        "kind": "upgrade"
+      },
+      {
+        "wave": 3,
+        "id": "life",
+        "kind": "upgrade"
+      },
+      {
+        "wave": 4,
+        "id": "life",
+        "kind": "upgrade"
+      },
+      {
+        "wave": 5,
+        "id": "gun",
+        "kind": "upgrade"
+      },
+      {
+        "wave": 6,
+        "id": "life",
+        "kind": "upgrade"
+      }
+    ],
+    "waves": [
+      {
+        "type": "wave_clear",
+        "time": 13.1083,
+        "wave": 1,
+        "duration": 13.108,
+        "build": "gun"
+      },
+      {
+        "type": "wave_clear",
+        "time": 26.4583,
+        "wave": 2,
+        "duration": 11.842,
+        "build": "gun"
+      },
+      {
+        "type": "wave_clear",
+        "time": 59.275,
+        "wave": 3,
+        "duration": 31.308,
+        "build": "gun"
+      },
+      {
+        "type": "wave_clear",
+        "time": 103.7667,
+        "wave": 4,
+        "duration": 42.983,
+        "build": "gun"
+      },
+      {
+        "type": "wave_clear",
+        "time": 151.6583,
+        "wave": 5,
+        "duration": 46.383,
+        "build": "gun"
+      },
+      {
+        "type": "wave_clear",
+        "time": 193.5917,
+        "wave": 6,
+        "duration": 40.425,
+        "build": "gun"
+      }
+    ]
+  },
+  {
+    "family": "gun",
+    "scenario": "soloBoss",
+    "seconds": 4.167,
+    "shots": 24,
+    "contacts": 18,
+    "arcReleases": 0,
+    "splitChildren": 0
+  },
+  {
+    "family": "gun",
+    "scenario": "tail",
+    "seconds": 5.325,
+    "shots": 31,
+    "contacts": 9,
+    "arcReleases": 0,
+    "splitChildren": 0
+  },
+  {
+    "scenario": "forced-budget-60s",
+    "seconds": 59.999999999997236,
+    "hostSimulationMs": 766.8,
+    "peak": 32,
+    "shots": 499,
+    "reclaims": 499,
+    "suppressedShots": 0,
+    "collisionChecks": 16582071,
+    "arcReleases": 60,
+    "splitChildren": 0,
+    "weakAuxiliaryRanks": {
+      "split": 1,
+      "arc": 1
+    }
+  }
+]

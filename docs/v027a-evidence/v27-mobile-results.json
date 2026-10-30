@@ -1,0 +1,278 @@
+{
+  "url": "http://127.0.0.1:8767/compare/hybrid-v27-buildlab/",
+  "results": [
+    {
+      "width": 390,
+      "height": 844,
+      "family": "split",
+      "layout": {
+        "width": 390,
+        "height": 844,
+        "scrollWidth": 390,
+        "scrollHeight": 844,
+        "arena": {
+          "x": 10,
+          "y": 144.234375,
+          "right": 380,
+          "bottom": 719.78125,
+          "width": 370,
+          "height": 575.546875
+        },
+        "footer": {
+          "x": 10,
+          "y": 741,
+          "right": 380,
+          "bottom": 839,
+          "width": 370,
+          "height": 98
+        },
+        "cards": [
+          {
+            "x": 29,
+            "y": 339.21875,
+            "right": 361,
+            "bottom": 407.21875,
+            "width": 332,
+            "height": 68
+          },
+          {
+            "x": 29,
+            "y": 415.21875,
+            "right": 361,
+            "bottom": 483.21875,
+            "width": 332,
+            "height": 68
+          },
+          {
+            "x": 29,
+            "y": 491.21875,
+            "right": 361,
+            "bottom": 559.21875,
+            "width": 332,
+            "height": 68
+          }
+        ],
+        "cardOverflow": [
+          false,
+          false,
+          false
+        ],
+        "overlayScroll": false
+      },
+      "playing": {
+        "shots": 3,
+        "contacts": 7,
+        "splitChildren": 1,
+        "arcReleases": 0,
+        "fps": 60,
+        "physicsMeanMs": 0.03486238542363184,
+        "maxPhysicsMs": 3.5
+      }
+    },
+    {
+      "width": 375,
+      "height": 667,
+      "family": "arc",
+      "layout": {
+        "width": 375,
+        "height": 667,
+        "scrollWidth": 375,
+        "scrollHeight": 667,
+        "arena": {
+          "x": 32.25,
+          "y": 105.515625,
+          "right": 342.734375,
+          "bottom": 588.484375,
+          "width": 310.484375,
+          "height": 482.96875
+        },
+        "footer": {
+          "x": 10,
+          "y": 592,
+          "right": 365,
+          "bottom": 664,
+          "width": 355,
+          "height": 72
+        },
+        "cards": [
+          {
+            "x": 46.25,
+            "y": 260.046875,
+            "right": 328.734375,
+            "bottom": 322.046875,
+            "width": 282.484375,
+            "height": 62
+          },
+          {
+            "x": 46.25,
+            "y": 328.046875,
+            "right": 328.734375,
+            "bottom": 392.640625,
+            "width": 282.484375,
+            "height": 64.59375
+          },
+          {
+            "x": 46.25,
+            "y": 398.640625,
+            "right": 328.734375,
+            "bottom": 460.640625,
+            "width": 282.484375,
+            "height": 62
+          }
+        ],
+        "cardOverflow": [
+          false,
+          false,
+          false
+        ],
+        "overlayScroll": false
+      },
+      "playing": {
+        "shots": 3,
+        "contacts": 4,
+        "splitChildren": 0,
+        "arcReleases": 1,
+        "fps": 60,
+        "physicsMeanMs": 0.02104247102521101,
+        "maxPhysicsMs": 0.6000000014901161
+      }
+    },
+    {
+      "width": 320,
+      "height": 568,
+      "family": "gun",
+      "layout": {
+        "width": 320,
+        "height": 568,
+        "scrollWidth": 320,
+        "scrollHeight": 568,
+        "arena": {
+          "x": 36.578125,
+          "y": 105.515625,
+          "right": 283.421875,
+          "bottom": 489.484375,
+          "width": 246.84375,
+          "height": 383.96875
+        },
+        "footer": {
+          "x": 10,
+          "y": 493,
+          "right": 310,
+          "bottom": 565,
+          "width": 300,
+          "height": 72
+        },
+        "cards": [
+          {
+            "x": 50.578125,
+            "y": 209.25,
+            "right": 269.421875,
+            "bottom": 273.84375,
+            "width": 218.84375,
+            "height": 64.59375
+          },
+          {
+            "x": 50.578125,
+            "y": 279.84375,
+            "right": 269.421875,
+            "bottom": 344.4375,
+            "width": 218.84375,
+            "height": 64.59375
+          },
+          {
+            "x": 50.578125,
+            "y": 350.4375,
+            "right": 269.421875,
+            "bottom": 412.4375,
+            "width": 218.84375,
+            "height": 62
+          }
+        ],
+        "cardOverflow": [
+          false,
+          false,
+          false
+        ],
+        "overlayScroll": false
+      },
+      "playing": {
+        "shots": 10,
+        "contacts": 11,
+        "splitChildren": 0,
+        "arcReleases": 0,
+        "fps": 60,
+        "physicsMeanMs": 0.03634311515274489,
+        "maxPhysicsMs": 0.8999999985098839
+      }
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "family": "gun",
+      "layout": {
+        "width": 1440,
+        "height": 900,
+        "scrollWidth": 1440,
+        "scrollHeight": 900,
+        "arena": {
+          "x": 511.078125,
+          "y": 135.015625,
+          "right": 928.921875,
+          "bottom": 784.984375,
+          "width": 417.84375,
+          "height": 649.96875
+        },
+        "footer": {
+          "x": 510,
+          "y": 797,
+          "right": 930,
+          "bottom": 895,
+          "width": 420,
+          "height": 98
+        },
+        "cards": [
+          {
+            "x": 530.078125,
+            "y": 367.21875,
+            "right": 909.921875,
+            "bottom": 435.21875,
+            "width": 379.84375,
+            "height": 68
+          },
+          {
+            "x": 530.078125,
+            "y": 443.21875,
+            "right": 909.921875,
+            "bottom": 511.21875,
+            "width": 379.84375,
+            "height": 68
+          },
+          {
+            "x": 530.078125,
+            "y": 519.21875,
+            "right": 909.921875,
+            "bottom": 587.21875,
+            "width": 379.84375,
+            "height": 68
+          }
+        ],
+        "cardOverflow": [
+          false,
+          false,
+          false
+        ],
+        "overlayScroll": false
+      },
+      "playing": {
+        "shots": 10,
+        "contacts": 13,
+        "splitChildren": 0,
+        "arcReleases": 0,
+        "fps": 60,
+        "physicsMeanMs": 0.03537117911901276,
+        "maxPhysicsMs": 0.8000000007450581
+      }
+    }
+  ],
+  "errors": []
+}

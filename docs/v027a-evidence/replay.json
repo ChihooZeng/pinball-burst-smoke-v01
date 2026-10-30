@@ -1,0 +1,974 @@
+[
+  {
+    "family": "split",
+    "seed": 2701,
+    "branch": "a",
+    "weak": false,
+    "hz": 60,
+    "phase": "complete",
+    "wave": 8,
+    "clears": 8,
+    "seconds": 148.43,
+    "peak": 19,
+    "shots": 118,
+    "contacts": 1465,
+    "splitChildren": 235,
+    "arcReleases": 0,
+    "bossDefeats": 2,
+    "bossTailSeconds": 0,
+    "suppressedShots": 0,
+    "budgetReclaims": 0,
+    "collisionChecks": 3962761,
+    "remainingHp": 0,
+    "history": [
+      {
+        "wave": 0,
+        "id": "split",
+        "kind": "seed"
+      },
+      {
+        "wave": 1,
+        "id": "split",
+        "kind": "upgrade"
+      },
+      {
+        "wave": 2,
+        "id": "split",
+        "kind": "upgrade"
+      },
+      {
+        "wave": 3,
+        "id": "hunter",
+        "kind": "upgrade"
+      },
+      {
+        "wave": 4,
+        "id": "split-a",
+        "kind": "upgrade"
+      },
+      {
+        "wave": 5,
+        "id": "power",
+        "kind": "upgrade"
+      },
+      {
+        "wave": 6,
+        "id": "power",
+        "kind": "upgrade"
+      },
+      {
+        "wave": 7,
+        "id": "power",
+        "kind": "upgrade"
+      },
+      {
+        "wave": 8,
+        "id": "hunter",
+        "kind": "upgrade"
+      }
+    ],
+    "waves": [
+      {
+        "type": "wave_clear",
+        "time": 15.7167,
+        "wave": 1,
+        "duration": 15.717,
+        "build": "split"
+      },
+      {
+        "type": "wave_clear",
+        "time": 27.675,
+        "wave": 2,
+        "duration": 10.45,
+        "build": "split"
+      },
+      {
+        "type": "wave_clear",
+        "time": 49.4083,
+        "wave": 3,
+        "duration": 20.225,
+        "build": "split"
+      },
+      {
+        "type": "wave_clear",
+        "time": 78.3083,
+        "wave": 4,
+        "duration": 27.392,
+        "build": "split"
+      },
+      {
+        "type": "wave_clear",
+        "time": 100.5917,
+        "wave": 5,
+        "duration": 20.775,
+        "build": "split-a"
+      },
+      {
+        "type": "wave_clear",
+        "time": 116.7667,
+        "wave": 6,
+        "duration": 14.667,
+        "build": "split-a"
+      },
+      {
+        "type": "wave_clear",
+        "time": 134.325,
+        "wave": 7,
+        "duration": 16.05,
+        "build": "split-a"
+      },
+      {
+        "type": "wave_clear",
+        "time": 148.4333,
+        "wave": 8,
+        "duration": 12.6,
+        "build": "split-a"
+      }
+    ],
+    "events": [
+      {
+        "type": "seed",
+        "time": 0,
+        "wave": 1,
+        "id": "split"
+      },
+      {
+        "type": "wave_clear",
+        "time": 15.7167,
+        "wave": 1,
+        "duration": 15.717,
+        "build": "split"
+      },
+      {
+        "type": "offer",
+        "time": 15.7167,
+        "wave": 1,
+        "cards": [
+          "split",
+          "rate",
+          "hunter"
+        ]
+      },
+      {
+        "type": "choice",
+        "time": 15.7167,
+        "wave": 1,
+        "id": "split"
+      },
+      {
+        "type": "wave_clear",
+        "time": 27.675,
+        "wave": 2,
+        "duration": 10.45,
+        "build": "split"
+      },
+      {
+        "type": "offer",
+        "time": 27.675,
+        "wave": 2,
+        "cards": [
+          "split",
+          "speed",
+          "arc"
+        ]
+      },
+      {
+        "type": "choice",
+        "time": 27.675,
+        "wave": 2,
+        "id": "split"
+      },
+      {
+        "type": "wave_clear",
+        "time": 49.4083,
+        "wave": 3,
+        "duration": 20.225,
+        "build": "split"
+      },
+      {
+        "type": "offer",
+        "time": 49.4083,
+        "wave": 3,
+        "cards": [
+          "life",
+          "shock",
+          "hunter"
+        ]
+      },
+      {
+        "type": "choice",
+        "time": 49.4083,
+        "wave": 3,
+        "id": "hunter"
+      },
+      {
+        "type": "wave_clear",
+        "time": 78.3083,
+        "wave": 4,
+        "duration": 27.392,
+        "build": "split"
+      },
+      {
+        "type": "offer",
+        "time": 78.3083,
+        "wave": 4,
+        "cards": [
+          "split-a",
+          "split-b",
+          "power"
+        ]
+      },
+      {
+        "type": "choice",
+        "time": 78.3083,
+        "wave": 4,
+        "id": "split-a"
+      },
+      {
+        "type": "wave_clear",
+        "time": 100.5917,
+        "wave": 5,
+        "duration": 20.775,
+        "build": "split-a"
+      },
+      {
+        "type": "offer",
+        "time": 100.5917,
+        "wave": 5,
+        "cards": [
+          "power",
+          "gun",
+          "shock"
+        ]
+      },
+      {
+        "type": "choice",
+        "time": 100.5917,
+        "wave": 5,
+        "id": "power"
+      },
+      {
+        "type": "wave_clear",
+        "time": 116.7667,
+        "wave": 6,
+        "duration": 14.667,
+        "build": "split-a"
+      },
+      {
+        "type": "offer",
+        "time": 116.7667,
+        "wave": 6,
+        "cards": [
+          "power",
+          "shock",
+          "rate"
+        ]
+      },
+      {
+        "type": "choice",
+        "time": 116.7667,
+        "wave": 6,
+        "id": "power"
+      },
+      {
+        "type": "wave_clear",
+        "time": 134.325,
+        "wave": 7,
+        "duration": 16.05,
+        "build": "split-a"
+      },
+      {
+        "type": "offer",
+        "time": 134.325,
+        "wave": 7,
+        "cards": [
+          "power",
+          "shock",
+          "speed"
+        ]
+      },
+      {
+        "type": "choice",
+        "time": 134.325,
+        "wave": 7,
+        "id": "power"
+      },
+      {
+        "type": "wave_clear",
+        "time": 148.4333,
+        "wave": 8,
+        "duration": 12.6,
+        "build": "split-a"
+      },
+      {
+        "type": "offer",
+        "time": 148.4333,
+        "wave": 8,
+        "cards": [
+          "rate",
+          "hunter",
+          "arc"
+        ]
+      },
+      {
+        "type": "choice",
+        "time": 148.4333,
+        "wave": 8,
+        "id": "hunter"
+      },
+      {
+        "type": "complete",
+        "time": 148.4333,
+        "wave": 8
+      }
+    ]
+  },
+  {
+    "family": "arc",
+    "seed": 2701,
+    "branch": "a",
+    "weak": false,
+    "hz": 60,
+    "phase": "complete",
+    "wave": 8,
+    "clears": 8,
+    "seconds": 256.92,
+    "peak": 9,
+    "shots": 211,
+    "contacts": 771,
+    "splitChildren": 0,
+    "arcReleases": 197,
+    "bossDefeats": 2,
+    "bossTailSeconds": 0,
+    "suppressedShots": 0,
+    "budgetReclaims": 0,
+    "collisionChecks": 2973498,
+    "remainingHp": 0,
+    "history": [
+      {
+        "wave": 0,
+        "id": "arc",
+        "kind": "seed"
+      },
+      {
+        "wave": 1,
+        "id": "arc",
+        "kind": "upgrade"
+      },
+      {
+        "wave": 2,
+        "id": "arc",
+        "kind": "upgrade"
+      },
+      {
+        "wave": 3,
+        "id": "hunter",
+        "kind": "upgrade"
+      },
+      {
+        "wave": 4,
+        "id": "arc-a",
+        "kind": "upgrade"
+      },
+      {
+        "wave": 5,
+        "id": "power",
+        "kind": "upgrade"
+      },
+      {
+        "wave": 6,
+        "id": "power",
+        "kind": "upgrade"
+      },
+      {
+        "wave": 7,
+        "id": "power",
+        "kind": "upgrade"
+      },
+      {
+        "wave": 8,
+        "id": "hunter",
+        "kind": "upgrade"
+      }
+    ],
+    "waves": [
+      {
+        "type": "wave_clear",
+        "time": 18.2167,
+        "wave": 1,
+        "duration": 18.217,
+        "build": "arc"
+      },
+      {
+        "type": "wave_clear",
+        "time": 39.8667,
+        "wave": 2,
+        "duration": 20.142,
+        "build": "arc"
+      },
+      {
+        "type": "wave_clear",
+        "time": 68.6167,
+        "wave": 3,
+        "duration": 27.242,
+        "build": "arc"
+      },
+      {
+        "type": "wave_clear",
+        "time": 119.975,
+        "wave": 4,
+        "duration": 49.85,
+        "build": "arc"
+      },
+      {
+        "type": "wave_clear",
+        "time": 165.0583,
+        "wave": 5,
+        "duration": 43.575,
+        "build": "arc-a"
+      },
+      {
+        "type": "wave_clear",
+        "time": 184.725,
+        "wave": 6,
+        "duration": 18.158,
+        "build": "arc-a"
+      },
+      {
+        "type": "wave_clear",
+        "time": 227.7583,
+        "wave": 7,
+        "duration": 41.525,
+        "build": "arc-a"
+      },
+      {
+        "type": "wave_clear",
+        "time": 256.925,
+        "wave": 8,
+        "duration": 27.658,
+        "build": "arc-a"
+      }
+    ],
+    "events": [
+      {
+        "type": "seed",
+        "time": 0,
+        "wave": 1,
+        "id": "arc"
+      },
+      {
+        "type": "wave_clear",
+        "time": 18.2167,
+        "wave": 1,
+        "duration": 18.217,
+        "build": "arc"
+      },
+      {
+        "type": "offer",
+        "time": 18.2167,
+        "wave": 1,
+        "cards": [
+          "arc",
+          "rate",
+          "hunter"
+        ]
+      },
+      {
+        "type": "choice",
+        "time": 18.2167,
+        "wave": 1,
+        "id": "arc"
+      },
+      {
+        "type": "wave_clear",
+        "time": 39.8667,
+        "wave": 2,
+        "duration": 20.142,
+        "build": "arc"
+      },
+      {
+        "type": "offer",
+        "time": 39.8667,
+        "wave": 2,
+        "cards": [
+          "arc",
+          "speed",
+          "split"
+        ]
+      },
+      {
+        "type": "choice",
+        "time": 39.8667,
+        "wave": 2,
+        "id": "arc"
+      },
+      {
+        "type": "wave_clear",
+        "time": 68.6167,
+        "wave": 3,
+        "duration": 27.242,
+        "build": "arc"
+      },
+      {
+        "type": "offer",
+        "time": 68.6167,
+        "wave": 3,
+        "cards": [
+          "life",
+          "shock",
+          "hunter"
+        ]
+      },
+      {
+        "type": "choice",
+        "time": 68.6167,
+        "wave": 3,
+        "id": "hunter"
+      },
+      {
+        "type": "wave_clear",
+        "time": 119.975,
+        "wave": 4,
+        "duration": 49.85,
+        "build": "arc"
+      },
+      {
+        "type": "offer",
+        "time": 119.975,
+        "wave": 4,
+        "cards": [
+          "arc-a",
+          "arc-b",
+          "power"
+        ]
+      },
+      {
+        "type": "choice",
+        "time": 119.975,
+        "wave": 4,
+        "id": "arc-a"
+      },
+      {
+        "type": "wave_clear",
+        "time": 165.0583,
+        "wave": 5,
+        "duration": 43.575,
+        "build": "arc-a"
+      },
+      {
+        "type": "offer",
+        "time": 165.0583,
+        "wave": 5,
+        "cards": [
+          "power",
+          "gun",
+          "shock"
+        ]
+      },
+      {
+        "type": "choice",
+        "time": 165.0583,
+        "wave": 5,
+        "id": "power"
+      },
+      {
+        "type": "wave_clear",
+        "time": 184.725,
+        "wave": 6,
+        "duration": 18.158,
+        "build": "arc-a"
+      },
+      {
+        "type": "offer",
+        "time": 184.725,
+        "wave": 6,
+        "cards": [
+          "power",
+          "shock",
+          "rate"
+        ]
+      },
+      {
+        "type": "choice",
+        "time": 184.725,
+        "wave": 6,
+        "id": "power"
+      },
+      {
+        "type": "wave_clear",
+        "time": 227.7583,
+        "wave": 7,
+        "duration": 41.525,
+        "build": "arc-a"
+      },
+      {
+        "type": "offer",
+        "time": 227.7583,
+        "wave": 7,
+        "cards": [
+          "power",
+          "shock",
+          "speed"
+        ]
+      },
+      {
+        "type": "choice",
+        "time": 227.7583,
+        "wave": 7,
+        "id": "power"
+      },
+      {
+        "type": "wave_clear",
+        "time": 256.925,
+        "wave": 8,
+        "duration": 27.658,
+        "build": "arc-a"
+      },
+      {
+        "type": "offer",
+        "time": 256.925,
+        "wave": 8,
+        "cards": [
+          "rate",
+          "hunter",
+          "split"
+        ]
+      },
+      {
+        "type": "choice",
+        "time": 256.925,
+        "wave": 8,
+        "id": "hunter"
+      },
+      {
+        "type": "complete",
+        "time": 256.925,
+        "wave": 8
+      }
+    ]
+  },
+  {
+    "family": "gun",
+    "seed": 2701,
+    "branch": "a",
+    "weak": false,
+    "hz": 60,
+    "phase": "complete",
+    "wave": 8,
+    "clears": 8,
+    "seconds": 152.19,
+    "peak": 18,
+    "shots": 728,
+    "contacts": 1470,
+    "splitChildren": 0,
+    "arcReleases": 0,
+    "bossDefeats": 2,
+    "bossTailSeconds": 0,
+    "suppressedShots": 0,
+    "budgetReclaims": 0,
+    "collisionChecks": 6048781,
+    "remainingHp": 0,
+    "history": [
+      {
+        "wave": 0,
+        "id": "gun",
+        "kind": "seed"
+      },
+      {
+        "wave": 1,
+        "id": "gun",
+        "kind": "upgrade"
+      },
+      {
+        "wave": 2,
+        "id": "gun",
+        "kind": "upgrade"
+      },
+      {
+        "wave": 3,
+        "id": "hunter",
+        "kind": "upgrade"
+      },
+      {
+        "wave": 4,
+        "id": "gun-a",
+        "kind": "upgrade"
+      },
+      {
+        "wave": 5,
+        "id": "power",
+        "kind": "upgrade"
+      },
+      {
+        "wave": 6,
+        "id": "power",
+        "kind": "upgrade"
+      },
+      {
+        "wave": 7,
+        "id": "power",
+        "kind": "upgrade"
+      },
+      {
+        "wave": 8,
+        "id": "hunter",
+        "kind": "upgrade"
+      }
+    ],
+    "waves": [
+      {
+        "type": "wave_clear",
+        "time": 13.1083,
+        "wave": 1,
+        "duration": 13.108,
+        "build": "gun"
+      },
+      {
+        "type": "wave_clear",
+        "time": 26.1833,
+        "wave": 2,
+        "duration": 11.567,
+        "build": "gun"
+      },
+      {
+        "type": "wave_clear",
+        "time": 42.5083,
+        "wave": 3,
+        "duration": 14.817,
+        "build": "gun"
+      },
+      {
+        "type": "wave_clear",
+        "time": 70.0167,
+        "wave": 4,
+        "duration": 26,
+        "build": "gun"
+      },
+      {
+        "type": "wave_clear",
+        "time": 102.5333,
+        "wave": 5,
+        "duration": 31.008,
+        "build": "gun-a"
+      },
+      {
+        "type": "wave_clear",
+        "time": 115.1667,
+        "wave": 6,
+        "duration": 11.125,
+        "build": "gun-a"
+      },
+      {
+        "type": "wave_clear",
+        "time": 135.7417,
+        "wave": 7,
+        "duration": 19.067,
+        "build": "gun-a"
+      },
+      {
+        "type": "wave_clear",
+        "time": 152.1917,
+        "wave": 8,
+        "duration": 14.942,
+        "build": "gun-a"
+      }
+    ],
+    "events": [
+      {
+        "type": "seed",
+        "time": 0,
+        "wave": 1,
+        "id": "gun"
+      },
+      {
+        "type": "wave_clear",
+        "time": 13.1083,
+        "wave": 1,
+        "duration": 13.108,
+        "build": "gun"
+      },
+      {
+        "type": "offer",
+        "time": 13.1083,
+        "wave": 1,
+        "cards": [
+          "gun",
+          "rate",
+          "hunter"
+        ]
+      },
+      {
+        "type": "choice",
+        "time": 13.1083,
+        "wave": 1,
+        "id": "gun"
+      },
+      {
+        "type": "wave_clear",
+        "time": 26.1833,
+        "wave": 2,
+        "duration": 11.567,
+        "build": "gun"
+      },
+      {
+        "type": "offer",
+        "time": 26.1833,
+        "wave": 2,
+        "cards": [
+          "gun",
+          "speed",
+          "split"
+        ]
+      },
+      {
+        "type": "choice",
+        "time": 26.1833,
+        "wave": 2,
+        "id": "gun"
+      },
+      {
+        "type": "wave_clear",
+        "time": 42.5083,
+        "wave": 3,
+        "duration": 14.817,
+        "build": "gun"
+      },
+      {
+        "type": "offer",
+        "time": 42.5083,
+        "wave": 3,
+        "cards": [
+          "life",
+          "shock",
+          "hunter"
+        ]
+      },
+      {
+        "type": "choice",
+        "time": 42.5083,
+        "wave": 3,
+        "id": "hunter"
+      },
+      {
+        "type": "wave_clear",
+        "time": 70.0167,
+        "wave": 4,
+        "duration": 26,
+        "build": "gun"
+      },
+      {
+        "type": "offer",
+        "time": 70.0167,
+        "wave": 4,
+        "cards": [
+          "gun-a",
+          "gun-b",
+          "power"
+        ]
+      },
+      {
+        "type": "choice",
+        "time": 70.0167,
+        "wave": 4,
+        "id": "gun-a"
+      },
+      {
+        "type": "wave_clear",
+        "time": 102.5333,
+        "wave": 5,
+        "duration": 31.008,
+        "build": "gun-a"
+      },
+      {
+        "type": "offer",
+        "time": 102.5333,
+        "wave": 5,
+        "cards": [
+          "power",
+          "arc",
+          "shock"
+        ]
+      },
+      {
+        "type": "choice",
+        "time": 102.5333,
+        "wave": 5,
+        "id": "power"
+      },
+      {
+        "type": "wave_clear",
+        "time": 115.1667,
+        "wave": 6,
+        "duration": 11.125,
+        "build": "gun-a"
+      },
+      {
+        "type": "offer",
+        "time": 115.1667,
+        "wave": 6,
+        "cards": [
+          "power",
+          "shock",
+          "rate"
+        ]
+      },
+      {
+        "type": "choice",
+        "time": 115.1667,
+        "wave": 6,
+        "id": "power"
+      },
+      {
+        "type": "wave_clear",
+        "time": 135.7417,
+        "wave": 7,
+        "duration": 19.067,
+        "build": "gun-a"
+      },
+      {
+        "type": "offer",
+        "time": 135.7417,
+        "wave": 7,
+        "cards": [
+          "power",
+          "shock",
+          "speed"
+        ]
+      },
+      {
+        "type": "choice",
+        "time": 135.7417,
+        "wave": 7,
+        "id": "power"
+      },
+      {
+        "type": "wave_clear",
+        "time": 152.1917,
+        "wave": 8,
+        "duration": 14.942,
+        "build": "gun-a"
+      },
+      {
+        "type": "offer",
+        "time": 152.1917,
+        "wave": 8,
+        "cards": [
+          "rate",
+          "hunter",
+          "split"
+        ]
+      },
+      {
+        "type": "choice",
+        "time": 152.1917,
+        "wave": 8,
+        "id": "hunter"
+      },
+      {
+        "type": "complete",
+        "time": 152.1917,
+        "wave": 8
+      }
+    ]
+  }
+]
