@@ -1,0 +1,43 @@
+{
+  "checkedAt": "2026-10-30T13:32:13.884Z",
+  "results": [
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "url": "https://chihoozeng.github.io/pinball-burst-smoke-v01/compare/hybrid-v1-m1/",
+      "status": 200,
+      "title": "弹珠超载 · M1 · B底盘10波候选",
+      "errors": [],
+      "checks": [
+        "production-test-mutator-absent",
+        "start-seed-play",
+        "pause-freezes-clock",
+        "build-panel",
+        "resume",
+        "no-horizontal-overflow"
+      ],
+      "wave": 1
+    },
+    {
+      "viewport": [
+        1440,
+        900
+      ],
+      "url": "https://chihoozeng.github.io/pinball-burst-smoke-v01/compare/hybrid-v1-m1/",
+      "status": 200,
+      "title": "弹珠超载 · M1 · B底盘10波候选",
+      "errors": [],
+      "checks": [
+        "production-test-mutator-absent",
+        "start-seed-play",
+        "pause-freezes-clock",
+        "build-panel",
+        "resume",
+        "no-horizontal-overflow"
+      ],
+      "wave": 1
+    }
+  ]
+}

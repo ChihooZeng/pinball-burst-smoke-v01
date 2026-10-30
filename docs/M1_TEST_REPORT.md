@@ -58,3 +58,16 @@ seed2701、自动瞄准最低威胁砖、能量满释放巨型球，选普通卡
 记录机型、浏览器、路线、到达波次、最明显问题。可下载本局JSON辅助定位，无需上传隐私数据。
 
 M2/M3尚未实现：11–50波、正常进化、融合、高阶/稀有、20/35/50生产卡池持续性、完整50波模拟。M4的跨刷新存档、真机音频/热量/长局也未验证。自动测试通过只意味着独立M1可送验。
+
+## 线上发布核验（2026-10-30 21:32 Asia/Shanghai）
+- 实现提交：`codex/v1-m1-overload@a355b3c21164edef1a614fec17ee6c6fa3bcb2f5`，tree `381f365593ab39f05d3bd5898a1e25f969c01f60`。本地测试提交d19f610与此远端提交树完全一致；提交身份因连接工具发布而不同。
+- 发布提交：`main@d6767b7cb33b83b440dd15870fbb2a870e0b9826`；通过expected_sha校验从be604b4前进，仅新增新目录六文件。默认/历史路径差异为0，未合并整个开发分支。
+- [M1独立试玩](https://chihoozeng.github.io/pinball-burst-smoke-v01/compare/hybrid-v1-m1/)返回HTTP 200。线上README/builds/game/index/juice-fx/style六文件SHA-256均等于已测试文件。
+- 生产页面未设测试标志：390×844、1440×900真实开始→选核→运行→暂停→继续通过；暂停时钟冻结、Build显示正确、无横向溢出、无页面/请求/控制台错误，`__pinballTest`未开放。该公开检查不强制清波、不注伤，不能代替已分开记录的物理回放或真人测试。
+- 证据：`m1-evidence/public.json`、`deployment.json`；复现脚本`compare/m1-public-qa.cjs`。公开页面截图`/tmp/pinball-m1-public-390.png`和`/tmp/pinball-m1-public-1440.png`仅本机临时可用，关键证据已入Git。
+
+本机复现线上检查：
+```sh
+NODE_PATH=/Users/chihoozeng/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules M1_PROXY=http://127.0.0.1:7897 node compare/m1-public-qa.cjs
+```
+`M1_PROXY`只在本机网络需要时设置。连接GitHub提交后经fetch确认远端提交/树一致，开发工作区保留用于下一里程碑。此次按用户既有授权发布独立版本；未触发默认切换批准流程。

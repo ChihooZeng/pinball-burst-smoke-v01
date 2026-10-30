@@ -1,0 +1,67 @@
+{
+  "checkedAt": "2026-10-30T13:32:13.884Z",
+  "url": "https://chihoozeng.github.io/pinball-burst-smoke-v01/compare/hybrid-v1-m1/",
+  "codeCommit": "a355b3c21164edef1a614fec17ee6c6fa3bcb2f5",
+  "releaseCommit": "d6767b7cb33b83b440dd15870fbb2a870e0b9826",
+  "previousMain": "be604b40610b6534142193e92a2d962ae74598f7",
+  "releaseScope": "Only six new files in compare/hybrid-v1-m1/; no prior path modified",
+  "originalWorkspaceBranch": "feat/pinball-burst-launch",
+  "originalWorkspaceHead": "5ec9b7399f90b9ab1b9e815b435d985bb58949a7",
+  "originalWorkspaceClean": true,
+  "files": [
+    {
+      "path": "compare/hybrid-v1-m1/README.md",
+      "curlExit": 0,
+      "expectedSha256": "7891a19db96c733722195ce26a98eff81f410b2fc2e4920ec18a07ed29dee542",
+      "actualSha256": "7891a19db96c733722195ce26a98eff81f410b2fc2e4920ec18a07ed29dee542",
+      "match": true,
+      "bytes": 2586,
+      "error": ""
+    },
+    {
+      "path": "compare/hybrid-v1-m1/builds.js",
+      "curlExit": 0,
+      "expectedSha256": "aa85212fa45462e88874e36ff198478cf4e745f289a905cd7cd22a6ff9f13953",
+      "actualSha256": "aa85212fa45462e88874e36ff198478cf4e745f289a905cd7cd22a6ff9f13953",
+      "match": true,
+      "bytes": 11885,
+      "error": ""
+    },
+    {
+      "path": "compare/hybrid-v1-m1/game.js",
+      "curlExit": 0,
+      "expectedSha256": "ba4d957a872ea8b38d840dcc397ffb99e8aaf2c5234b6ac7bee6533388ea87a6",
+      "actualSha256": "ba4d957a872ea8b38d840dcc397ffb99e8aaf2c5234b6ac7bee6533388ea87a6",
+      "match": true,
+      "bytes": 84739,
+      "error": ""
+    },
+    {
+      "path": "compare/hybrid-v1-m1/index.html",
+      "curlExit": 0,
+      "expectedSha256": "124df1a2281e06b7853d722b2d240b0d412794885651aa8f8a4cc90b7d6cfd94",
+      "actualSha256": "124df1a2281e06b7853d722b2d240b0d412794885651aa8f8a4cc90b7d6cfd94",
+      "match": true,
+      "bytes": 6920,
+      "error": ""
+    },
+    {
+      "path": "compare/hybrid-v1-m1/juice-fx.js",
+      "curlExit": 0,
+      "expectedSha256": "4256687464454348640474a8a550c68f766118729362b550c2c6d49bc93262f1",
+      "actualSha256": "4256687464454348640474a8a550c68f766118729362b550c2c6d49bc93262f1",
+      "match": true,
+      "bytes": 8532,
+      "error": ""
+    },
+    {
+      "path": "compare/hybrid-v1-m1/style.css",
+      "curlExit": 0,
+      "expectedSha256": "26e8f01d44dc309ef757dc364bd3fddc0e61bbb6f798c4998f20a8ea69937f94",
+      "actualSha256": "26e8f01d44dc309ef757dc364bd3fddc0e61bbb6f798c4998f20a8ea69937f94",
+      "match": true,
+      "bytes": 9730,
+      "error": ""
+    }
+  ]
+}
