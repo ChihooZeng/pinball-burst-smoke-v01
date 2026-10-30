@@ -1,0 +1,94 @@
+[
+  {
+    "viewport": [
+      320,
+      568
+    ],
+    "title": "弹珠超载 · M1 · B底盘10波候选",
+    "url": "http://127.0.0.1:8771/compare/hybrid-v1-m1/",
+    "errors": [],
+    "checks": [
+      "identity",
+      "nonblank",
+      "no-error-overlay",
+      "console",
+      "screenshot",
+      "seed-play-pause-resume-reward-touch",
+      "pause-focus-wrap-and-inert"
+    ],
+    "fps": 60,
+    "physicsMeanMs": 0.044968553496606695,
+    "physicsMaxMs": 1.6000000014901161,
+    "scrollX": false,
+    "scrollY": false
+  },
+  {
+    "viewport": [
+      375,
+      667
+    ],
+    "title": "弹珠超载 · M1 · B底盘10波候选",
+    "url": "http://127.0.0.1:8771/compare/hybrid-v1-m1/",
+    "errors": [],
+    "checks": [
+      "identity",
+      "nonblank",
+      "no-error-overlay",
+      "console",
+      "screenshot",
+      "seed-play-pause-resume-reward-touch",
+      "pause-focus-wrap-and-inert"
+    ],
+    "fps": 60,
+    "physicsMeanMs": 0.04190476184326505,
+    "physicsMaxMs": 1.1999999955296516,
+    "scrollX": false,
+    "scrollY": false
+  },
+  {
+    "viewport": [
+      390,
+      844
+    ],
+    "title": "弹珠超载 · M1 · B底盘10波候选",
+    "url": "http://127.0.0.1:8771/compare/hybrid-v1-m1/",
+    "errors": [],
+    "checks": [
+      "identity",
+      "nonblank",
+      "no-error-overlay",
+      "console",
+      "screenshot",
+      "seed-play-pause-resume-reward-touch",
+      "pause-focus-wrap-and-inert"
+    ],
+    "fps": 60,
+    "physicsMeanMs": 0.038170346960848436,
+    "physicsMaxMs": 1.3000000044703484,
+    "scrollX": false,
+    "scrollY": false
+  },
+  {
+    "viewport": [
+      1440,
+      900
+    ],
+    "title": "弹珠超载 · M1 · B底盘10波候选",
+    "url": "http://127.0.0.1:8771/compare/hybrid-v1-m1/",
+    "errors": [],
+    "checks": [
+      "identity",
+      "nonblank",
+      "no-error-overlay",
+      "console",
+      "screenshot",
+      "seed-play-pause-resume-reward-touch",
+      "pause-focus-wrap-and-inert"
+    ],
+    "fps": 60,
+    "physicsMeanMs": 0.03957703927942633,
+    "physicsMaxMs": 1.2000000029802322,
+    "scrollX": false,
+    "scrollY": false
+  }
+]

@@ -1,0 +1,191 @@
+[
+  {
+    "file": "compare/ab-test.js",
+    "cwd": "compare",
+    "status": 0,
+    "stdout": "A {\"score\":60,\"phase\":\"won\",\"seconds\":52,\"wave\":3}\nB {\"score\":60,\"phase\":\"won\",\"seconds\":61,\"wave\":3}\nPASS: baseline one-hit; hybrid 2/3/4 HP; identical controls, fire interval and upgrade choices; normal ball, giant charge, pause, win, replay, and active simulation\n",
+    "stderr": ""
+  },
+  {
+    "file": "compare/hybrid-v05/v05-test.js",
+    "cwd": "compare/hybrid-v05",
+    "status": 0,
+    "stdout": "LIVE SNAPSHOT {\"phase\":\"won\",\"wave\":3,\"score\":126,\"aim\":-0.5880026035475674,\"interval\":0.9,\"rateLevel\":1,\"ricochetLevel\":1,\"charge\":100,\"activeBalls\":0,\"giantActive\":false,\"skillsUsed\":0,\"ricochetTriggers\":2,\"elapsed\":113.06666666666408,\"combo\":1,\"maxCombo\":27,\"hitCount\":164,\"fxRings\":1,\"fxText\":0,\"fxParticles\":12,\"remaining\":0,\"armored\":0,\"armorHp\":0}\nDENSE RUN {\"seconds\":113,\"score\":126,\"maxCombo\":27,\"waves\":3}\nPASS dense waves 35/42/49, armor HP2/3/4, hit FX+caps, reduced motion, aim, auto fire, rate, giant, upgrade, no deadlock\n",
+    "stderr": ""
+  },
+  {
+    "file": "compare/hybrid-v05-haptics/haptics-test.js",
+    "cwd": "compare/hybrid-v05-haptics",
+    "status": 0,
+    "stdout": "PASS opted-in vibration, event merging, type priority, cooldowns, unsupported browser guard, physical interaction and unchanged game flow\n",
+    "stderr": ""
+  },
+  {
+    "file": "compare/hybrid-v06-juice/visual-test.js",
+    "cwd": "compare/hybrid-v06-juice",
+    "status": 0,
+    "stdout": "LIVE SNAPSHOT {\"phase\":\"won\",\"wave\":3,\"score\":126,\"aim\":-0.5880026035475674,\"interval\":0.9,\"rateLevel\":1,\"ricochetLevel\":1,\"charge\":100,\"activeBalls\":0,\"giantActive\":false,\"skillsUsed\":0,\"ricochetTriggers\":2,\"elapsed\":113.06666666666408,\"combo\":1,\"maxCombo\":27,\"hitCount\":164,\"fxRings\":1,\"fxText\":0,\"fxParticles\":12,\"visualImpact\":{\"mode\":\"balanced\",\"shards\":5,\"sparks\":2,\"flashes\":1,\"waves\":0,\"shakeEvents\":32,\"breakEvents\":126,\"shakeStrength\":1.15,\"max\":{\"shards\":120,\"sparks\":90,\"flashes\":24,\"waves\":5}},\"remaining\":0,\"armored\":0,\"armorHp\":0}\nDENSE RUN {\"seconds\":113,\"score\":126,\"maxCombo\":27,\"waves\":3}\nPASS 35/42/49, visual shards and sparks, standard/bold/off, reduced motion, aim, fire, upgrade, giant, win\nPASS effect stress caps, expiry, canvas draw, on/off without gameplay changes\n",
+    "stderr": ""
+  },
+  {
+    "file": "compare/hybrid-v061-hitfeel/visual-test.js",
+    "cwd": "compare/hybrid-v061-hitfeel",
+    "status": 0,
+    "stdout": "LIVE SNAPSHOT {\"phase\":\"won\",\"wave\":3,\"score\":126,\"aim\":-0.5880026035475674,\"interval\":0.9,\"rateLevel\":1,\"ricochetLevel\":1,\"charge\":100,\"activeBalls\":0,\"giantActive\":false,\"skillsUsed\":0,\"ricochetTriggers\":2,\"elapsed\":113.06666666666408,\"combo\":1,\"maxCombo\":27,\"hitCount\":164,\"fxRings\":1,\"fxText\":0,\"fxParticles\":12,\"visualImpact\":{\"mode\":\"balanced\",\"shards\":5,\"sparks\":2,\"flashes\":1,\"waves\":0,\"ghosts\":1,\"shakeEvents\":109,\"breakEvents\":126,\"shakeStrength\":0.8,\"max\":{\"shards\":120,\"sparks\":90,\"flashes\":24,\"waves\":5,\"ghosts\":32}},\"remaining\":0,\"armored\":0,\"armorHp\":0}\nDENSE RUN {\"seconds\":113,\"score\":126,\"maxCombo\":27,\"waves\":3}\nPASS 35/42/49, visual shards and sparks, standard/bold/off, reduced motion, aim, fire, upgrade, giant, win\nPASS effect stress caps, expiry, canvas draw, on/off without gameplay changes\nPASS regular brick local hit-afterimage + micro camera shake, armored rebound, physics coordinates stable, limits and expiry\n",
+    "stderr": ""
+  },
+  {
+    "file": "compare/hybrid-v07-density/density-test.js",
+    "cwd": "compare/hybrid-v07-density",
+    "status": 0,
+    "stdout": "LIVE SNAPSHOT {\"phase\":\"won\",\"wave\":3,\"score\":189,\"aim\":0.3507958046639236,\"interval\":0.9,\"rateLevel\":1,\"ricochetLevel\":1,\"charge\":100,\"activeBalls\":0,\"giantActive\":false,\"skillsUsed\":0,\"ricochetTriggers\":3,\"elapsed\":121.59999999999692,\"combo\":6,\"maxCombo\":40,\"hitCount\":248,\"shotRadius\":3.45,\"shotSpeed\":405,\"brickWidth\":29,\"brickHeight\":22,\"brickPitchX\":38.5,\"brickPitchY\":30,\"fxRings\":3,\"fxText\":1,\"fxParticles\":36,\"visualImpact\":{\"mode\":\"balanced\",\"shards\":30,\"sparks\":11,\"flashes\":2,\"waves\":0,\"ghosts\":2,\"shakeEvents\":145,\"breakEvents\":189,\"shakeStrength\":1.23,\"max\":{\"shards\":120,\"sparks\":90,\"flashes\":24,\"waves\":5,\"ghosts\":32}},\"remaining\":0,\"armored\":0,\"armorHp\":0}\nDENSE RUN {\"seconds\":122,\"score\":189,\"maxCombo\":40,\"waves\":3}\nPASS 54/63/72, smaller radius + faster balls, more armor, old upgrades intact\nPASS effect stress caps, expiry, canvas draw, on/off without gameplay changes\nPASS regular brick local hit-afterimage + micro camera shake, armored rebound, physics coordinates stable, limits and expiry\nPASS real collision corridor, gap=9.5 bullet diameter=6.9\nPASS visual default matches previous enhanced, with stronger optional mode\n",
+    "stderr": ""
+  },
+  {
+    "file": "compare/hybrid-v08-ricochet/gameplay-test.js",
+    "cwd": "compare/hybrid-v08-ricochet",
+    "status": 0,
+    "stdout": "RUN basic {\"phase\":\"won\",\"score\":189,\"seconds\":68.6,\"shots\":74,\"contacts\":244,\"maxContactsPerBall\":32,\"giantRebounds\":0,\"maxCombo\":33}\nRUN upgraded {\"phase\":\"won\",\"score\":189,\"seconds\":58.5,\"shots\":58,\"contacts\":230,\"splitBursts\":12,\"chainBursts\":12,\"maxCombo\":66}\nPASS default bold, slower shots, contact-normal armor bounce, fragile penetration, giant rebounds, split and chain upgrades, replay, reduced motion, multi-hit full runs\n",
+    "stderr": ""
+  },
+  {
+    "file": "compare/v09-comparison-test.js",
+    "cwd": "compare",
+    "status": 0,
+    "stdout": "PASS progression hybrid-v09a-longrun {\"counts\":[72,81,90,99],\"armor\":[11,12,13,15],\"step1Armor\":2,\"step4Armor\":5}\nPASS progression hybrid-v09b-armor {\"counts\":[72,81,90,99],\"armor\":[11,12,13,15],\"step1Armor\":2,\"step4Armor\":5}\nFULL RUN hybrid-v09a-longrun {\"seconds\":79.4,\"score\":342,\"maxCombo\":82,\"maxBallContacts\":27,\"split\":20,\"chain\":35}\nFULL RUN hybrid-v09b-armor {\"seconds\":107,\"score\":342,\"maxCombo\":63,\"maxBallContacts\":46,\"split\":29,\"chain\":31}\nPASS: equal four-wave grids, isolated two-stage armor, three upgrades, 342 breaks and full-game simulations\n",
+    "stderr": ""
+  },
+  {
+    "file": "compare/v10-final-rush-test.js",
+    "cwd": "compare",
+    "status": 0,
+    "stdout": "PASS shared four-wave and two-stage baseline hybrid-v10a-hunt\nPASS shared four-wave and two-stage baseline hybrid-v10b-lightning\nHUNT tail {\"hits\":9,\"endgameSeconds\":3.6000000000000085,\"score\":8}\nLIGHTNING concurrent {\"triggers\":2,\"secondaryHits\":2,\"arcs\":2,\"score\":2}\nFULL hybrid-v10a-hunt {\"seconds\":90.6,\"score\":342,\"maxCombo\":119,\"finalSeconds\":[{\"wave\":1,\"seconds\":2.52},{\"wave\":2,\"seconds\":2.62},{\"wave\":3,\"seconds\":3.12},{\"wave\":4,\"seconds\":4.53}],\"huntHits\":9}\nFULL hybrid-v10b-lightning {\"seconds\":94.2,\"score\":342,\"maxCombo\":75,\"finalSeconds\":[{\"wave\":1,\"seconds\":4.4},{\"wave\":2,\"seconds\":2.48},{\"wave\":3,\"seconds\":2.97},{\"wave\":4,\"seconds\":3.92}],\"lightningTriggers\":21,\"lightningDamage\":35}\nPASS same threshold 8, no automatic activation, A true hit then full chase, B independent lightning from 2 simultaneous balls, real armor reflection, capped visual, 342 full game\n",
+    "stderr": ""
+  },
+  {
+    "file": "compare/v11-electric-test.js",
+    "cwd": "compare",
+    "status": 0,
+    "stdout": "BASELINE {\"time\":94.2,\"hits\":21,\"damage\":35,\"finaleSeconds\":13.77,\"finals\":[{\"wave\":1,\"seconds\":4.4},{\"wave\":2,\"seconds\":2.48},{\"wave\":3,\"seconds\":2.97},{\"wave\":4,\"seconds\":3.92}]}\nPROGRESSIVE {\"time\":74.9,\"hits\":50,\"damage\":73,\"finaleSeconds\":10.25,\"finals\":[{\"wave\":1,\"seconds\":4.47},{\"wave\":2,\"seconds\":1.35},{\"wave\":3,\"seconds\":2.73},{\"wave\":4,\"seconds\":1.7}],\"stages\":[{\"wave\":1,\"thresholds\":[22,11,8],\"entries\":[8.32,12.85,13.45],\"hits\":[3,2,4]},{\"wave\":2,\"thresholds\":[25,13,8],\"entries\":[26.47,30.2,31.92],\"hits\":[4,3,4]},{\"wave\":3,\"thresholds\":[27,14,8],\"entries\":[38,45.32,49.35],\"hits\":[5,5,5]},{\"wave\":4,\"thresholds\":[30,15,8],\"entries\":[62.18,70.77,73.18],\"hits\":[7,5,3]}]}\nPASS stage0/1/2/3, controlled HP damage, no instant wipe, no free activation, simultaneous independent balls, original reflection, full 342 comparison, reduced motion\n",
+    "stderr": ""
+  },
+  {
+    "file": "compare/v12-storm-test.js",
+    "cwd": "compare",
+    "status": 0,
+    "stdout": "OLD {\"time\":74.9,\"damage\":73,\"lightning\":50,\"maxCombo\":76,\"stages\":[[3,2,4],[4,3,4],[5,5,5],[7,5,3]]}\nV12 {\"time\":166.5,\"damage\":134,\"lightning\":94,\"maxCombo\":67,\"armorHits\":453,\"cracks\":51,\"finale\":[{\"wave\":1,\"seconds\":5.05},{\"wave\":2,\"seconds\":2.13},{\"wave\":3,\"seconds\":6.5},{\"wave\":4,\"seconds\":7.92}],\"stages\":[[6,1,4],[9,1,8],[16,2,8],[20,7,12]]}\nPASS storm cannon loadout + giant active slot, HP [4,7,10,13], two-stage armor, four waves, passive lightning and longer simulated run\n",
+    "stderr": ""
+  },
+  {
+    "file": "compare/v13-numberfield-test.js",
+    "cwd": "compare",
+    "status": 0,
+    "stdout": "OLD {\"seconds\":166.5,\"maxCombo\":67,\"lightningHits\":94,\"armorHits\":453,\"finals\":[{\"wave\":1,\"seconds\":5.05},{\"wave\":2,\"seconds\":2.13},{\"wave\":3,\"seconds\":6.5},{\"wave\":4,\"seconds\":7.92}]}\nNEW {\"seconds\":174.9,\"maxCombo\":58,\"lightningHits\":97,\"armorHits\":1161,\"breaks\":223,\"finals\":[{\"wave\":1,\"seconds\":3.37},{\"wave\":2,\"seconds\":6.9},{\"wave\":3,\"seconds\":4.03},{\"wave\":4,\"seconds\":4.8}],\"stages\":[[7,4,4],[11,5,8],[13,1,10],[14,7,13]]}\nPASS every tile independently numbered, low HP breaks at once, per-brick armor cracks, physical rebound, lightning, four waves and comparison\n",
+    "stderr": ""
+  },
+  {
+    "file": "compare/v14-tenwave-test.js",
+    "cwd": "compare",
+    "status": 0,
+    "stdout": "FULL TEN {\"seconds\":425,\"score\":900,\"rounds\":10,\"maxCombo\":87,\"lightning\":178,\"armorCracks\":547,\"powerShots\":122,\"tailSoftens\":5,\"newUpgrades\":{\"pierce\":2,\"arc\":2},\"finale\":[{\"wave\":1,\"seconds\":6.95},{\"wave\":2,\"seconds\":4.4},{\"wave\":3,\"seconds\":2.08},{\"wave\":4,\"seconds\":1.47},{\"wave\":5,\"seconds\":4.93},{\"wave\":6,\"seconds\":1.7},{\"wave\":7,\"seconds\":1.55},{\"wave\":8,\"seconds\":2.25},{\"wave\":9,\"seconds\":3.35},{\"wave\":10,\"seconds\":0.6}]}\nSECOND BUILD {\"seconds\":440.1,\"score\":900,\"maxCombo\":75,\"lightning\":210}\nPASS: full independent HP, hidden 1, giant HP5 penetration/HP6+ bounce and 5s timer, 10 waves 900 tiles, 9 upgrades, both new skills, last-eight soften and two ten-wave runs\n",
+    "stderr": ""
+  },
+  {
+    "file": "compare/v15-build-test.js",
+    "cwd": "compare",
+    "status": 0,
+    "stdout": "FULL TEN {\"seconds\":212.4,\"score\":900,\"rounds\":10,\"maxCombo\":156,\"lightning\":238,\"armorCracks\":547,\"powerShots\":55,\"tailSoftens\":24,\"newUpgrades\":{\"pierce\":2,\"arc\":2},\"finale\":[{\"wave\":1,\"seconds\":3.72},{\"wave\":2,\"seconds\":0.95},{\"wave\":3,\"seconds\":1.05},{\"wave\":4,\"seconds\":1.82},{\"wave\":5,\"seconds\":1.77},{\"wave\":6,\"seconds\":0.67},{\"wave\":7,\"seconds\":0.35},{\"wave\":8,\"seconds\":0.57},{\"wave\":9,\"seconds\":2.72},{\"wave\":10,\"seconds\":1.83}]}\nSECOND BUILD {\"seconds\":230.1,\"score\":900,\"maxCombo\":97,\"lightning\":119}\nPASS v0.15: stronger normal balls, instant zero-HP breaks, capped giant, storm/blast builds, 10 waves 900 tiles, 9 upgrades, two full runs\n",
+    "stderr": ""
+  },
+  {
+    "file": "compare/v16-sound-build-test.js",
+    "cwd": "compare",
+    "status": 0,
+    "stdout": "V16 RUNS [{\"seconds\":115.1,\"score\":900,\"combo\":478,\"split\":71,\"shock\":91,\"arc\":354},{\"seconds\":151.9,\"score\":900,\"combo\":589,\"split\":51,\"shock\":150,\"arc\":102}]\nPASS v0.16: six rewritten skills, layered sound audition, no old passive, giant cap, real ten-wave completion in two builds\n",
+    "stderr": ""
+  },
+  {
+    "file": "compare/v17-sustain-test.js",
+    "cwd": "compare",
+    "status": 0,
+    "stdout": "HP PROFILES [{\"wave\":1,\"count\":72,\"hp1\":35,\"hp\":171,\"max\":6,\"oldHp\":171},{\"wave\":2,\"count\":81,\"hp1\":33,\"hp\":238,\"max\":8,\"oldHp\":206},{\"wave\":3,\"count\":90,\"hp1\":31,\"hp\":277,\"max\":10,\"oldHp\":238},{\"wave\":4,\"count\":99,\"hp1\":45,\"hp\":401,\"max\":14,\"oldHp\":263},{\"wave\":5,\"count\":81,\"hp1\":38,\"hp\":407,\"max\":18,\"oldHp\":245},{\"wave\":6,\"count\":90,\"hp1\":30,\"hp\":601,\"max\":22,\"oldHp\":304},{\"wave\":7,\"count\":99,\"hp1\":36,\"hp\":825,\"max\":26,\"oldHp\":356},{\"wave\":8,\"count\":90,\"hp1\":30,\"hp\":986,\"max\":29,\"oldHp\":390},{\"wave\":9,\"count\":99,\"hp1\":38,\"hp\":871,\"max\":30,\"oldHp\":317},{\"wave\":10,\"count\":99,\"hp1\":37,\"hp\":977,\"max\":32,\"oldHp\":330}]\nV17 RUNS [{\"seconds\":131,\"score\":900,\"combo\":481,\"split\":93,\"shock\":96,\"arc\":730},{\"seconds\":189.3,\"score\":900,\"combo\":277,\"split\":84,\"shock\":165,\"arc\":276},{\"seconds\":187.6,\"score\":900,\"combo\":494,\"split\":62,\"shock\":0,\"arc\":107}]\nWAVE_TIMINGS [{\"build\":\"A\",\"sec\":[25.7,13.05,10.33,14.57,12.83,12.08,10.58,12.48,10.17,9.2]},{\"build\":\"B\",\"sec\":[25.7,32.1,16.35,26.38,12.8,11.03,16.57,16.92,16.63,14.8]},{\"build\":\"C\",\"sec\":[25.7,25.9,23.25,23.92,26.73,14.78,11.23,15.18,9.72,11.2]}]\nPASS v0.17: progressive HP ramp, intact skills and audio, ten-wave completion\n",
+    "stderr": ""
+  },
+  {
+    "file": "compare/v18-classlab-test.js",
+    "cwd": "compare",
+    "status": 0,
+    "stdout": "BASE_WEAPON_PASS balanced [{\"vx\":0,\"damage\":2,\"speed\":365,\"r\":3.45}]\nBASE_WEAPON_PASS scatter [{\"vx\":-86.8,\"damage\":1,\"speed\":365,\"r\":2.8},{\"vx\":0,\"damage\":1,\"speed\":365,\"r\":2.8},{\"vx\":86.8,\"damage\":1,\"speed\":365,\"r\":2.8}]\nBASE_WEAPON_PASS heavy [{\"vx\":0,\"damage\":4,\"speed\":295,\"r\":5.2}]\nBASE_WEAPON_PASS laser {\"pulses\":1,\"hits\":4,\"heat\":20,\"overheatAndRecovery\":true}\nARMOR_DAMAGE_PASS balanced 2\nARMOR_DAMAGE_PASS scatter 1\nARMOR_DAMAGE_PASS heavy 4\nPRESSURE_RESULTS [{\"class\":\"balanced\",\"scenario\":\"standard\",\"phase\":\"won\",\"seconds\":21.4,\"score\":72,\"remaining\":0,\"pressureSteps\":4,\"laserHits\":0,\"laserPulses\":0,\"heat\":0,\"frames\":1284},{\"class\":\"scatter\",\"scenario\":\"standard\",\"phase\":\"won\",\"seconds\":15.8,\"score\":72,\"remaining\":0,\"pressureSteps\":3,\"laserHits\":0,\"laserPulses\":0,\"heat\":0,\"frames\":946},{\"class\":\"heavy\",\"scenario\":\"standard\",\"phase\":\"won\",\"seconds\":23.8,\"score\":72,\"remaining\":0,\"pressureSteps\":4,\"laserHits\":0,\"laserPulses\":0,\"heat\":0,\"frames\":1425},{\"class\":\"laser\",\"scenario\":\"standard\",\"phase\":\"won\",\"seconds\":29.4,\"score\":72,\"remaining\":0,\"pressureSteps\":5,\"laserHits\":111,\"laserPulses\":38,\"heat\":95.73333333332451,\"frames\":1761},{\"class\":\"balanced\",\"scenario\":\"pressure\",\"phase\":\"won\",\"seconds\":17.8,\"score\":72,\"remaining\":0,\"pressureSteps\":3,\"laserHits\":0,\"laserPulses\":0,\"heat\":0,\"frames\":1067},{\"class\":\"scatter\",\"scenario\":\"pressure\",\"phase\":\"won\",\"seconds\":27.1,\"score\":72,\"remaining\":0,\"pressureSteps\":5,\"laserHits\":0,\"laserPulses\":0,\"heat\":0,\"frames\":1627},{\"class\":\"heavy\",\"scenario\":\"pressure\",\"phase\":\"won\",\"seconds\":22.2,\"score\":72,\"remaining\":0,\"pressureSteps\":4,\"laserHits\":0,\"laserPulses\":0,\"heat\":0,\"frames\":1330},{\"class\":\"laser\",\"scenario\":\"pressure\",\"phase\":\"won\",\"seconds\":29.4,\"score\":72,\"remaining\":0,\"pressureSteps\":5,\"laserHits\":111,\"laserPulses\":38,\"heat\":95.73333333332451,\"frames\":1761},{\"class\":\"balanced\",\"scenario\":\"armor\",\"phase\":\"won\",\"seconds\":37.7,\"score\":72,\"remaining\":0,\"pressureSteps\":7,\"laserHits\":0,\"laserPulses\":0,\"heat\":0,\"frames\":2260},{\"class\":\"scatter\",\"scenario\":\"armor\",\"phase\":\"won\",\"seconds\":33.3,\"score\":72,\"remaining\":0,\"pressureSteps\":6,\"laserHits\":0,\"laserPulses\":0,\"heat\":0,\"frames\":1996},{\"class\":\"heavy\",\"scenario\":\"armor\",\"phase\":\"won\",\"seconds\":31.8,\"score\":72,\"remaining\":0,\"pressureSteps\":6,\"laserHits\":0,\"laserPulses\":0,\"heat\":0,\"frames\":1906},{\"class\":\"laser\",\"scenario\":\"armor\",\"phase\":\"won\",\"seconds\":34.6,\"score\":72,\"remaining\":0,\"pressureSteps\":6,\"laserHits\":136,\"laserPulses\":44,\"heat\":87.43333333333702,\"frames\":2073}]\nLASER_AIM_POLICY_COMPARISON {\"bestLine\":{\"class\":\"laser\",\"scenario\":\"pressure\",\"phase\":\"won\",\"seconds\":29.4,\"score\":72,\"remaining\":0,\"pressureSteps\":5,\"laserHits\":111,\"laserPulses\":38,\"heat\":95.73333333332451,\"frames\":1761},\"firstTarget\":{\"class\":\"laser\",\"scenario\":\"pressure\",\"phase\":\"won\",\"seconds\":33.9,\"score\":72,\"remaining\":0,\"pressureSteps\":6,\"laserHits\":111,\"laserPulses\":43,\"heat\":79.13333333333524,\"frames\":2034}}\nPASS v0.18: four weapon base stats, ray laser, pressure failure, three-scenario comparisons\n",
+    "stderr": ""
+  },
+  {
+    "file": "compare/v19-survival-test.js",
+    "cwd": "compare",
+    "status": 0,
+    "stdout": "AUDIO_START_PASS\nSTREAM_PASS 6.7 22\nUPGRADE_PAUSE_PASS\nBOSS_SUMMON_AND_REWARD_PASS 4\nDANGER_FAILURE_PASS\nCLEAR_REWARD_PASS\nPASS v0.19: audio gesture, streaming, XP choice and pause, boss summons, boss reward and pressure failure\nLONG_RUN_PROBE {\"phase\":\"playing\",\"seconds\":249.8,\"kills\":376,\"level\":9,\"choices\":11,\"bossSeen\":1,\"bossDefeats\":3,\"screenClears\":0,\"alive\":13}\n",
+    "stderr": ""
+  },
+  {
+    "file": "compare/v20-denseflow-test.js",
+    "cwd": "compare",
+    "status": 0,
+    "stdout": "REFRESH_SIM_PASS 60 {\"seconds\":9.99,\"fpsEstimate\":60,\"frame\":600,\"phase\":\"playing\"}\nREFRESH_SIM_PASS 120 {\"seconds\":10,\"fpsEstimate\":120,\"frame\":1200,\"phase\":\"playing\"}\nAUDIO_START_PASS\nSTREAM_PASS 6.7 57\nUPGRADE_PAUSE_PASS\nBOSS_SUMMON_AND_REWARD_PASS 4\nDANGER_FAILURE_PASS\nCLEAR_REWARD_PASS\nPASS v0.20: audio gesture, streaming, XP choice and pause, boss summons, boss reward and pressure failure\nLONG_RUN_PROBE {\"phase\":\"playing\",\"seconds\":249.7,\"kills\":514,\"level\":12,\"choices\":14,\"bossSeen\":1,\"bossDefeats\":3,\"screenClears\":29,\"alive\":0,\"firstChoice\":17.4,\"firstClear\":24.1,\"firstBoss\":78}\n",
+    "stderr": ""
+  },
+  {
+    "file": "compare/v21-burstcurve-test.js",
+    "cwd": "compare",
+    "status": 0,
+    "stdout": "REFRESH_SIM_PASS 60 {\"seconds\":10,\"fpsEstimate\":60,\"frame\":600,\"phase\":\"playing\"}\nREFRESH_SIM_PASS 120 {\"seconds\":10,\"fpsEstimate\":120,\"frame\":1200,\"phase\":\"playing\"}\nAUDIO_START_PASS\nSTREAM_PASS 6.7 54\nUPGRADE_PAUSE_PASS\nBOSS_SUMMON_AND_REWARD_PASS 4\nDANGER_FAILURE_PASS\nCLEAR_REWARD_PASS\nPASS v0.21: audio gesture, streaming, XP choice and pause, boss summons, boss reward and pressure failure\nLONG_RUN_PROBE {\"phase\":\"playing\",\"seconds\":249.7,\"kills\":721,\"level\":12,\"choices\":13,\"bossSeen\":1,\"bossDefeats\":2,\"screenClears\":0,\"alive\":17,\"firstChoice\":5.8,\"firstClear\":null,\"firstBoss\":110}\nCYCLIC_PALETTE_PASS [{\"hp\":1,\"color\":\"#257da9\"},{\"hp\":2,\"color\":\"#218fa7\"},{\"hp\":4,\"color\":\"#428bbd\"},{\"hp\":8,\"color\":\"#7972c5\"},{\"hp\":16,\"color\":\"#bb77ad\"},{\"hp\":28,\"color\":\"#cc817b\"},{\"hp\":40,\"color\":\"#b9985e\"},{\"hp\":52,\"color\":\"#4c9e90\"},{\"hp\":64,\"color\":\"#257da9\"},{\"hp\":76,\"color\":\"#218fa7\"},{\"hp\":88,\"color\":\"#428bbd\"},{\"hp\":100,\"color\":\"#7972c5\"}]\nCLEAR_REFILL_PASS 36\nBURST_BUILD_PROBE {\"seconds\":299.6,\"phase\":\"playing\",\"kills\":1415,\"level\":20,\"choices\":21,\"firstAdvanced\":87.5,\"maxBalls\":32,\"maxHp\":115,\"bossDefeats\":2,\"clears\":13,\"remaining\":28,\"firstBoss\":110,\"firstLoss\":null}\nPASS v0.21: palette cycling, visible fast refill, early limited upgrades, advanced-build survival probe\n",
+    "stderr": ""
+  },
+  {
+    "file": "compare/v23-clean-grid-test.js",
+    "cwd": "compare",
+    "status": 0,
+    "stdout": "REFRESH_SIM_PASS 60 {\"seconds\":10,\"fpsEstimate\":60,\"frame\":600,\"phase\":\"playing\"}\nREFRESH_SIM_PASS 120 {\"seconds\":10,\"fpsEstimate\":120,\"frame\":1200,\"phase\":\"playing\"}\nAUDIO_START_PASS\nSTREAM_PASS 6.7 54\nUPGRADE_PAUSE_PASS\nBOSS_SUMMON_AND_REWARD_PASS 5\nDANGER_FAILURE_PASS\nCLEAR_REWARD_PASS\nPASS v0.23: audio gesture, streaming, XP choice and pause, boss summons, boss reward and pressure failure\nLONG_RUN_PROBE {\"phase\":\"lost\",\"seconds\":89.8,\"kills\":216,\"level\":5,\"choices\":4,\"bossSeen\":0,\"bossDefeats\":0,\"screenClears\":0,\"alive\":63,\"ambientBursts\":11,\"ambientTiles\":40,\"overlapTiles\":0,\"firstChoice\":5.8,\"firstClear\":null,\"firstBoss\":null}\nCYCLIC_PALETTE_PASS [{\"hp\":1,\"color\":\"#257da9\"},{\"hp\":2,\"color\":\"#218fa7\"},{\"hp\":4,\"color\":\"#428bbd\"},{\"hp\":8,\"color\":\"#7972c5\"},{\"hp\":16,\"color\":\"#bb77ad\"},{\"hp\":28,\"color\":\"#cc817b\"},{\"hp\":40,\"color\":\"#b9985e\"},{\"hp\":52,\"color\":\"#4c9e90\"},{\"hp\":64,\"color\":\"#257da9\"},{\"hp\":76,\"color\":\"#218fa7\"},{\"hp\":88,\"color\":\"#428bbd\"},{\"hp\":100,\"color\":\"#7972c5\"}]\nCLEAR_BURST_PASS {\"count\":81,\"tracked\":81,\"minY\":88.89592958333336,\"maxY\":288.8959295833332}\nAMBIENT_SUMMON_PASS {\"queued\":6,\"materialized\":6,\"overlap\":0}\nAMBIENT_TIMER_PASS {\"time\":10.000000000000073,\"bursts\":1,\"tiles\":2}\nREINFORCEMENT_BURST_PASS {\"queued\":18,\"materialized\":18}\nBURST_BUILD_PROBE {\"seconds\":299.6,\"phase\":\"playing\",\"kills\":1734,\"level\":19,\"choices\":20,\"firstAdvanced\":95.7,\"maxBalls\":32,\"maxHp\":115,\"bossDefeats\":2,\"clears\":10,\"remaining\":3,\"ambientBursts\":37,\"ambientTiles\":321,\"overlapTiles\":0,\"firstBoss\":110,\"firstLoss\":null}\nPASS v0.23: continuous summons, safe-zone reinforcement, scalable Boss summons, clear burst, controlled overlap, palette and progression\n",
+    "stderr": ""
+  },
+  {
+    "file": "compare/v24-bridge-flow-test.js",
+    "cwd": "compare",
+    "status": 0,
+    "stdout": "REFRESH_SIM_PASS 60 {\"seconds\":10,\"fpsEstimate\":60,\"frame\":600,\"phase\":\"playing\"}\nREFRESH_SIM_PASS 120 {\"seconds\":10,\"fpsEstimate\":120,\"frame\":1200,\"phase\":\"playing\"}\nAUDIO_START_PASS\nSTREAM_PASS 6.7 54\nUPGRADE_PAUSE_PASS\nBOSS_SUMMON_AND_REWARD_PASS 5\nDANGER_FAILURE_PASS\nCLEAR_REWARD_PASS\nPASS v0.24: audio gesture, streaming, XP choice and pause, boss summons, boss reward and pressure failure\nLONG_RUN_PROBE {\"phase\":\"lost\",\"seconds\":119.5,\"kills\":459,\"level\":8,\"choices\":7,\"bossSeen\":1,\"bossDefeats\":0,\"screenClears\":2,\"alive\":33,\"ambientBursts\":11,\"ambientTiles\":71,\"overlapTiles\":0,\"firstChoice\":5.8,\"firstClear\":32.9,\"firstBoss\":110}\nCYCLIC_PALETTE_PASS [{\"hp\":1,\"color\":\"#257da9\"},{\"hp\":2,\"color\":\"#218fa7\"},{\"hp\":4,\"color\":\"#428bbd\"},{\"hp\":8,\"color\":\"#7972c5\"},{\"hp\":16,\"color\":\"#bb77ad\"},{\"hp\":28,\"color\":\"#cc817b\"},{\"hp\":40,\"color\":\"#b9985e\"},{\"hp\":52,\"color\":\"#4c9e90\"},{\"hp\":64,\"color\":\"#257da9\"},{\"hp\":76,\"color\":\"#218fa7\"},{\"hp\":88,\"color\":\"#428bbd\"},{\"hp\":100,\"color\":\"#7972c5\"}]\nCLEAR_BURST_PASS {\"count\":77,\"tracked\":78,\"minY\":123.51621208333324,\"maxY\":339.5162120833329}\nAMBIENT_SUMMON_PASS {\"queued\":6,\"materialized\":5,\"overlap\":0}\nAMBIENT_TIMER_PASS {\"time\":10.000000000000073,\"bursts\":1,\"tiles\":2}\nUPPER_ONLY_BRIDGE_PASS {\"tiles\":7,\"levels\":[3,4,5,3,6,3,4],\"zone\":{\"upper\":14,\"middle\":2,\"lower\":5,\"total\":21}}\nCLEAR_GRACE_PASS {\"seconds\":3.6666666666666563,\"alive\":4}\nREINFORCEMENT_BURST_PASS {\"materialized\":2}\nBURST_BUILD_PROBE {\"seconds\":299.5,\"phase\":\"playing\",\"kills\":3124,\"level\":24,\"choices\":25,\"firstAdvanced\":92.1,\"maxBalls\":32,\"maxHp\":115,\"bossDefeats\":2,\"clears\":33,\"remaining\":16,\"ambientBursts\":7,\"ambientTiles\":57,\"overlapTiles\":0,\"firstBoss\":110,\"firstLoss\":null}\nPASS v0.24: continuous summons, safe-zone reinforcement, scalable Boss summons, clear burst, controlled overlap, palette and progression\n",
+    "stderr": ""
+  },
+  {
+    "file": "compare/v25-wave-rush-test.js",
+    "cwd": "compare",
+    "status": 0,
+    "stdout": "WAVE_SETUP_PASS {\"wave\":1,\"live\":78,\"minY\":36,\"maxBottom\":282,\"boss\":false}\nNO_MIDWAVE_SPAWNS_PASS 9.0\nCLEAR_NEXT_WAVE_PASS {\"wave\":2,\"live\":75,\"minY\":42.84450000000045,\"maxBottom\":288.8445000000039,\"boss\":false}\nBOSS_WAVE_PASS {\"supportBudget\":8,\"defeats\":1}\nDANGER_LINE_PASS\nREFRESH_RATE_PASS [{\"hz\":60,\"elapsed\":10},{\"hz\":120,\"elapsed\":10}]\nLONG_RUN_BASIC {\"phase\":\"lost\",\"seconds\":258.1,\"wave\":7,\"clear\":6,\"kills\":542,\"level\":11,\"boss\":1,\"choices\":11,\"live\":7,\"maxWave\":7,\"ambient\":0,\"bridge\":0}\nLONG_RUN_BURST {\"phase\":\"playing\",\"seconds\":299.5,\"wave\":20,\"clear\":19,\"kills\":1549,\"level\":21,\"boss\":4,\"choices\":24,\"live\":2,\"maxWave\":20,\"ambient\":0,\"bridge\":0}\nPASS v0.25 full-wave lifecycle\n",
+    "stderr": ""
+  },
+  {
+    "file": "compare/v26-wave-level-test.js",
+    "cwd": "compare",
+    "status": 0,
+    "stdout": "ONE_WAVE_ONE_LEVEL_RULE_PASS {\"wave\":1,\"level\":1,\"time\":9.333333333333444}\nCLEAR_UPGRADE_AND_BALL_RESET_PASS {\"wave\":2,\"level\":2,\"balls\":2}\nBOSS_ONLY_WAVE_END_UPGRADE_PASS\nDANGER_LINE_PASS\n60_120HZ_PASS\nWEAK_BUILD_PROBE {\"phase\":\"lost\",\"time\":185.3,\"wave\":5,\"level\":5,\"waveUpgrades\":4,\"clears\":4,\"choices\":4,\"score\":370,\"bossDefeats\":1,\"peakBalls\":11,\"firstClear\":19.4,\"waveTimes\":[{\"wave\":1,\"time\":0},{\"wave\":2,\"time\":20.9},{\"wave\":3,\"time\":40.5},{\"wave\":4,\"time\":83},{\"wave\":5,\"time\":137.6}],\"bossHp\":0,\"activeBricks\":12,\"remainingHp\":80}\nBURST_BUILD_PROBE {\"phase\":\"lost\",\"time\":185.3,\"wave\":5,\"level\":5,\"waveUpgrades\":4,\"clears\":4,\"choices\":4,\"score\":370,\"bossDefeats\":1,\"peakBalls\":11,\"firstClear\":19.4,\"waveTimes\":[{\"wave\":1,\"time\":0},{\"wave\":2,\"time\":20.9},{\"wave\":3,\"time\":40.5},{\"wave\":4,\"time\":83},{\"wave\":5,\"time\":137.6}],\"bossHp\":0,\"activeBricks\":12,\"remainingHp\":80}\nPASS v0.26: one level per completed wave, no mid-wave upgrades, no carried balls, moderate fall pressure\n",
+    "stderr": ""
+  },
+  {
+    "file": "compare/v27-build-model-test.js",
+    "cwd": "compare",
+    "status": 0,
+    "stdout": "PASS v27 data model: ranks, prerequisites, exclusivity, branch guarantee, cross-core, deterministic choices and real fallback\n",
+    "stderr": ""
+  },
+  {
+    "file": "compare/v27-buildlab-test.js",
+    "cwd": "compare",
+    "status": 0,
+    "stdout": "PASS v27 combat: split counts, six branches, single-Boss arc, recursion guard, continuous gun budget, wave lifecycle, eight-wave stop and 30/60/120Hz\nPASS preview cadence, production API isolation and hidden-page pause\n",
+    "stderr": ""
+  },
+  {
+    "file": "smoke-test.js",
+    "cwd": "",
+    "status": 0,
+    "stdout": "ACTIVE RUN {\"seconds\":242,\"score\":259,\"level\":17,\"skillReady\":true}\nPASSIVE RUN {\"seconds\":34,\"score\":7,\"level\":2}\nTARGET AVAILABILITY {\"playSeconds\":150,\"emptySeconds\":0.42,\"maxEmptySeconds\":0.42}\nPASS survival numeric HP, continuous auto-fire, aim-only touch, XP + 2 choice pause, giant, bottom-line loss, restart, target refill\n",
+    "stderr": ""
+  }
+]

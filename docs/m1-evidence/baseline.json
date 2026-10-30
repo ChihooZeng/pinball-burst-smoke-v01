@@ -1,0 +1,138 @@
+{
+  "ref": "8865a74c6c188e1e2ac645e864efeeb600a7ae93",
+  "scope": "10-second controlled high-HP physical fixture; no Buff, no bank, not a wave-completion test",
+  "rows": [
+    {
+      "family": "split",
+      "trained": false,
+      "B": {
+        "shots": 12,
+        "contacts": 0,
+        "hp": 300000,
+        "children": 0,
+        "arc": 0,
+        "interval": 0.86,
+        "balls": 3
+      },
+      "M1": {
+        "shots": 12,
+        "contacts": 0,
+        "hp": 300000,
+        "children": 0,
+        "arc": 0,
+        "interval": 0.86,
+        "balls": 3
+      }
+    },
+    {
+      "family": "split",
+      "trained": true,
+      "B": {
+        "shots": 19,
+        "contacts": 0,
+        "hp": 300000,
+        "children": 0,
+        "arc": 0,
+        "interval": 0.55,
+        "balls": 5
+      },
+      "M1": {
+        "shots": 19,
+        "contacts": 0,
+        "hp": 300000,
+        "children": 0,
+        "arc": 0,
+        "interval": 0.55,
+        "balls": 5
+      }
+    },
+    {
+      "family": "arc",
+      "trained": false,
+      "B": {
+        "shots": 12,
+        "contacts": 0,
+        "hp": 300000,
+        "children": 0,
+        "arc": 0,
+        "interval": 0.86,
+        "balls": 3
+      },
+      "M1": {
+        "shots": 12,
+        "contacts": 0,
+        "hp": 300000,
+        "children": 0,
+        "arc": 0,
+        "interval": 0.86,
+        "balls": 3
+      }
+    },
+    {
+      "family": "arc",
+      "trained": true,
+      "B": {
+        "shots": 19,
+        "contacts": 0,
+        "hp": 300000,
+        "children": 0,
+        "arc": 0,
+        "interval": 0.55,
+        "balls": 5
+      },
+      "M1": {
+        "shots": 19,
+        "contacts": 0,
+        "hp": 300000,
+        "children": 0,
+        "arc": 0,
+        "interval": 0.55,
+        "balls": 5
+      }
+    },
+    {
+      "family": "gun",
+      "trained": false,
+      "B": {
+        "shots": 29,
+        "contacts": 0,
+        "hp": 300000,
+        "children": 0,
+        "arc": 0,
+        "interval": 0.35,
+        "balls": 8
+      },
+      "M1": {
+        "shots": 29,
+        "contacts": 0,
+        "hp": 300000,
+        "children": 0,
+        "arc": 0,
+        "interval": 0.35,
+        "balls": 8
+      }
+    },
+    {
+      "family": "gun",
+      "trained": true,
+      "B": {
+        "shots": 85,
+        "contacts": 390,
+        "hp": 298050,
+        "children": 0,
+        "arc": 0,
+        "interval": 0.12,
+        "balls": 32
+      },
+      "M1": {
+        "shots": 85,
+        "contacts": 390,
+        "hp": 298050,
+        "children": 0,
+        "arc": 0,
+        "interval": 0.12,
+        "balls": 32
+      }
+    }
+  ]
+}
