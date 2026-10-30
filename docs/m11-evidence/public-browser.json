@@ -1,0 +1,170 @@
+[
+  {
+    "viewport": [
+      320,
+      568
+    ],
+    "arena": {
+      "x": 0,
+      "y": 0,
+      "width": 320,
+      "height": 568
+    },
+    "world": [
+      360,
+      639
+    ],
+    "errors": [],
+    "checks": [
+      "identity",
+      "full-arena",
+      "settings-pause-resume",
+      "volume",
+      "sound-unlock",
+      "quality",
+      "touch-camera-mapping",
+      "resize-pause",
+      "no-scroll"
+    ]
+  },
+  {
+    "viewport": [
+      375,
+      667
+    ],
+    "arena": {
+      "x": 0,
+      "y": 0,
+      "width": 375,
+      "height": 667
+    },
+    "world": [
+      360,
+      640
+    ],
+    "errors": [],
+    "checks": [
+      "identity",
+      "full-arena",
+      "settings-pause-resume",
+      "volume",
+      "sound-unlock",
+      "quality",
+      "touch-camera-mapping",
+      "resize-pause",
+      "no-scroll"
+    ]
+  },
+  {
+    "viewport": [
+      390,
+      844
+    ],
+    "arena": {
+      "x": 0,
+      "y": 0,
+      "width": 390,
+      "height": 844
+    },
+    "world": [
+      360,
+      779
+    ],
+    "errors": [],
+    "checks": [
+      "identity",
+      "full-arena",
+      "settings-pause-resume",
+      "volume",
+      "sound-unlock",
+      "quality",
+      "touch-camera-mapping",
+      "resize-pause",
+      "no-scroll"
+    ]
+  },
+  {
+    "viewport": [
+      430,
+      932
+    ],
+    "arena": {
+      "x": 0,
+      "y": 0,
+      "width": 430,
+      "height": 932
+    },
+    "world": [
+      360,
+      780
+    ],
+    "errors": [],
+    "checks": [
+      "identity",
+      "full-arena",
+      "settings-pause-resume",
+      "volume",
+      "sound-unlock",
+      "quality",
+      "touch-camera-mapping",
+      "resize-pause",
+      "no-scroll"
+    ]
+  },
+  {
+    "viewport": [
+      844,
+      390
+    ],
+    "arena": {
+      "x": 217.25,
+      "y": 0,
+      "width": 409.5,
+      "height": 390
+    },
+    "world": [
+      360,
+      560
+    ],
+    "errors": [],
+    "checks": [
+      "identity",
+      "full-arena",
+      "settings-pause-resume",
+      "volume",
+      "sound-unlock",
+      "quality",
+      "touch-camera-mapping",
+      "resize-pause",
+      "no-scroll"
+    ]
+  },
+  {
+    "viewport": [
+      1440,
+      900
+    ],
+    "arena": {
+      "x": 247.5,
+      "y": 0,
+      "width": 945,
+      "height": 900
+    },
+    "world": [
+      360,
+      560
+    ],
+    "errors": [],
+    "checks": [
+      "identity",
+      "full-arena",
+      "settings-pause-resume",
+      "volume",
+      "sound-unlock",
+      "quality",
+      "touch-camera-mapping",
+      "resize-pause",
+      "no-scroll"
+    ]
+  }
+]

@@ -1,0 +1,55 @@
+{
+  "checkedAt": "2026-10-30T16:01:53.330027+00:00",
+  "codeCommit": "a4861a01444ba3f80511ce65f92e944752dd521f",
+  "releaseCommit": "3a4623b2224a459bd94b8cd1508984c652160507",
+  "files": [
+    {
+      "file": "README.md",
+      "curlExit": 0,
+      "bytes": 2185,
+      "sha256": "a644ebf6c75056c8357c062349b12de207ab31f82ee7849aa104d125803431eb",
+      "expected": "a644ebf6c75056c8357c062349b12de207ab31f82ee7849aa104d125803431eb",
+      "match": true
+    },
+    {
+      "file": "builds.js",
+      "curlExit": 0,
+      "bytes": 12298,
+      "sha256": "43506efa143a879c55a6ef35d0343c7ef5777c47e2b1689e612a4bd0f21daae4",
+      "expected": "43506efa143a879c55a6ef35d0343c7ef5777c47e2b1689e612a4bd0f21daae4",
+      "match": true
+    },
+    {
+      "file": "game.js",
+      "curlExit": 0,
+      "bytes": 87182,
+      "sha256": "dcce9fe46a74833a2079e599a49bbd21710f9b7de3a5fbde341b8fa8d89cd9ba",
+      "expected": "dcce9fe46a74833a2079e599a49bbd21710f9b7de3a5fbde341b8fa8d89cd9ba",
+      "match": true
+    },
+    {
+      "file": "index.html",
+      "curlExit": 0,
+      "bytes": 6260,
+      "sha256": "0b532d985b4b4bcf489f1c1b8079a425e18b5728f8c1b206ea719dccb6062b5f",
+      "expected": "0b532d985b4b4bcf489f1c1b8079a425e18b5728f8c1b206ea719dccb6062b5f",
+      "match": true
+    },
+    {
+      "file": "juice-fx.js",
+      "curlExit": 0,
+      "bytes": 8532,
+      "sha256": "4256687464454348640474a8a550c68f766118729362b550c2c6d49bc93262f1",
+      "expected": "4256687464454348640474a8a550c68f766118729362b550c2c6d49bc93262f1",
+      "match": true
+    },
+    {
+      "file": "style.css",
+      "curlExit": 0,
+      "bytes": 12894,
+      "sha256": "a7b912c2df4c1f026c05d7f95a263abb5061d3abf7ecba27e7705d5b53f3499d",
+      "expected": "a7b912c2df4c1f026c05d7f95a263abb5061d3abf7ecba27e7705d5b53f3499d",
+      "match": true
+    }
+  ]
+}

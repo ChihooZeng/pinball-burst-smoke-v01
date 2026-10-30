@@ -6,6 +6,14 @@
 用户反馈M1 HP3砖一击破与弹球飞行过快。新增 `codex/v1-m1-soft-balance` 独立分支，B球速365→330，基础直接伤害2→1，保留射速/Buff/所有系统。GitHub Pages单独添加 `compare/hybrid-v1-m1-soft-balance/`，旧版本无更改。仅通过语法、模型及静态文件验证；没有新的全路线物理回放或真人Gate结果。这是候选，不视为新的已批准平衡基准。
 
 # 开发状态
+## M1.1 已发布核验（2026-10-31 00:02 Asia/Shanghai）
+- 实现：`codex/v1-m1-1-refinement@a4861a01444ba3f80511ce65f92e944752dd521f`，tree `ef717486200e789452d1683792934c681704a4aa`；本地ab7b731与连接GitHub发布提交树相同。后续交接提交只更新文档/证据，游戏文件不变。
+- 线上：`main@3a4623b2224a459bd94b8cd1508984c652160507`，仅相对8192e91新增新目录六文件；未合并开发历史，旧游戏与默认入口差异0。
+- 试玩：https://chihoozeng.github.io/pinball-burst-smoke-v01/compare/hybrid-v1-m1-1/?v=3a4623b
+- 线上目录HTTP200，六文件SHA-256逐项一致；生产页六视口开始/选核/设置/音量/特效/暂停继续/触控/resize重开通过，无控制台/请求错误，测试修改接口未开放。见m11-evidence/deployment.json、public-browser.json。
+- 27项新模型/机制/生命周期测试、27历史脚本通过；18定制场景真实清屏。三主路线×三下降、三混合、三无主动及手机逻辑世界三无主动均清10波；弱电弧W5/弱裂变W7失败保留。真人手感、真机声音/发热未验收。
+- 开发worktree保留；原目录仍干净`feat/pinball-burst-launch@5ec9b73`。CLI无推送凭据，采用连接GitHub树/提交/expected_sha发布并fetch比对，非CLI push成功。
+
 ## M1.1 最新节点（2026-10-30）
 基准`codex/v1-m1-soft-balance@2f128b0`；开发分支`codex/v1-m1-1-refinement`，独立目录`compare/hybrid-v1-m1-1/`。已编码单体/残局真实碰撞机制、孤Boss弱点、满可用视口和集中设置；下降.84为实验。27项新模型/战斗测试和27历史脚本、分离物理对照、六视口网页验证已执行，详细证据见M1_1_TEST_REPORT与m11-evidence。真人尚未验收；弱电弧W5、弱裂变W7触线，不能称平衡完成。旧入口/默认未改变，11–50波和跨刷新存档未实现。下方为历史状态。
 

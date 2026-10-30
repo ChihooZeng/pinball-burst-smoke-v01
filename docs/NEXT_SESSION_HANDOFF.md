@@ -13,6 +13,11 @@
 原M1：https://chihoozeng.github.io/pinball-burst-smoke-v01/compare/hybrid-v1-m1/
 
 # 下一会话交接
+## 发布落点（2026-10-31）
+M1.1实现SHA `a4861a01444ba3f80511ce65f92e944752dd521f`，独立main发布SHA `3a4623b2224a459bd94b8cd1508984c652160507`，六文件线上哈希和生产六视口检查已通过。最终交接HEAD以远端`codex/v1-m1-1-refinement`为准，已同步本地；工作区应干净。旧入口未变，原目录仍5ec9b73干净。
+
+下一会话先核对Git再读本交接与M1_1_TEST_REPORT；不要重新做已完成发布。真人尚未验收，优先收集同机对照和处理已知弱电弧提前W5触线问题。线上证据在m11-evidence/deployment.json/public-browser.json；本机截图不保证跨会话保留。27项新测试+27历史脚本通过不代表真机手感通过。
+
 ## M1.1 最新交接（2026-10-30，优先于下方M1记录）
 当前分支`codex/v1-m1-1-refinement`，路径仍为`/Users/chihoozeng/.codex/worktrees/v1-m1-overload/霓虹弹珠`，基准2f128b0调弱版。先核对Git状态/HEAD，再读PRODUCT_TRUTH、DECISION_LEDGER、DEVELOPMENT_STATUS、M1_1_TEST_REPORT、最新反馈规格及候选README。不要恢复伤害2/速度365。
 

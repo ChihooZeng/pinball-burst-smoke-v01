@@ -1,4 +1,6 @@
 # M1.1 自动验收与实际修改报告
+发布附录（2026-10-31 00:02 Asia/Shanghai）：实现SHA `a4861a01444ba3f80511ce65f92e944752dd521f`，选择性main发布 `3a4623b2224a459bd94b8cd1508984c652160507`，仅六新增文件，旧路径0差异。HTTP200、六文件SHA-256匹配、生产六视口交互通过，证据deployment.json/public-browser.json/verification.json。本地与远端树比对一致，项目记忆随开发分支持久化；真人手感仍待验收。
+
 2026-10-30；真人手感未验收。来源 `codex/v1-m1-soft-balance@2f128b043e40811d8920671df240c90fcb8a9503`；独立分支 `codex/v1-m1-1-refinement`，新目录 `compare/hybrid-v1-m1-1`。
 
 ## 实际修改

@@ -1,0 +1,20 @@
+{
+  "model": "reachable model states checked 158565 terminal states 133218\n✔ B base yields real 1 damage at 330 speed and gun 4.1s life (2.100083ms)\n✔ first R2 commits focus, preserves purchased other R1 and blocks third core (3.753959ms)\n✔ displayed rate delta reflects cap and removes further zero-effect ranks (3.564209ms)\n✔ branch-covered core ranks are not sold as fake improvements (2.073625ms)\n✔ card has actual change, preview never mutates build or rng (0.568292ms)\n✔ history captures independent permanent before/after and all skill totals (0.492708ms)\n✔ Buffs refresh without stacking and expire at effective time only (0.179375ms)\n✔ bank exposes finite next-hit charges, permanent reward never temporary fallback (0.875292ms)\n✔ reachable build states have three effective choices through all nine M1 rewards (110782.410542ms)\n✔ new core cards describe a gained behavior instead of invented penalty from zero (0.472417ms)\nℹ tests 10\nℹ suites 0\nℹ pass 10\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 110885.65775\n",
+  "combatAndMechanics": "✔ B first shot is responsive for all three seeds (35.092459ms)\n✔ ten actual clears give nine combat rewards and retain Build (388.044792ms)\n✔ pause freezes battle and input, reward pause returns to same offer (100.485917ms)\n✔ power Buff applies to old balls, lasts 15 battle seconds, refreshes and crosses waves (311.210875ms)\n✔ speed Buff modifies already flying balls and expires at 30 battle seconds (6.708041ms)\n✔ bank charging consumes bounded extra damage on real wall then brick contacts (3.056958ms)\n✔ 30/60/120Hz yield same physics and effective clock; production exposes no test mutator (738.254708ms)\n✔ speed refresh expires without leaving bonus on a surviving old ball (227.569208ms)\n✔ backgrounding pauses immediately even when browser suspends all animation frames (20.849625ms)\n✔ soft baseline and direct numeric3 remain one damage (12.158792ms)\n✔ five high HP targets never silently soften without contact (2.78225ms)\n✔ arc rank growth converts unused propagation to contact target damage (4.846334ms)\n✔ gun consecutive hits grow with purchased rank only (5.993416ms)\n✔ split children carry limited followups by rank, never recurse (1.801583ms)\n✔ branch arc model equals real solo discharge (2.314375ms)\n✔ child direct hits never recursively create children (3.211375ms)\n✔ gun focus chain breaks when switching targets (1.581958ms)\nℹ tests 17\nℹ suites 0\nℹ pass 17\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 1917.328792\n",
+  "legacy": {
+    "total": 27,
+    "passed": 27
+  },
+  "review": {
+    "importantFindingsFixed": [
+      "arc-a R2 solo damage mismatch",
+      "restart viewport geometry"
+    ],
+    "extraFixes": [
+      "landscape fixed panel transform",
+      "gun focus switch resets streak",
+      "life description"
+    ]
+  },
+  "localCodeTree": "ef717486200e789452d1683792934c681704a4aa"
+}
