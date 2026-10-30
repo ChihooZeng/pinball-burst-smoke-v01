@@ -1,3 +1,9 @@
+
+## 2026-10-30 追加：M1调弱实验（比此前交接更新）
+用户指出M1炮台火力过强、数字3砖可能一次被打碎、球速过快。原M1基础伤害2，强击Buff+1或火力/撞墙蓄势/电弧可能造成即刻破碎。新增独立 `codex/v1-m1-soft-balance` 分支和 `compare/hybrid-v1-m1-soft-balance/` 试验（baseDamage1、speed330，发射间隔保持B版），单独选择性发布到Pages main；不是原M1的修改或正式产品数值。静态JS/模型检查PASS，真人与三流派10波物理回放尚未做，尤其要注意原M1弱电弧第7波失败。当前由用户对照试验后再决定是否采用。
+试玩：https://chihoozeng.github.io/pinball-burst-smoke-v01/compare/hybrid-v1-m1-soft-balance/
+原M1：https://chihoozeng.github.io/pinball-burst-smoke-v01/compare/hybrid-v1-m1/
+
 # 下一会话交接
 更新：2026-10-30 21:32 Asia/Shanghai，M1独立试玩上线；真人手感Gate待反馈。
 
