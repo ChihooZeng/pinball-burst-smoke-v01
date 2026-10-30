@@ -102,3 +102,6 @@
 此前关于“临时增幅清屏后失效”的讨论已被更新。**最新确认**：特殊砖提供15秒或30秒的短期战斗增幅，按有效战斗时间计时；升级选择、清屏预告和暂停时不计时；**允许带着剩余Buff进入下一波**。每次清屏仍清除普通弹球和巨型球；特殊砖不提供永久升级资源。
 
 已形成三流派（裂变、电弧、机枪）的技能设计草案、稀有度与进化规则、成长预算和程序验收边界，详见 [v0.27技能设计表V1](./V027_THREE_BUILD_SKILL_SPEC_V1_20261030.md)。目前只是V1讨论参数，不代表代码已经实现。
+
+
+2026-10-30 M1.1: baseline damage1/speed330; 50 continuous waves unchanged. See PRODUCT_TRUTH, DEVELOPMENT_STATUS and M1_1_TEST_REPORT for implemented sparse-target skills, immersive UI, .84 fall experiment and known weak-arc W5 regression. Human acceptance pending.

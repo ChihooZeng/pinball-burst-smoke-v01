@@ -1,0 +1,981 @@
+[
+  {
+    "family": "split",
+    "seed": 2703,
+    "branch": "a",
+    "weak": false,
+    "hz": 60,
+    "damageDealt": 4885,
+    "shotsWithContact": 102,
+    "contactShotRatio": 0.796875,
+    "currentWaveMetrics": {
+      "breaks": 78,
+      "lastBreak": 9.675000000000091,
+      "longestNoBreak": 1.799999999999996,
+      "tailSeconds": 0.6833333333333333,
+      "bossSoloSeconds": 0,
+      "shots": 117,
+      "children": 218,
+      "reclaims": 0,
+      "suppressed": 0,
+      "suppressedChildren": 0
+    },
+    "phase": "complete",
+    "wave": 10,
+    "clears": 10,
+    "seconds": 127.49,
+    "peak": 21,
+    "shots": 128,
+    "contacts": 1718,
+    "splitChildren": 242,
+    "arcReleases": 0,
+    "bossDefeats": 2,
+    "bossTailSeconds": 0.21,
+    "suppressedShots": 0,
+    "budgetReclaims": 0,
+    "collisionChecks": 7067569,
+    "remainingHp": 0,
+    "history": [
+      {
+        "wave": 0,
+        "id": "split",
+        "kind": "seed",
+        "deltas": [
+          {
+            "key": "ability",
+            "value": 1,
+            "text": "获得新能力：每2次撞击生成1颗真实子球（同屏预算内）"
+          }
+        ]
+      },
+      {
+        "wave": 1,
+        "id": "split",
+        "kind": "upgrade",
+        "deltas": [
+          {
+            "key": "splitPursuit",
+            "value": 1,
+            "text": "少目标子球追击次数 +1"
+          },
+          {
+            "key": "splitCount",
+            "value": 1,
+            "text": "每次裂变 +1颗"
+          }
+        ]
+      },
+      {
+        "wave": 2,
+        "id": "split",
+        "kind": "upgrade",
+        "deltas": [
+          {
+            "key": "splitPursuit",
+            "value": 1,
+            "text": "少目标子球追击次数 +1"
+          },
+          {
+            "key": "splitEvery",
+            "value": -1,
+            "text": "裂变所需撞击 -1次"
+          }
+        ]
+      },
+      {
+        "wave": 3,
+        "id": "power",
+        "kind": "upgrade",
+        "deltas": [
+          {
+            "key": "damage",
+            "value": 100,
+            "text": "撞击伤害 +100%"
+          }
+        ]
+      },
+      {
+        "wave": 4,
+        "id": "split-a",
+        "kind": "upgrade",
+        "deltas": [
+          {
+            "key": "splitCount",
+            "value": 1,
+            "text": "每次裂变 +1颗"
+          },
+          {
+            "key": "splitSpread",
+            "value": 77.77777777777779,
+            "text": "裂变散开范围 +77.8%"
+          }
+        ]
+      },
+      {
+        "wave": 5,
+        "id": "hunter",
+        "kind": "upgrade",
+        "deltas": [
+          {
+            "key": "hunter",
+            "value": 1,
+            "text": "撞墙追猎次数 +1次"
+          }
+        ]
+      },
+      {
+        "wave": 6,
+        "id": "power",
+        "kind": "upgrade",
+        "deltas": [
+          {
+            "key": "damage",
+            "value": 50,
+            "text": "撞击伤害 +50%"
+          }
+        ]
+      },
+      {
+        "wave": 7,
+        "id": "hunter",
+        "kind": "upgrade",
+        "deltas": [
+          {
+            "key": "hunter",
+            "value": 1,
+            "text": "撞墙追猎次数 +1次"
+          }
+        ]
+      },
+      {
+        "wave": 8,
+        "id": "power",
+        "kind": "upgrade",
+        "deltas": [
+          {
+            "key": "damage",
+            "value": 33.33333333333333,
+            "text": "撞击伤害 +33.3%"
+          }
+        ]
+      },
+      {
+        "wave": 9,
+        "id": "speed",
+        "kind": "upgrade",
+        "deltas": [
+          {
+            "key": "speed",
+            "value": 4.545454545454541,
+            "text": "弹球速度 +4.5%"
+          }
+        ]
+      }
+    ],
+    "waves": [
+      {
+        "wave": 1,
+        "duration": 12.783,
+        "breaks": 78,
+        "breaksPerSecond": 6.101694915254278,
+        "longestNoBreak": 1.2999999999999978,
+        "tailSeconds": 0.3416666666666669,
+        "bossSoloSeconds": 0,
+        "shots": 15,
+        "children": 10,
+        "reclaims": 0,
+        "suppressedShots": 0,
+        "suppressedChildren": 0
+      },
+      {
+        "wave": 2,
+        "duration": 12.483,
+        "breaks": 78,
+        "breaksPerSecond": 6.248331108144226,
+        "longestNoBreak": 1.908333333333329,
+        "tailSeconds": 1.1333333333333317,
+        "bossSoloSeconds": 0,
+        "shots": 14,
+        "children": 14,
+        "reclaims": 0,
+        "suppressedShots": 0,
+        "suppressedChildren": 0
+      },
+      {
+        "wave": 3,
+        "duration": 11.608,
+        "breaks": 78,
+        "breaksPerSecond": 6.719310839913866,
+        "longestNoBreak": 1.908333333333329,
+        "tailSeconds": 0.4666666666666673,
+        "bossSoloSeconds": 0,
+        "shots": 13,
+        "children": 20,
+        "reclaims": 0,
+        "suppressedShots": 0,
+        "suppressedChildren": 0
+      },
+      {
+        "wave": 4,
+        "duration": 12.15,
+        "breaks": 72,
+        "breaksPerSecond": 5.92592592592595,
+        "longestNoBreak": 1.9166666666666623,
+        "tailSeconds": 1.0249999999999988,
+        "bossSoloSeconds": 0.24166666666666664,
+        "shots": 14,
+        "children": 24,
+        "reclaims": 0,
+        "suppressedShots": 0,
+        "suppressedChildren": 0
+      },
+      {
+        "wave": 5,
+        "duration": 10.708,
+        "breaks": 78,
+        "breaksPerSecond": 7.284046692606982,
+        "longestNoBreak": 1.908333333333329,
+        "tailSeconds": 0.5666666666666671,
+        "bossSoloSeconds": 0,
+        "shots": 12,
+        "children": 27,
+        "reclaims": 0,
+        "suppressedShots": 0,
+        "suppressedChildren": 0
+      },
+      {
+        "wave": 6,
+        "duration": 9.283,
+        "breaks": 78,
+        "breaksPerSecond": 8.402154398563631,
+        "longestNoBreak": 1.8416666666666626,
+        "tailSeconds": 0.366666666666667,
+        "bossSoloSeconds": 0,
+        "shots": 10,
+        "children": 24,
+        "reclaims": 0,
+        "suppressedShots": 0,
+        "suppressedChildren": 0
+      },
+      {
+        "wave": 7,
+        "duration": 12.025,
+        "breaks": 78,
+        "breaksPerSecond": 6.486486486486509,
+        "longestNoBreak": 1.908333333333329,
+        "tailSeconds": 0.5833333333333337,
+        "bossSoloSeconds": 0,
+        "shots": 13,
+        "children": 36,
+        "reclaims": 0,
+        "suppressedShots": 0,
+        "suppressedChildren": 0
+      },
+      {
+        "wave": 8,
+        "duration": 11.55,
+        "breaks": 71,
+        "breaksPerSecond": 6.147186147186155,
+        "longestNoBreak": 1.8416666666666626,
+        "tailSeconds": 0.5333333333333339,
+        "bossSoloSeconds": 0,
+        "shots": 13,
+        "children": 33,
+        "reclaims": 0,
+        "suppressedShots": 0,
+        "suppressedChildren": 0
+      },
+      {
+        "wave": 9,
+        "duration": 11.642,
+        "breaks": 78,
+        "breaksPerSecond": 6.700071581961358,
+        "longestNoBreak": 1.8749999999999958,
+        "tailSeconds": 1.2833333333333312,
+        "bossSoloSeconds": 0,
+        "shots": 13,
+        "children": 30,
+        "reclaims": 0,
+        "suppressedShots": 0,
+        "suppressedChildren": 0
+      },
+      {
+        "wave": 10,
+        "duration": 9.683,
+        "breaks": 78,
+        "breaksPerSecond": 8.055077452667739,
+        "longestNoBreak": 1.799999999999996,
+        "tailSeconds": 0.6833333333333333,
+        "bossSoloSeconds": 0,
+        "shots": 11,
+        "children": 24,
+        "reclaims": 0,
+        "suppressedShots": 0,
+        "suppressedChildren": 0
+      }
+    ],
+    "suppressedChildren": 0,
+    "bankDamage": 0
+  },
+  {
+    "family": "arc",
+    "seed": 2703,
+    "branch": "a",
+    "weak": false,
+    "hz": 60,
+    "damageDealt": 4934,
+    "shotsWithContact": 249,
+    "contactShotRatio": 0.9054545454545454,
+    "currentWaveMetrics": {
+      "breaks": 78,
+      "lastBreak": 31.183333333332204,
+      "longestNoBreak": 3.4749999999998025,
+      "tailSeconds": 1.8749999999999958,
+      "bossSoloSeconds": 0,
+      "shots": 239,
+      "children": 0,
+      "reclaims": 0,
+      "suppressed": 0,
+      "suppressedChildren": 0
+    },
+    "phase": "complete",
+    "wave": 10,
+    "clears": 10,
+    "seconds": 252.04,
+    "peak": 8,
+    "shots": 275,
+    "contacts": 1103,
+    "splitChildren": 0,
+    "arcReleases": 284,
+    "bossDefeats": 2,
+    "bossTailSeconds": 1.13,
+    "suppressedShots": 0,
+    "budgetReclaims": 0,
+    "collisionChecks": 6683736,
+    "remainingHp": 0,
+    "history": [
+      {
+        "wave": 0,
+        "id": "arc",
+        "kind": "seed",
+        "deltas": [
+          {
+            "key": "ability",
+            "value": 1,
+            "text": "获得新能力：每3次命中向1个目标传播伤害；未用传播位按等级转为命中目标聚能，孤立放电3伤害"
+          }
+        ]
+      },
+      {
+        "wave": 1,
+        "id": "arc",
+        "kind": "upgrade",
+        "deltas": [
+          {
+            "key": "arcEvery",
+            "value": -1,
+            "text": "放电所需命中 -1次"
+          },
+          {
+            "key": "arcTargets",
+            "value": 1,
+            "text": "电弧传播目标 +1个"
+          },
+          {
+            "key": "arcDamage",
+            "value": 1,
+            "text": "电弧伤害 +1"
+          },
+          {
+            "key": "arcSolo",
+            "value": 3,
+            "text": "单体放电伤害 +3"
+          }
+        ]
+      },
+      {
+        "wave": 2,
+        "id": "arc",
+        "kind": "upgrade",
+        "deltas": [
+          {
+            "key": "arcTargets",
+            "value": 1,
+            "text": "电弧传播目标 +1个"
+          },
+          {
+            "key": "arcRange",
+            "value": 27.27272727272727,
+            "text": "电弧传播距离 +27.3%"
+          },
+          {
+            "key": "arcDamage",
+            "value": 1,
+            "text": "电弧伤害 +1"
+          },
+          {
+            "key": "arcSolo",
+            "value": 5,
+            "text": "单体放电伤害 +5"
+          }
+        ]
+      },
+      {
+        "wave": 3,
+        "id": "power",
+        "kind": "upgrade",
+        "deltas": [
+          {
+            "key": "damage",
+            "value": 100,
+            "text": "撞击伤害 +100%"
+          }
+        ]
+      },
+      {
+        "wave": 4,
+        "id": "arc-a",
+        "kind": "upgrade",
+        "deltas": [
+          {
+            "key": "arcNet",
+            "value": 1,
+            "text": "获得跨目标跳传"
+          }
+        ]
+      },
+      {
+        "wave": 5,
+        "id": "hunter",
+        "kind": "upgrade",
+        "deltas": [
+          {
+            "key": "hunter",
+            "value": 1,
+            "text": "撞墙追猎次数 +1次"
+          }
+        ]
+      },
+      {
+        "wave": 6,
+        "id": "power",
+        "kind": "upgrade",
+        "deltas": [
+          {
+            "key": "damage",
+            "value": 50,
+            "text": "撞击伤害 +50%"
+          }
+        ]
+      },
+      {
+        "wave": 7,
+        "id": "hunter",
+        "kind": "upgrade",
+        "deltas": [
+          {
+            "key": "hunter",
+            "value": 1,
+            "text": "撞墙追猎次数 +1次"
+          }
+        ]
+      },
+      {
+        "wave": 8,
+        "id": "power",
+        "kind": "upgrade",
+        "deltas": [
+          {
+            "key": "damage",
+            "value": 33.33333333333333,
+            "text": "撞击伤害 +33.3%"
+          }
+        ]
+      },
+      {
+        "wave": 9,
+        "id": "speed",
+        "kind": "upgrade",
+        "deltas": [
+          {
+            "key": "speed",
+            "value": 4.545454545454541,
+            "text": "弹球速度 +4.5%"
+          }
+        ]
+      }
+    ],
+    "waves": [
+      {
+        "wave": 1,
+        "duration": 19.492,
+        "breaks": 78,
+        "breaksPerSecond": 4.001710132535367,
+        "longestNoBreak": 2.23333333333336,
+        "tailSeconds": 0.9249999999999992,
+        "bossSoloSeconds": 0,
+        "shots": 23,
+        "children": 0,
+        "reclaims": 0,
+        "suppressedShots": 0,
+        "suppressedChildren": 0
+      },
+      {
+        "wave": 2,
+        "duration": 12.375,
+        "breaks": 78,
+        "breaksPerSecond": 6.303030303030335,
+        "longestNoBreak": 1.908333333333329,
+        "tailSeconds": 3.166666666666658,
+        "bossSoloSeconds": 0,
+        "shots": 14,
+        "children": 0,
+        "reclaims": 0,
+        "suppressedShots": 0,
+        "suppressedChildren": 0
+      },
+      {
+        "wave": 3,
+        "duration": 25.383,
+        "breaks": 78,
+        "breaksPerSecond": 3.072882468811653,
+        "longestNoBreak": 2.5249999999998565,
+        "tailSeconds": 1.8333333333333293,
+        "bossSoloSeconds": 0,
+        "shots": 29,
+        "children": 0,
+        "reclaims": 0,
+        "suppressedShots": 0,
+        "suppressedChildren": 0
+      },
+      {
+        "wave": 4,
+        "duration": 15.008,
+        "breaks": 73,
+        "breaksPerSecond": 4.8639644641866315,
+        "longestNoBreak": 1.9166666666666623,
+        "tailSeconds": 2.2749999999999946,
+        "bossSoloSeconds": 0.508333333333334,
+        "shots": 17,
+        "children": 0,
+        "reclaims": 0,
+        "suppressedShots": 0,
+        "suppressedChildren": 0
+      },
+      {
+        "wave": 5,
+        "duration": 29.442,
+        "breaks": 78,
+        "breaksPerSecond": 2.6493065383527674,
+        "longestNoBreak": 1.908333333333329,
+        "tailSeconds": 1.691666666666663,
+        "bossSoloSeconds": 0,
+        "shots": 34,
+        "children": 0,
+        "reclaims": 0,
+        "suppressedShots": 0,
+        "suppressedChildren": 0
+      },
+      {
+        "wave": 6,
+        "duration": 14.783,
+        "breaks": 78,
+        "breaksPerSecond": 5.27621195039466,
+        "longestNoBreak": 1.8416666666666626,
+        "tailSeconds": 0.5250000000000006,
+        "bossSoloSeconds": 0,
+        "shots": 17,
+        "children": 0,
+        "reclaims": 0,
+        "suppressedShots": 0,
+        "suppressedChildren": 0
+      },
+      {
+        "wave": 7,
+        "duration": 37.983,
+        "breaks": 78,
+        "breaksPerSecond": 2.053532250987357,
+        "longestNoBreak": 2.208333333333208,
+        "tailSeconds": 2.699999999999993,
+        "bossSoloSeconds": 0,
+        "shots": 44,
+        "children": 0,
+        "reclaims": 0,
+        "suppressedShots": 0,
+        "suppressedChildren": 0
+      },
+      {
+        "wave": 8,
+        "duration": 32.792,
+        "breaks": 78,
+        "breaksPerSecond": 2.378653113087763,
+        "longestNoBreak": 2.291666666666538,
+        "tailSeconds": 3.8416666666666557,
+        "bossSoloSeconds": 0.7416666666666665,
+        "shots": 38,
+        "children": 0,
+        "reclaims": 0,
+        "suppressedShots": 0,
+        "suppressedChildren": 0
+      },
+      {
+        "wave": 9,
+        "duration": 20.017,
+        "breaks": 78,
+        "breaksPerSecond": 3.8967527060783644,
+        "longestNoBreak": 1.8749999999999958,
+        "tailSeconds": 2.008333333333329,
+        "bossSoloSeconds": 0,
+        "shots": 23,
+        "children": 0,
+        "reclaims": 0,
+        "suppressedShots": 0,
+        "suppressedChildren": 0
+      },
+      {
+        "wave": 10,
+        "duration": 31.192,
+        "breaks": 78,
+        "breaksPerSecond": 2.500667913438509,
+        "longestNoBreak": 3.4749999999998025,
+        "tailSeconds": 1.8749999999999958,
+        "bossSoloSeconds": 0,
+        "shots": 36,
+        "children": 0,
+        "reclaims": 0,
+        "suppressedShots": 0,
+        "suppressedChildren": 0
+      }
+    ],
+    "suppressedChildren": 0,
+    "bankDamage": 0
+  },
+  {
+    "family": "gun",
+    "seed": 2703,
+    "branch": "a",
+    "weak": false,
+    "hz": 60,
+    "damageDealt": 4896,
+    "shotsWithContact": 457,
+    "contactShotRatio": 0.7528830313014827,
+    "currentWaveMetrics": {
+      "breaks": 78,
+      "lastBreak": 12.883333333333242,
+      "longestNoBreak": 1.1166666666666651,
+      "tailSeconds": 0.3000000000000001,
+      "bossSoloSeconds": 0,
+      "shots": 532,
+      "children": 0,
+      "reclaims": 0,
+      "suppressed": 0,
+      "suppressedChildren": 0
+    },
+    "phase": "complete",
+    "wave": 10,
+    "clears": 10,
+    "seconds": 130.04,
+    "peak": 25,
+    "shots": 607,
+    "contacts": 1723,
+    "splitChildren": 0,
+    "arcReleases": 0,
+    "bossDefeats": 2,
+    "bossTailSeconds": 0,
+    "suppressedShots": 0,
+    "budgetReclaims": 0,
+    "collisionChecks": 12796521,
+    "remainingHp": 0,
+    "history": [
+      {
+        "wave": 0,
+        "id": "gun",
+        "kind": "seed",
+        "deltas": [
+          {
+            "key": "ability",
+            "value": 1,
+            "text": "获得新能力：炮台持续连射真实弹球"
+          },
+          {
+            "key": "rate",
+            "value": 145.71428571428572,
+            "text": "炮台射速 +145.7%"
+          },
+          {
+            "key": "ttl",
+            "value": -51.1904761904762,
+            "text": "弹球留场时间 -51.2%"
+          }
+        ]
+      },
+      {
+        "wave": 1,
+        "id": "gun",
+        "kind": "upgrade",
+        "deltas": [
+          {
+            "key": "rate",
+            "value": 29.629629629629605,
+            "text": "炮台射速 +29.6%"
+          },
+          {
+            "key": "gunPressure",
+            "value": 1,
+            "text": "连续命中破甲上限 +1"
+          }
+        ]
+      },
+      {
+        "wave": 2,
+        "id": "gun",
+        "kind": "upgrade",
+        "deltas": [
+          {
+            "key": "rate",
+            "value": 35.00000000000001,
+            "text": "炮台射速 +35%"
+          },
+          {
+            "key": "gunPressure",
+            "value": 1,
+            "text": "连续命中破甲上限 +1"
+          }
+        ]
+      },
+      {
+        "wave": 3,
+        "id": "power",
+        "kind": "upgrade",
+        "deltas": [
+          {
+            "key": "damage",
+            "value": 100,
+            "text": "撞击伤害 +100%"
+          }
+        ]
+      },
+      {
+        "wave": 4,
+        "id": "gun-a",
+        "kind": "upgrade",
+        "deltas": [
+          {
+            "key": "rate",
+            "value": 17.647058823529417,
+            "text": "炮台射速 +17.6%"
+          },
+          {
+            "key": "line",
+            "value": 1,
+            "text": "获得直线集中压制"
+          }
+        ]
+      },
+      {
+        "wave": 5,
+        "id": "hunter",
+        "kind": "upgrade",
+        "deltas": [
+          {
+            "key": "hunter",
+            "value": 1,
+            "text": "撞墙追猎次数 +1次"
+          }
+        ]
+      },
+      {
+        "wave": 6,
+        "id": "power",
+        "kind": "upgrade",
+        "deltas": [
+          {
+            "key": "damage",
+            "value": 50,
+            "text": "撞击伤害 +50%"
+          }
+        ]
+      },
+      {
+        "wave": 7,
+        "id": "hunter",
+        "kind": "upgrade",
+        "deltas": [
+          {
+            "key": "hunter",
+            "value": 1,
+            "text": "撞墙追猎次数 +1次"
+          }
+        ]
+      },
+      {
+        "wave": 8,
+        "id": "power",
+        "kind": "upgrade",
+        "deltas": [
+          {
+            "key": "damage",
+            "value": 33.33333333333333,
+            "text": "撞击伤害 +33.3%"
+          }
+        ]
+      },
+      {
+        "wave": 9,
+        "id": "speed",
+        "kind": "upgrade",
+        "deltas": [
+          {
+            "key": "speed",
+            "value": 4.545454545454541,
+            "text": "弹球速度 +4.5%"
+          }
+        ]
+      }
+    ],
+    "waves": [
+      {
+        "wave": 1,
+        "duration": 11.358,
+        "breaks": 78,
+        "breaksPerSecond": 6.867204695524581,
+        "longestNoBreak": 1.724999999999902,
+        "tailSeconds": 5.325000000000054,
+        "bossSoloSeconds": 0,
+        "shots": 33,
+        "children": 0,
+        "reclaims": 0,
+        "suppressedShots": 0,
+        "suppressedChildren": 0
+      },
+      {
+        "wave": 2,
+        "duration": 8.575,
+        "breaks": 78,
+        "breaksPerSecond": 9.09620991253628,
+        "longestNoBreak": 1.3249999999999977,
+        "tailSeconds": 1.7333333333333296,
+        "bossSoloSeconds": 0,
+        "shots": 31,
+        "children": 0,
+        "reclaims": 0,
+        "suppressedShots": 0,
+        "suppressedChildren": 0
+      },
+      {
+        "wave": 3,
+        "duration": 10.833,
+        "breaks": 78,
+        "breaksPerSecond": 7.199999999999983,
+        "longestNoBreak": 1.424999999999919,
+        "tailSeconds": 2.0249999999999955,
+        "bossSoloSeconds": 0,
+        "shots": 54,
+        "children": 0,
+        "reclaims": 0,
+        "suppressedShots": 0,
+        "suppressedChildren": 0
+      },
+      {
+        "wave": 4,
+        "duration": 12.083,
+        "breaks": 72,
+        "breaksPerSecond": 5.958620689655195,
+        "longestNoBreak": 1.2666666666666646,
+        "tailSeconds": 1.6416666666666633,
+        "bossSoloSeconds": 0,
+        "shots": 60,
+        "children": 0,
+        "reclaims": 0,
+        "suppressedShots": 0,
+        "suppressedChildren": 0
+      },
+      {
+        "wave": 5,
+        "duration": 11.05,
+        "breaks": 78,
+        "breaksPerSecond": 7.0588235294117565,
+        "longestNoBreak": 1.4583333333332504,
+        "tailSeconds": 3.2666666666666577,
+        "bossSoloSeconds": 0,
+        "shots": 64,
+        "children": 0,
+        "reclaims": 0,
+        "suppressedShots": 0,
+        "suppressedChildren": 0
+      },
+      {
+        "wave": 6,
+        "duration": 9.608,
+        "breaks": 78,
+        "breaksPerSecond": 8.117953165654733,
+        "longestNoBreak": 1.1583333333333317,
+        "tailSeconds": 0.7249999999999999,
+        "bossSoloSeconds": 0,
+        "shots": 56,
+        "children": 0,
+        "reclaims": 0,
+        "suppressedShots": 0,
+        "suppressedChildren": 0
+      },
+      {
+        "wave": 7,
+        "duration": 12.458,
+        "breaks": 78,
+        "breaksPerSecond": 6.260869565217425,
+        "longestNoBreak": 1.224999999999998,
+        "tailSeconds": 1.1749999999999983,
+        "bossSoloSeconds": 0,
+        "shots": 73,
+        "children": 0,
+        "reclaims": 0,
+        "suppressedShots": 0,
+        "suppressedChildren": 0
+      },
+      {
+        "wave": 8,
+        "duration": 14.075,
+        "breaks": 72,
+        "breaksPerSecond": 5.115452930728299,
+        "longestNoBreak": 1.1583333333333317,
+        "tailSeconds": 1.4749999999999972,
+        "bossSoloSeconds": 0,
+        "shots": 82,
+        "children": 0,
+        "reclaims": 0,
+        "suppressedShots": 0,
+        "suppressedChildren": 0
+      },
+      {
+        "wave": 9,
+        "duration": 13.533,
+        "breaks": 78,
+        "breaksPerSecond": 5.763546798029611,
+        "longestNoBreak": 1.1999999999999982,
+        "tailSeconds": 0.15833333333333333,
+        "bossSoloSeconds": 0,
+        "shots": 79,
+        "children": 0,
+        "reclaims": 0,
+        "suppressedShots": 0,
+        "suppressedChildren": 0
+      },
+      {
+        "wave": 10,
+        "duration": 12.892,
+        "breaks": 78,
+        "breaksPerSecond": 6.05042016806727,
+        "longestNoBreak": 1.1166666666666651,
+        "tailSeconds": 0.3000000000000001,
+        "bossSoloSeconds": 0,
+        "shots": 75,
+        "children": 0,
+        "reclaims": 0,
+        "suppressedShots": 0,
+        "suppressedChildren": 0
+      }
+    ],
+    "suppressedChildren": 0,
+    "bankDamage": 0
+  }
+]

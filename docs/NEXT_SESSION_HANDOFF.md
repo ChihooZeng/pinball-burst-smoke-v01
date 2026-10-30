@@ -13,6 +13,13 @@
 原M1：https://chihoozeng.github.io/pinball-burst-smoke-v01/compare/hybrid-v1-m1/
 
 # 下一会话交接
+## M1.1 最新交接（2026-10-30，优先于下方M1记录）
+当前分支`codex/v1-m1-1-refinement`，路径仍为`/Users/chihoozeng/.codex/worktrees/v1-m1-overload/霓虹弹珠`，基准2f128b0调弱版。先核对Git状态/HEAD，再读PRODUCT_TRUTH、DECISION_LEDGER、DEVELOPMENT_STATUS、M1_1_TEST_REPORT、最新反馈规格及候选README。不要恢复伤害2/速度365。
+
+本轮实现：≤5目标有限弹球导向、三核心单体等级收益、孤Boss弱点、去隐藏HP软化、沉浸视口、右上设置、动态等比相机，下降.84候选。27新测试、27历史回归、主/混合/无主动/移动逻辑场地回放、六视口与模拟安全区已验证。独立审查两个P2已修复。详细失败见报告：弱电弧从旧W7提前到W5触线，弱裂变W7触线，部分五砖R1仍慢；不能宣称M1.1真人或平衡通过。
+
+下一步：同机对照调弱版和M1.1，收集核心/波次、残局和Boss体感、布局、音效与发热；优先弱电弧/低攻成长容错，再推进M2。保留50波连续Build、真实清屏、特殊砖限时职责，保护所有旧试玩。新版链接`https://chihoozeng.github.io/pinball-burst-smoke-v01/compare/hybrid-v1-m1-1/`；实际发布提交与线上核验见开发状态最新附录。
+
 更新：2026-10-30 21:32 Asia/Shanghai，M1独立试玩上线；真人手感Gate待反馈。
 
 当前目标：取得M1具体真人反馈，处理电弧/成长理解等问题，再推进M2。完整产品始终50波，当前10波是里程碑切片。Gate0的永久记忆、50波设计、24条研究及M1实施/内部审查已经完成。
