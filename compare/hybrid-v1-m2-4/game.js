@@ -332,7 +332,7 @@
         const corner=row===1&&(col===1||col===2||col===6||col===7);
         const sides=row>=2&&row<=4&&(col===1||col===2||col===6||col===7);
         const lowerRim=row===5&&(col===1||col===2||col===6||col===7);
-        const guide=row>=6&&(col===0||col===1||col===7||col===8)||(row===7&&(col===2||col===6));
+        const guide=row===6&&(col===0||col===1||col===2||col===6||col===7||col===8);
         if(!top&&!corner&&!sides&&!lowerRim&&!guide)continue;
         if(row>=5&&col>=3&&col<=5)continue;
         const x=12+col*BRICK_STEP_X,y=WAVE_START_Y+row*WAVE_ROW_GAP;
@@ -1168,17 +1168,16 @@
     if(!boss)return;
     bossDefeats++;
     const x=boss.x+boss.w/2,y=boss.y+boss.h/2;
+    // Persist all NEW physical support bricks after either Boss dies.
+    // Previously Boss10 silently deleted its summoned bricks on death.
+    let survivors=0;
     for(const b of bricks)if(b.alive&&b.bossSupport&&b.bossId===boss.id){
-      if(isFinaleWave(wave)){
-        // Final victory still requires genuine destruction of every physical brick.
-        b.bossSupport=false;b.bossId=null;
-      }else{
-        b.alive=false;score++;burst(b.x+b.w/2,b.y+b.h/2,"#8bd9ff",9);
-      }
+      b.bossSupport=false;b.bossId=null;survivors++;
     }
     burst(x,y,"#d3a2ff",50);juice.onSplash({x,y});shake=.18;
+    record("boss_defeated",{wave,physicalSummonSurvivors:survivors,otherBricks:bricks.filter(b=>b.alive&&!b.isBoss).length-survivors});
     boss=null;summonSignals=[];alertUntil=elapsed+3;
-    setState("BOSS 核心击破 · 清理剩余砖块完成本波");playSfx("shock");
+    setState("Boss已击破 · "+bricks.filter(b=>b.alive).length+"块实体砖仍需清除（测试规则）");playSfx("shock");
   }
   function zoneCounts(){
     let upper=0,middle=0,lower=0;
@@ -1237,16 +1236,20 @@
       const liveBefore=livingCount();if(liveBefore>0){waveMetrics.longestNoBreak=Math.max(waveMetrics.longestNoBreak,waveElapsed-waveMetrics.lastBreak);if(liveBefore<=5)waveMetrics.tailSeconds+=dt;if(liveBefore===1&&boss)waveMetrics.bossSoloSeconds+=dt;}
       const latePressure=wave>=11&&wave<=19?1+(wave-10)*.022:1;
       const finalePressure=isFinaleWave(wave)?.34+.11*(finaleStage-1):1;
-      const bossPressure=wave===10?1.20:isFinaleWave(wave)?.9:1;
+      // Boss10 gains speed as battle lasts; move the initial lowest guides
+      // one row up so the faster visual descent does not cause instant losses.
+      const bossPressure=wave===10?Math.min(1.49,1.22+Math.max(0,waveElapsed-8)*.014):isFinaleWave(wave)?.9:1;
       const speed=Math.min(8.4,FALL_BASE+Math.max(0,wave-1)*.09)*bossPressure*CFG.fallScale*waveFallMultiplier*latePressure*finalePressure;
       for(const brick of bricks)if(brick.alive)brick.y+=speed*dt;
       const danger=bricks.find(b=>b.alive&&b.y+b.h>=DANGER_Y);
       if(danger){
+        const dangerSource=danger.isBoss?"BOSS":danger.summonSource==="boss"?"Boss召唤砖":danger.summonSource==="finale"?"终局增援砖":"初始砖";
+        record("touchline",{wave,source:dangerSource,brickId:danger.id,hp:danger.hp,elapsed:+waveElapsed.toFixed(2),bossHp:boss?.hp??null,bossSupportBorn:bossSummonTotal});
         phase="lost";balls=[];giant=null;ui.win.classList.remove("hidden");
         const seconds=Math.floor(elapsed);
         ui.final.textContent="生存 "+Math.floor(seconds/60)+"分"+seconds%60+
           "秒 · 击碎 "+score+" 块 · 到达第 "+wave+" 波 · LV."+level+
-          " · 清屏 "+screenClears+" 次 · Boss "+bossDefeats+" 个";
+          " · 清屏 "+screenClears+" 次 · Boss "+bossDefeats+" 个 · 触线："+dangerSource+"("+danger.hp+"HP)";
         setState("砖阵触线 · 第 "+wave+" 波失败");
         playSfx("shock");updateUI();return;
       }

@@ -2,7 +2,7 @@
 (function(root,factory){const api=factory();if(typeof module==='object')module.exports=api;else root.PinballBuilds=api;})(typeof window==='object'?window:globalThis,()=>{
  'use strict';
  const CONFIG={maxBalls:32,maxWaves:20,productWaves:50,baseDamage:1,firstShot:.12,
-  arcCooldown:.34,arcEvery:[0,2,2,2],arcTargets:[0,2,3,4],arcRange:[0,145,165,180],arcDamage:[0,2,4,6],focusDamage:6,bossArcDamage:4,
+  arcCooldown:.30,arcEvery:[0,2,1,1],arcTargets:[0,2,3,4],arcRange:[0,145,165,180],arcDamage:[0,2,4,6],focusDamage:6,bossArcDamage:4,
   splitEvery:[0,2,2,1],splitCount:[0,1,2,2],splitSpread:.45,stormSpread:.8,huntTurns:2,childTTL:4.1,
   gunInterval:[0,.35,.27,.20],gunTTL:4.1,lineInterval:.17,fanInterval:.18,fanAngle:.28,fanPeriod:1.8,gunMinInterval:.12,gunRateStep:.012,auxGunInterval:.70,auxGunMinInterval:.55,
   normalInterval:.86,normalMinInterval:.55,normalRateStep:.075,normalTTL:8.4,speed:330,speedStep:15,lifeStep:.7,gunLifeStep:.2,fallScale:.84,
@@ -102,7 +102,7 @@
  if(id==='speed')return {title:d.name,description:'弹球飞行速度 +'+num((z.speed/a.speed-1)*100)+'%'};
  if(id==='life')return {title:d.name,description:'弹球留场时间 +'+num(delta('ttl'))+'秒'};
  if(id==='split')return {title:d.name,description:delta('splitCount')>0?'每次分裂多 '+num(delta('splitCount'))+'颗小球':delta('splitEvery')<0?'升级后首次撞砖就能分裂':'小球追踪次数 +'+num(delta('splitPursuit'))};
- if(id==='arc')return {title:d.name,description:'闪电目标 +'+num(Math.max(0,delta('arcTargets')))+'；每目标伤害 +'+num(Math.max(0,delta('arcDamage')))+'；打Boss/护甲额外 +'+num(Math.max(0,delta('arcArmorBonus')))};
+ if(id==='arc')return {title:d.name,description:(delta('arcEvery')<0?'每次撞砖就放电；':'')+'闪电目标 +'+num(Math.max(0,delta('arcTargets')))+'；伤害 +'+num(Math.max(0,delta('arcDamage')))+'；对Boss/护甲 +'+num(Math.max(0,delta('arcArmorBonus')))};
  if(id==='gun')return {title:d.name,description:delta('gunPressure')>0?'连续命中同一目标，可多造成 '+num(delta('gunPressure'))+'点伤害':'炮台射速 +'+num((a.interval/z.interval-1)*100)+'%'};
  if(id==='hunter')return {title:d.name,description:'撞墙后追踪目标次数 +'+num(delta('hunter'))};
  if(id==='bank')return {title:d.name,description:'每次撞侧墙，下一击伤害额外 +'+num(delta('bankStep'))};
