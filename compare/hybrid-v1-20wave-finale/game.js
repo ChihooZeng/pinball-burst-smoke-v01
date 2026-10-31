@@ -43,8 +43,25 @@
   const WAVE_ROWS_COUNT=9, WAVE_ROW_GAP=28, WAVE_BOSS_EVERY=10;
   const BOSS_SUPPORT_LIMIT_TOTAL=12, BOSS_SUPPORT_INTERVAL=7.0;
   const WAVE_ROWS=[8,9,10,11,9,10,11,10,11,11,9,10,11,10,11,11,10,11,10,11];
-  const isBossWave=n=>n===10,isEliteWave=n=>n===5;
+  const isBossWave=n=>n===10||n===20,isEliteWave=n=>n===5,isFinaleWave=n=>n===20;
   const featuredRect=()=>({x:138,y:WAVE_START_Y+58,w:84,h:53});
+  const finalBossRect=()=>({x:122,y:WAVE_START_Y+64,w:116,h:74});
+  const FINALE_HP=888,FINALE_WARNING=1.35;
+  function lateStageHp(n,row,col,anchor=false){
+    const t=Math.max(0,Math.min(8,n-11)),v=hash01(n,row,col,205);
+    if(anchor)return 31+Math.round(t*4)+Math.floor(hash01(n,row,col,206)*(15+t*2));
+    if(v<.34)return 3+Math.floor(t*.45)+Math.floor(hash01(n,row,col,207)*(5+Math.floor(t*.3)));
+    if(v<.72)return 13+Math.floor(t*1.8)+Math.floor(hash01(n,row,col,208)*(11+t));
+    return 29+Math.floor(t*3)+Math.floor(hash01(n,row,col,209)*(15+t*2));
+  }
+  function latePatternHasBrick(n,row,col){
+    const type=(n-11)%5;
+    if(type===0)return !(row>=5&&col>=3&&col<=5);
+    if(type===1)return !(row>=2&&row<=6&&Math.abs(col-4)<=Math.floor(row/3));
+    if(type===2)return !(row>=2&&row<=7&&col===(row+1)%7+1);
+    if(type===3)return !(row>=4&&row<=6&&(col===2||col===6));
+    return !(row>=3&&row<=7&&(col===3||col===5));
+  }
   const FIRE_INTERVAL=1.14, MAX_UPGRADE_LEVEL=2;
   const MAX_BALLS = CFG.maxBalls, BALL_SPEED = CFG.speed, BALL_TTL = CFG.normalTTL, MAX_CHARGE = 100;
   const GIANT_SPEED = 610, GIANT_LIFETIME = 5, GIANT_MAX_BOUNCES = 80;
@@ -96,11 +113,7 @@
   }
   function brickHP(n,r,c,special){
     if(special)return 1;
-    if(n>10){const v=hash01(n,r,c),early=n<=15;
-      if(v<(early?.33:.42))return 2+Math.floor(hash01(n,r,c,71)*4);
-      if(v<(early?.68:.75))return 6+Math.floor(hash01(n,r,c,72)*(early?9:6));
-      if(v<.93)return (early?16:12)+Math.floor(hash01(n,r,c,73)*(early?18:12));
-      return (early?34:24)+Math.floor(hash01(n,r,c,74)*(early?16:15));}
+    if(n>10)return lateStageHp(n,r,c);
     const profile=HP_PROFILES[Math.min(9,n-1)],roll=hash01(n,r,c);
     const tier=roll<profile.cut[0]?0:roll<profile.cut[1]?1:roll<profile.cut[2]?2:3;
     const [low,high]=profile.tiers[tier];
@@ -133,6 +146,7 @@
   let bridgeTimer=0,lastBridgeTime=-100,bridgeBursts=0,bridgeTiles=0,upperOnlyBridgeCount=0,cleanupWindow=0,cleanupStarted=false,cleanupActivations=0,clearPreview=[],clearPreviewShown=false;
   let boss=null,bossDefeats=0,bossSupportXP=0,bossSummonClock=0,summonSignals=[],surgeUntil=0,alertUntil=0,choiceReason="upgrade";
   let waveElapsed=0,clearWindowActive=false,bossSummonTotal=0,waveTailSoftened=false,waveSpawnCount=0,waveStartingTargets=0,waveUpgrades=0;
+  let finaleStage=0,finaleWaveSpawns=[0,0,0,0],finaleDamageCheckpoints=[];
   let phase, charge, hunterLevel, ricochetLevel, splitLevel, shockLevel, drillLevel, arcLevel, shootClock, elapsed;
   let skillsUsed, ricochetTriggers, lastFrame, soundContext, masterGain, soundLimiter, soundVolume=.78;
   let accumulator=0,uiClock=0,metricsClock=0,frameSamples=0,fpsNow=0,slowFrames=0,renderQuality="full",drawMs=0;
@@ -241,7 +255,7 @@
     const parts=[speedLevel?"球速+"+speedLevel:null,lifeLevel?"续航+"+lifeLevel:null,powerLevel?"火力+"+powerLevel:null,volleyLevel?"散射+"+volleyLevel:null,splitLevel?"裂变+"+splitLevel:null,arcLevel?"电弧+"+arcLevel:null,shockLevel?"震荡+"+shockLevel:null,drillLevel?"钻头+"+drillLevel:null,hunterLevel?"追猎+"+hunterLevel:null,ricochetLevel?"蓄能+"+ricochetLevel:null,rateLevel?"射速+"+rateLevel:null].filter(Boolean);
     ui.build.textContent=parts.length?parts.join(" · ")+(build.ranks.gun?" · 供弹R"+build.ranks.gun:""):build.ranks.gun?"高速供弹 R"+build.ranks.gun:"清屏成长 · 20波候选";
     $("bossHud").classList.toggle("hidden",!boss||!boss.alive);
-    if(boss&&boss.alive){$("bossText").textContent=boss.hp+" / "+boss.initialHp;$("bossFill").style.width=Math.max(0,boss.hp/boss.initialHp*100)+"%";}
+    if(boss&&boss.alive){$("bossText").textContent=(isFinaleWave(wave)?"终局 "+finaleStage+"/3 · ":"")+boss.hp+" / "+boss.initialHp;$("bossFill").style.width=Math.max(0,boss.hp/boss.initialHp*100)+"%";}
   }
   function brickAt(x,y,hp,extra={}){
     const special=!!extra.special;
@@ -325,13 +339,30 @@
       }
       return plan;
     }
+    if(isFinaleWave(n)){
+      const result=[],r=finalBossRect();
+      for(let row=0;row<8;row++)for(let col=0;col<BRICK_COLUMNS;col++){
+        const x=12+col*BRICK_STEP_X,y=WAVE_START_Y+row*WAVE_ROW_GAP;
+        const top=row<=1&&col>=1&&col<=7;
+        const wall=row>=2&&row<=5&&(col===1||col===2||col===6||col===7);
+        const guide=row>=5&&(col===0||col===8);
+        if(!top&&!wall&&!guide)continue;
+        if(row>=4&&col>=3&&col<=5)continue;
+        if(rectanglesOverlap({x,y,w:BRICK_W,h:BRICK_H},r,6))continue;
+        const hp=top?66+Math.floor(hash01(n,row,col,301)*33):
+          wall?42+Math.floor(hash01(n,row,col,302)*29):8+Math.floor(hash01(n,row,col,303)*8);
+        result.push({x,y,hp,special:false,finaleArmor:top||wall});
+      }
+      return result;
+    }
     const result=[],tier=Math.min(10,1+Math.floor((n-1)/2));
     const bossWave=isBossWave(n);
     for(let row=0;row<WAVE_ROWS_COUNT;row++){
       for(let col=0;col<BRICK_COLUMNS;col++){
         // A couple of clean ricochet channels amid a large wall of targets.
-        if(row===WAVE_ROWS_COUNT-1&&(col===2||col===6))continue;
-        if(row===WAVE_ROWS_COUNT-2&&col===4)continue;
+        if(n<=10&&row===WAVE_ROWS_COUNT-1&&(col===2||col===6))continue;
+        if(n<=10&&row===WAVE_ROWS_COUNT-2&&col===4)continue;
+        if(n>10&&!latePatternHasBrick(n,row,col))continue;
         const x=12+col*BRICK_STEP_X,y=WAVE_START_Y+row*WAVE_ROW_GAP;
         if(bossWave&&rectanglesOverlap({x,y,w:BRICK_W,h:BRICK_H},{x:138,y:108,w:84,h:53},5))continue;
         const special=(n*13+row*5+col)%23===0;
@@ -347,11 +378,11 @@
         if(n>=3&&n<=6&&hp>1)hp=Math.max(2,Math.ceil(hp*.85));
         if(n<=10&&tier>=4&&hp>1)hp=Math.min(160,Math.round(hp*(1+(n-1)*.075)));
         if(n>10&&!special){
-          // Durable wall next to 2-6 HP tiles, without artificial zero-HP trash.
-          const anchor=(col===2||col===6)&&row%3===1;
-          const nearAnchor=[1,3,5,7].includes(col)&&row%3!==2;
-          if(anchor)hp=(n<=15?25:19)+Math.floor(hash01(n,row,col,144)*(n<=15?19:15));
-          else if(nearAnchor)hp=2+Math.floor(hash01(n,row,col,145)*5);
+          const anchor=(col===1||col===7)&&row%3===1;
+          const nearAnchor=(col===2||col===6)&&row%3!==2;
+          hp=anchor?lateStageHp(n,row,col,true):nearAnchor?
+            3+Math.floor((n-11)/3)+Math.floor(hash01(n,row,col,145)*5):
+            lateStageHp(n,row,col);
           hp=Math.max(2,hp);
         }
         result.push({x,y,hp,special});
@@ -363,6 +394,7 @@
     wave=n;waveElapsed=0;waveTailSoftened=false;boss=null;
     waveMetrics={breaks:0,lastBreak:0,longestNoBreak:0,tailSeconds:0,bossSoloSeconds:0,shots:shotsFired||0,children:counters.splitChildren,reclaims:counters.budgetReclaims,suppressed:counters.suppressedShots,suppressedChildren:counters.suppressedChildren};
     summonSignals=[];ambientSignals=[];bossSummonClock=0;bossSummonTotal=0;bossSupportXP=0;
+    finaleStage=isFinaleWave(n)?1:0;finaleWaveSpawns=[0,0,0,0];finaleDamageCheckpoints=[];
     const tiles=plan||createWavePlan(n);bricks=[];
     for(const tile of tiles)bricks.push(brickAt(tile.x,tile.y,tile.hp,
       {...tile,special:tile.special,summonAge:0,summonSource:"wave"}));
@@ -376,7 +408,7 @@
     waveStartingTargets=livingCount();
     clearPreview=[];clearPreviewShown=false;clearWindowActive=false;
     waveSpawnCount++;clearBurstCount=Math.max(0,n-1);clearBurstTiles=tiles.length;
-    setState("第 "+wave+" 波 · "+(boss?"BOSS 核心":"整波破坏")+" · 清屏后进入下一波");
+    setState(isFinaleWave(wave)?"最终关 · 三阶段Boss试炼 · 破坏护甲并击退全部砖阵":"第 "+wave+" 波 · "+(boss?"BOSS 核心":"整波破坏")+" · 清屏后进入下一波");
     updateUI();
     return tiles.length;
   }
@@ -402,6 +434,7 @@
     ambientSignals=[];ambientSummonClock=0;ambientSummonBursts=0;ambientSummonTiles=0;overlapSummonCount=0;clearBurstCount=0;clearBurstTiles=0;
     accumulator=0;uiClock=0;metricsClock=0;frameSamples=0;fpsNow=0;slowFrames=0;renderQuality="full";drawMs=0;
     boss=null;bossDefeats=0;bossSupportXP=0;bossSummonClock=0;summonSignals=[];ambientSignals=[];surgeUntil=0;alertUntil=0;
+    finaleStage=0;finaleWaveSpawns=[0,0,0,0];finaleDamageCheckpoints=[];
     shotsFired=0;brickContacts=0;shotMaxContacts=0;splitBursts=0;chainBursts=0;bonusVolleyBalls=0;homingTurns=0;shockWaves=0;directBreaks=0;giantRebounds=0;giantBrickRebounds=0;giantWallRebounds=0;giantTotalHits=0;
     shootClock=.8;skillsUsed=0;ricochetTriggers=0;aim=0;activePointer=null;balls=[];particles=[];giant=null;
     impactRings=[];floatTexts=[];combo=0;maxCombo=0;lastBreak=-99;comboVisibility=0;shake=0;hitCount=0;
@@ -864,8 +897,8 @@
   function bossSpawn(){
     if(boss&&boss.alive)return false;
     // Wave-clear upgrading supplies fewer skills than the old XP model.
-    const hp=isBossWave(wave)?128:52+Math.floor(Math.max(0,wave-4)/4)*24+bossDefeats*6;
-    const r=featuredRect();boss=brickAt(r.x,r.y,hp,{w:r.w,h:r.h,isBoss:true,color:"#ab66f5"});
+    const hp=isFinaleWave(wave)?FINALE_HP:isBossWave(wave)?128:52+Math.floor(Math.max(0,wave-4)/4)*24+bossDefeats*6;
+    const r=isFinaleWave(wave)?finalBossRect():featuredRect();boss=brickAt(r.x,r.y,hp,{w:r.w,h:r.h,isBoss:true,color:isFinaleWave(wave)?"#cf668f":"#ab66f5",isFinalBoss:isFinaleWave(wave)});
     bricks.push(boss);bossSummonClock=0;bossSummonTotal=0;bossSupportXP=0;summonSignals=[];
     alertUntil=elapsed+2.5;setState("第 "+wave+" 波 · BOSS 核心已降临！");
     if(phase==="playing")playSfx("giant");return true;
@@ -1060,7 +1093,9 @@
     if(!emptyLatch){
       waveElapsed+=dt;
       const liveBefore=livingCount();if(liveBefore>0){waveMetrics.longestNoBreak=Math.max(waveMetrics.longestNoBreak,waveElapsed-waveMetrics.lastBreak);if(liveBefore<=5)waveMetrics.tailSeconds+=dt;if(liveBefore===1&&boss)waveMetrics.bossSoloSeconds+=dt;}
-      const speed=Math.min(8.4,FALL_BASE+Math.max(0,wave-1)*.09)*(isBossWave(wave)?.9:1)*CFG.fallScale*waveFallMultiplier;
+      const latePressure=wave>=11&&wave<=19?1+(wave-10)*.028:1;
+      const finalePressure=isFinaleWave(wave)?.62+.10*(finaleStage-1):1;
+      const speed=Math.min(8.4,FALL_BASE+Math.max(0,wave-1)*.09)*(isBossWave(wave)?.9:1)*CFG.fallScale*waveFallMultiplier*latePressure*finalePressure;
       for(const brick of bricks)if(brick.alive)brick.y+=speed*dt;
       const danger=bricks.find(b=>b.alive&&b.y+b.h>=DANGER_Y);
       if(danger){
@@ -1073,16 +1108,17 @@
         playSfx("shock");updateUI();return;
       }
       if(boss&&boss.alive){
+        if(isFinaleWave(wave))updateFinaleStages();
         bossSummonClock+=dt;
         if(bossSummonClock>=BOSS_SUPPORT_INTERVAL){
           bossSummonClock=0;
-          if(bossSummonTotal<BOSS_SUPPORT_LIMIT_TOTAL)summonBossBricks();
+          if(!isFinaleWave(wave)&&bossSummonTotal<BOSS_SUPPORT_LIMIT_TOTAL)summonBossBricks();
         }
         updateSummonSignals(dt);
       }
       // Guidance changes trajectories only; HP is never silently reduced.
       const live=bricks.filter(b=>b.alive);
-      if(!live.length&&!boss){
+      if(!live.length&&!boss&&(!isFinaleWave(wave)||finaleStage===3)&&!summonSignals.some(sig=>sig.finale)){
         // No projectiles or active giant may carry over into the next wave.
         // Pause combat at this boundary; only the wave-clear reward grants XP level.
         balls=[];giant=null;shootClock=0;
