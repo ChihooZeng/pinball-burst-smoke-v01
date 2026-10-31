@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no"/>
   <meta name="theme-color" content="#08182b"/>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%2212%22 fill=%22%2308192a%22 stroke=%22%2366ebf2%22 stroke-width=%223%22/%3E%3C/svg%3E"/>
-  <title>弹珠超载 · M2.3 · Boss波次与电弧反击</title>
-  <link rel="stylesheet" href="./style.css?v=m23"/>
+  <title>弹珠超载 · M2.4 · Boss战修复与加速</title>
+  <link rel="stylesheet" href="./style.css?v=m24"/>
 </head>
 <body>
   <main class="shell">
@@ -18,8 +18,8 @@
       <div class="ult-wrap"><div id="skillGuide" class="skill-guide hidden" role="status">首次技能提示：松开瞄准后点这里，方向会保留</div><button id="giant" type="button" disabled>超载冲锋 0%</button></div>
       <div class="overlay" id="startOverlay" role="dialog" aria-modal="true" aria-labelledby="startTitle">
         <div class="start-icon">◉</div><small class="label">SPLIT / ARC / GUN · FINAL BOSS LAB</small>
-        <h2 id="startTitle">弹珠超载 · M2.3 Boss波次强化</h2>
-        <p>Boss增援改为上中下多行大波次：第10关约每3.8秒尝试召唤14块真实数字砖，下降更快；电弧对Boss与高血护甲有额外导电伤害。20关试玩，完整目标50关。</p>
+        <h2 id="startTitle">弹珠超载 · M2.4 Boss战优化</h2>
+        <p>Boss死后召唤砖不再凭空消失；电弧2级起每次撞砖都可放电；Boss下降逐步加速，开场砖阵略上移保留反应时间。Boss过关条件暂保留清屏，正在比较方案。</p>
         <button class="cta" id="start" type="button">开始20关挑战</button>
         <div class="boss-preview"><label for="bossRoute">直达第10关Boss · 测试流派</label>
           <select id="bossRoute" aria-label="测试Boss的成熟流派"><option value="split">裂变Build</option><option value="arc">电弧Build</option><option value="gun">机枪Build</option></select>
@@ -27,7 +27,7 @@
           <button id="jumpFinalBoss" class="final-boss-jump" type="button">直达第20关 最终Boss</button>
           <small>调试专用 · 自动配置9或19次升级，跳关不计入正常通关成绩</small>
         </div>
-        <a class="comparison-link" href="../hybrid-v1-m2-2/">M2.2 对照</a> · <a class="comparison-link" href="../hybrid-v1-m2-1-ricochet/">M2.1 对照</a> · <a class="comparison-link" href="../hybrid-v1-20wave-finale/">原高压基准对照</a> · <a class="comparison-link" href="../hybrid-v1-m2-20wave/">旧20关对照</a> · <a class="comparison-link" href="../hybrid-v1-m1-3/">原M1.3对照</a> · <a class="comparison-link" href="../hybrid-v1-m1-2/">M1.2对照</a> · <a class="comparison-link" href="../hybrid-v1-m1-1/">M1.1对照</a> · <a class="comparison-link" href="../hybrid-v1-m1-soft-balance/">调弱基准对照</a> · <a class="comparison-link" href="../hybrid-v27-feel-lab/?feel=tempo">Feel Lab B 对照</a> · <a class="comparison-link" href="../hybrid-v17-sustain/">v0.17 对照</a>
+        <a class="comparison-link" href="../hybrid-v1-m2-3/">M2.3 对照</a> · <a class="comparison-link" href="../hybrid-v1-m2-2/">M2.2 对照</a> · <a class="comparison-link" href="../hybrid-v1-m2-1-ricochet/">M2.1 对照</a> · <a class="comparison-link" href="../hybrid-v1-20wave-finale/">原高压基准对照</a> · <a class="comparison-link" href="../hybrid-v1-m2-20wave/">旧20关对照</a> · <a class="comparison-link" href="../hybrid-v1-m1-3/">原M1.3对照</a> · <a class="comparison-link" href="../hybrid-v1-m1-2/">M1.2对照</a> · <a class="comparison-link" href="../hybrid-v1-m1-1/">M1.1对照</a> · <a class="comparison-link" href="../hybrid-v1-m1-soft-balance/">调弱基准对照</a> · <a class="comparison-link" href="../hybrid-v27-feel-lab/?feel=tempo">Feel Lab B 对照</a> · <a class="comparison-link" href="../hybrid-v17-sustain/">v0.17 对照</a>
         <small class="overlay-tip">移动端需要首次点击才能启用音效</small>
       </div>
       <div class="overlay hidden" id="choiceOverlay" role="dialog" aria-modal="true" aria-labelledby="choiceTitle">
@@ -69,6 +69,6 @@
       <div id="hunterDetails"></div><div id="bounceDetails"></div><div id="splitDetails"></div><div id="chainDetails"></div><div id="pierceDetails"></div><div id="arcDetails"></div>
     </div>
   </main>
-  <script src="./juice-fx.js?v=m23" defer></script><script src="./builds.js?v=m23" defer></script><script src="./game.js?v=m23a" defer></script>
+  <script src="./juice-fx.js?v=m24" defer></script><script src="./builds.js?v=m24" defer></script><script src="./game.js?v=m24" defer></script>
 </body>
 </html>
