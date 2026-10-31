@@ -7,6 +7,12 @@
   let gunTarget=null,gunStreak=0,gunLast=-99;
   let precisionTurns=0,focusDamage=0,gunBonusDamage=0,weakpointDamage=0,weakpointCharge=0,damageDealt=0,shotsWithContact=0;
   let waveFallMultiplier=1;
+  const FIRST_SKILL_KEY='pinball-overload-first-skill-v1',SIDE_KEY='pinball-overload-skill-side-v1',AUTO_KEY='pinball-overload-auto-skill-v1';
+  let firstSkillUsed=false,skillSide='right',autoSkill=false;
+  try{firstSkillUsed=localStorage.getItem(FIRST_SKILL_KEY)==='done';skillSide=localStorage.getItem(SIDE_KEY)==='left'?'left':'right';autoSkill=localStorage.getItem(AUTO_KEY)==='yes';}catch(e){}
+  function store(key,value){try{localStorage.setItem(key,value);}catch(e){}}
+  function applySkillSide(){document.querySelector('.shell').classList.toggle('skill-left',skillSide==='left');}
+  function markSkillUsed(){if(firstSkillUsed)return;firstSkillUsed=true;store(FIRST_SKILL_KEY,'done');document.getElementById('skillGuide').classList.add('hidden');}
   let build,events=[],counters,arcCharge=0,lastArcRelease=-99,fanClock=0,gunFlash=0,lastShotAngle=0;
   let collisionChecks=0,physicsCostMs=0,physicsSteps=0,maxPhysicsMs=0;
   const initialSeed=Number.isFinite(window.__PINBALL_SEED__)?window.__PINBALL_SEED__>>>0:null;
@@ -22,12 +28,12 @@
     record("seed",{id});setState("第1波 · "+Build.DEFS[id].name);updateUI();return true;
   }
   function showCards(seed=false){
-    $("choiceTitle").textContent=seed?"选择起始能力":"选择一次强化";
-    $("choiceWave").textContent=seed?"三种起点 · 分支时再定主核心":"WAVE "+wave+" CLEAR · LV."+level;
+    $("choiceTitle").textContent=!build.seedAbility?"选一个新技能":"选择一次强化";
+    $("choiceWave").textContent=!build.seedAbility?"第1波完成 · 第一次升级":"WAVE "+wave+" CLEAR · LV."+level;
     for(let i=0;i<3;i++){const card=Build.card(build,choiceSet[i]);$("choiceTitle"+i).textContent=card.title;$("choiceDesc"+i).textContent=card.description;}
     ui.choice.classList.remove("hidden");
   }
-  function finishPrototype(){phase="complete";balls=[];giant=null;ui.win.classList.remove("hidden");$("winTitle").textContent="M1.1 · 10波挑战完成";ui.final.textContent="构筑："+Build.DEFS[build.coreBranch||build.seedAbility].name+" · 用时 "+Math.round(elapsed)+" 秒 · 击碎 "+score+" 块。请反馈手感，后续内容等待验收。";record("complete");setState("M1候选 · 等待真人手感验收");updateUI();}
+  function finishPrototype(){phase="complete";balls=[];giant=null;ui.win.classList.remove("hidden");$("winTitle").textContent="M1.3 · 10波挑战完成";ui.final.textContent="构筑："+Build.DEFS[build.coreBranch||build.seedAbility].name+" · 用时 "+Math.round(elapsed)+" 秒 · 击碎 "+score+" 块。请反馈手感，后续内容等待验收。";record("complete");setState("M1候选 · 等待真人手感验收");updateUI();}
 
   const BOSS_INTERVAL=110, SURGE_INTERVAL=75, FALL_BASE=6.8, MAX_BRICKS=168;
   const START_ROWS=6, SPAWN_INTERVAL=3.5, PHYSICS_DT=1/120, MAX_FRAME_STEPS=6;
@@ -217,12 +223,14 @@
     $("xpFill").style.width=(waveStartingTargets?Math.min(100,cleared/waveStartingTargets*100):0)+"%";
     $("pause").disabled=false;
     $("buffStatus").textContent=build.temporaryBuffs.map(b=>Build.BUFFS[b.id].name+" "+Math.ceil(b.remaining)+"s").join(" · ");
-    const ready=phase==="playing"&&!emptyLatch&&charge>=MAX_CHARGE&&!giant;
+    const ready=phase==="playing"&&!emptyLatch&&!!build.seedAbility&&charge>=MAX_CHARGE&&!giant;
+    ui.giant.parentElement.classList.toggle("hidden",!build.seedAbility);
     ui.giant.disabled=!ready;ui.giant.textContent=giant?"超载中 "+Math.ceil(GIANT_LIFETIME-giant.life)+"s":ready?"超载冲锋 READY":"超载冲锋 "+Math.floor(charge)+"%";
+    const showGuide=ready&&!firstSkillUsed;$("skillGuide").classList.toggle("hidden",!showGuide);ui.giant.classList.toggle("guide-pulse",showGuide);
     $("giantLife").classList.toggle("hidden",!giant);
     $("giantTimeText").textContent=giant?Math.max(0,GIANT_LIFETIME-giant.life).toFixed(1)+"s":"0.0s";
     $("giantTimeFill").style.width=giant?Math.max(0,(GIANT_LIFETIME-giant.life)/GIANT_LIFETIME*100)+"%":"0%";
-    $("loadoutLabel").textContent=build.coreBranch?Build.DEFS[build.coreBranch].name:build.seedAbility?"尚未定主核心":"三种起点";
+    $("loadoutLabel").textContent=build.coreBranch?Build.DEFS[build.coreBranch].name:build.seedAbility?"尚未定主核心":"普通炮台";
     const parts=[speedLevel?"球速+"+speedLevel:null,lifeLevel?"续航+"+lifeLevel:null,powerLevel?"火力+"+powerLevel:null,volleyLevel?"散射+"+volleyLevel:null,splitLevel?"裂变+"+splitLevel:null,arcLevel?"电弧+"+arcLevel:null,shockLevel?"震荡+"+shockLevel:null,drillLevel?"钻头+"+drillLevel:null,hunterLevel?"追猎+"+hunterLevel:null,ricochetLevel?"蓄能+"+ricochetLevel:null,rateLevel?"射速+"+rateLevel:null].filter(Boolean);
     ui.build.textContent=parts.length?parts.join(" · ")+(build.ranks.gun?" · 供弹R"+build.ranks.gun:""):build.ranks.gun?"高速供弹 R"+build.ranks.gun:"清屏成长 · 10波候选";
     $("bossHud").classList.toggle("hidden",!boss||!boss.alive);
@@ -277,6 +285,7 @@
     rowIndex++;return true;
   }
   function createWavePlan(n){
+    if(n===1){const intro=[];for(let row=0;row<5;row++)for(let col=1;col<=7;col++){const hp=row<2&&col%3===0?2:1;intro.push({x:12+col*BRICK_STEP_X,y:WAVE_START_Y+row*WAVE_ROW_GAP,hp,special:false});}return intro;}
     const result=[],tier=Math.min(10,1+Math.floor((n-1)/2));
     const bossWave=n%WAVE_BOSS_EVERY===0;
     for(let row=0;row<WAVE_ROWS_COUNT;row++){
@@ -315,7 +324,7 @@
     const bottom=Math.max(...bricks.map(b=>b.y+b.h));
     const referenceGap=455-(84+(WAVE_ROWS_COUNT-1)*WAVE_ROW_GAP+BRICK_H);
     const gap=Math.max(0,DANGER_Y-bottom);
-    waveFallMultiplier=Math.max(1,Math.min(3.2,1+Math.max(0,gap/referenceGap-1)*.70));
+    waveFallMultiplier=n===1?1:Math.max(1,Math.min(3.2,1+Math.max(0,gap/referenceGap-1)*.70));
     record("wave_pressure",{wave:n,fallMultiplier:+waveFallMultiplier.toFixed(3),gap:+gap.toFixed(1)});
     waveStartingTargets=livingCount();
     clearPreview=[];clearPreviewShown=false;clearWindowActive=false;
@@ -334,7 +343,7 @@
     WAVE_START_Y=window.innerWidth?Math.max(84,Math.ceil((document.querySelector(".topbar").getBoundingClientRect().height+28)*W/window.innerWidth)):84;
     pausedFrom=null;battleTime=0;waveReports=[];bankDamage=0;lockBackground(false);$("pauseOverlay").classList.add("hidden");
     gunTarget=null;gunStreak=0;gunLast=-99;precisionTurns=focusDamage=gunBonusDamage=weakpointDamage=weakpointCharge=damageDealt=shotsWithContact=0;build=Build.createState(initialSeed===null?Math.floor(Math.random()*4294967296):initialSeed);events=[];arcCharge=0;lastArcRelease=-99;fanClock=0;gunFlash=0;
-    counters={splitChildren:0,arcReleases:0,arcSingleDamage:0,budgetReclaims:0,suppressedShots:0,suppressedChildren:0,maxBallsAlive:0,wallBounces:0,shotsByBuild:{split:0,arc:0,gun:0}};
+    counters={splitChildren:0,arcReleases:0,arcSingleDamage:0,budgetReclaims:0,suppressedShots:0,suppressedChildren:0,maxBallsAlive:0,wallBounces:0,shotsByBuild:{base:0,split:0,arc:0,gun:0}};
     collisionChecks=0;physicsCostMs=0;physicsSteps=0;maxPhysicsMs=0;
     wave=1;score=0;phase="ready";charge=0;elapsed=0;level=1;xp=0;xpGoal=34;
     $("winTitle").textContent="砖阵触及警戒线";
@@ -360,8 +369,9 @@
   }
   function begin(){
     if(phase!=="ready")return false;
-    unlockSound();phase="seeding";$("startOverlay").classList.add("hidden");choiceSet=["split","arc","gun"];
-    showCards(true);setState("先选起点 · 之后仍可改变方向");playSfx("upgrade");updateUI();return true;
+    unlockSound();phase="playing";$("startOverlay").classList.add("hidden");choiceSet=[];
+    shootClock=Build.tuning(build).interval-CFG.firstShot;
+    record("intro_start");setState("第1波 · 滑动瞄准，普通炮台开始破坏");updateUI();return true;
   }
   function livingCount(){return bricks.reduce((n,b)=>n+(b.alive?1:0),0);}
   function stageForRemaining(remaining){
@@ -542,14 +552,14 @@
     if(build.coreBranch==="gun-b")offset=Math.sin(fanClock*Math.PI*2/CFG.fanPeriod)*CFG.fanAngle;
     lastShotAngle=aim+offset;const shot=makeBall(lastShotAngle);
     if(drillLevel>0&&shotNumber%(drillLevel===1?4:3)===0){shot.drill=true;shot.drillLeft=drillLevel===1?3:5;shot.r=SHOT_RADIUS*1.35;powerShots++;playSfx("drill");}
-    balls.push(shot);gunFlash=.07;counters.shotsByBuild[Build.preferred(build)]++;
+    balls.push(shot);gunFlash=.07;counters.shotsByBuild[Build.preferred(build)||'base']++;
     counters.maxBallsAlive=Math.max(counters.maxBallsAlive,balls.length);
     record("shot",{angle:+(aim+offset).toFixed(5),ttl:shot.maxLife,interval:t.interval});beep(245,.045,.011);return true;
   }
   function fireGiant() {
-    if (phase !== "playing" || emptyLatch || charge < selectedActive.maxCharge || giant || selectedActive.kind!=="giant") return false;
+    if (phase !== "playing" || !build.seedAbility || emptyLatch || charge < selectedActive.maxCharge || giant || selectedActive.kind!=="giant") return false;
     unlockSound();
-    charge=0;skillsUsed++;
+    charge=0;skillsUsed++;markSkillUsed();
     giant={x:shooter.x,y:shooter.y-27,
       vx:Math.sin(aim)*GIANT_SPEED,vy:-Math.cos(aim)*GIANT_SPEED,
       r:14,life:0,collisions:0,bounces:0,pierceLeft:GIANT_PIERCE_LIMIT,lastBounceFx:-100,trail:[],lastHitId:null,lastHitLife:-99};
@@ -772,6 +782,7 @@
     if(phase==="seeding")return selectSeed(id);
     if(phase!=="choosing"||!choiceSet.includes(id)||!Build.choose(build,id,screenClears))return false;
     syncBuild();record("choice",{id});phase="playing";choiceSet=[];ui.choice.classList.add("hidden");playSfx("upgrade");
+    if(build.choiceHistory.length===1&&build.seedAbility){record("first_upgrade",{id});setState("新技能已获得 · 充满能量后可以释放超载");}
     if(screenClears>=MAX_WAVES){finishPrototype();return true;}
     if(choiceQueue>0)offerChoice();else{setState("强化完成 · 下一波验证构筑");updateUI();}return true;
   }
@@ -1041,6 +1052,7 @@
     if(phase!=="playing")return;
     if(!emptyLatch){
       fanClock+=dt;gunFlash=Math.max(0,gunFlash-dt);
+      if(autoSkill&&build.seedAbility&&charge>=MAX_CHARGE&&!giant)activateEquippedSkill();
       const fireInterval=Build.tuning(build).interval/Build.buffModifiers(build).rate;
       if(shootClock>=fireInterval){shootClock-=fireInterval;fire();}
       const currentBalls=balls.slice(),kept=currentBalls.filter(b=>updateBall(b,dt));
@@ -1290,7 +1302,7 @@
   $("pause").addEventListener("click",()=>phase==="paused"?resume():pause());
   $("resume").addEventListener("click",resume);
   $("exportRun").addEventListener("click",()=>{
-    const data=JSON.stringify({version:"M1",state:snapshot(),events,config:CFG},null,2);
+    const data=JSON.stringify({version:"M1.3",state:snapshot(),events,config:CFG},null,2);
     const url=URL.createObjectURL(new Blob([data],{type:"application/json"}));const link=document.createElement("a");link.href=url;link.download="pinball-m1-"+build.seed+".json";link.click();URL.revokeObjectURL(url);
   });
   function setAim(e) {
@@ -1311,7 +1323,10 @@
   function stopAim(e){if(e.pointerId===activePointer) activePointer=null;}
   canvas.addEventListener("pointerup",stopAim);
   canvas.addEventListener("pointercancel",stopAim);
-  ui.giant.addEventListener("click",activateEquippedSkill);
+  ui.giant.addEventListener("click",e=>{e.stopPropagation();activateEquippedSkill();});
+  $("skillSide").value=skillSide;$("autoSkill").checked=autoSkill;applySkillSide();
+  $("skillSide").addEventListener("change",e=>{skillSide=e.target.value==="left"?"left":"right";store(SIDE_KEY,skillSide);applySkillSide();});
+  $("autoSkill").addEventListener("change",e=>{autoSkill=!!e.target.checked;store(AUTO_KEY,autoSkill?"yes":"no");});
   $("start").addEventListener("click",begin);
   for(let i=0;i<3;i++)$("choice"+i).addEventListener("click",()=>{unlockSound();chooseUpgrade(choiceSet[i]);});
   $("again").addEventListener("click",()=>{unlockSound();reset();begin();});

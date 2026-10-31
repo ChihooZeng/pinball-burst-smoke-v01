@@ -51,3 +51,14 @@ canvas{width:100%;height:100%;object-fit:contain}
 @media(orientation:landscape){.arena{left:50%;transform:translateX(-50%);width:min(100%,calc(100dvh * 1.05))}.topbar{left:max(0px,calc((100vw - 100dvh*1.05)/2));right:max(0px,calc((100vw - 100dvh*1.05)/2))}.overlay{padding:12px;gap:6px}.upgrade-options{gap:5px}.upgrade-card{min-height:55px;padding:7px}.start-icon{font-size:24px}.ult-wrap{bottom:12px}.overlay h2{font-size:19px}}
 /* Keep fixed settings relative to the viewport even in the wide-screen camera. */
 @media(orientation:landscape){.arena{left:0;right:0;transform:none;margin:0 auto}}
+
+/* M1.3 one-thumb controls */
+.ult-wrap button{min-width:96px;min-height:64px;touch-action:manipulation}
+.skill-left .ult-wrap{left:calc(env(safe-area-inset-left) + 14px);right:auto}
+.skill-guide{position:absolute;right:0;bottom:calc(100% + 10px);width:206px;max-width:62vw;border:1px solid #82d8e8;background:#123b50ef;border-radius:10px;padding:9px;color:#e4ffff;font-size:12px;line-height:1.5;text-align:left;box-shadow:0 4px 14px #001b2a8c;pointer-events:none}
+.skill-left .skill-guide{right:auto;left:0}
+.guide-pulse{outline:3px solid #8bf2e1;outline-offset:2px;box-shadow:0 0 24px #64eeddb3!important}
+.auto-skill-label{display:flex!important;align-items:center;gap:10px;margin-top:8px;line-height:1.45}
+.auto-skill-label input{width:18px;height:18px;flex:0 0 auto;accent-color:#65e8db}
+.one-hand-tip{line-height:1.5;color:#add6e6}
+@media(orientation:landscape){.skill-guide{width:176px;bottom:calc(100% + 4px)}}
