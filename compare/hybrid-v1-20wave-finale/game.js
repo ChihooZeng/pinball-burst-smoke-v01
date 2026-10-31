@@ -476,6 +476,29 @@
     setState("第10关 · BOSS弹射阵型 · 调试直达（已配成长Build）");
     updateUI();return true;
   }
+
+  function jumpToFinalBoss(){
+    reset();
+    const route=$("bossRoute").value;
+    const priorities=[route,route+"-a","power","rate","speed","life","shock","drill","hunter","bank","split","arc","gun"];
+    const picks=[];
+    for(let w=1;w<=19;w++){
+      const offer=Build.offer(build,w);
+      const id=w===1?route:offer.slice().sort((a,b)=>{
+        const aRank=priorities.indexOf(a),bRank=priorities.indexOf(b);
+        return (aRank<0?100:aRank)-(bRank<0?100:bRank);
+      })[0];
+      if(!id||!Build.choose(build,id,w))throw Error("Final Boss preview lacks a valid upgrade at wave "+w);
+      picks.push(id);
+    }
+    syncBuild();screenClears=19;level=20;waveUpgrades=19;charge=100;
+    balls=[];giant=null;emptyLatch=false;choiceSet=[];choiceQueue=0;
+    phase="playing";$("startOverlay").classList.add("hidden");ui.choice.classList.add("hidden");
+    unlockSound();spawnWave(20);shootClock=Build.tuning(build).interval-CFG.firstShot;
+    record("debug_jump",{targetWave:20,route,simulatedUpgrades:picks,excludedFromNormalRecords:true});
+    setState("第20关 · 888HP最终Boss · 三阶段砖阵（调试直达）");
+    updateUI();return true;
+  }
   function livingCount(){return bricks.reduce((n,b)=>n+(b.alive?1:0),0);}
   function stageForRemaining(remaining){
     if(remaining<=0)return electricStage;
@@ -1484,6 +1507,7 @@
   $("autoSkill").addEventListener("change",e=>{autoSkill=!!e.target.checked;store(AUTO_KEY,autoSkill?"yes":"no");});
   $("start").addEventListener("click",begin);
   $("jumpBoss").addEventListener("click",jumpToBoss10);
+  $("jumpFinalBoss").addEventListener("click",jumpToFinalBoss);
   for(let i=0;i<3;i++)$("choice"+i).addEventListener("click",()=>{unlockSound();chooseUpgrade(choiceSet[i]);});
   $("again").addEventListener("click",()=>{unlockSound();reset();begin();});
   $("reset").addEventListener("click",()=>{unlockSound();reset();begin();});
@@ -1603,7 +1627,7 @@
       hitForTest(id,source="normal",points=2){const b=bricks.find(x=>x.id===id);return b?hitBrick(b,source,null,points):false;},
       playSfx,unlockSound,
       hitById(id,source="normal"){const b=bricks.find(x=>x.id===id);if(b)hitBrick(b,source);updateUI();},
-      reset,begin,jumpToBoss10,addRow,bossSpawn,summonBossBricks,generateSurvival,addExperience,offerChoice,chooseUpgrade,
+      reset,begin,jumpToBoss10,jumpToFinalBoss,addRow,bossSpawn,summonBossBricks,generateSurvival,addExperience,offerChoice,chooseUpgrade,
       createWavePlan,spawnWave,planClearBurst,
       spawnClearBurst,
       queueFinaleStage,updateFinaleStages,
