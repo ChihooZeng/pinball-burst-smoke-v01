@@ -239,7 +239,7 @@
     $("giantTimeFill").style.width=giant?Math.max(0,(GIANT_LIFETIME-giant.life)/GIANT_LIFETIME*100)+"%":"0%";
     $("loadoutLabel").textContent=build.coreBranch?Build.DEFS[build.coreBranch].name:build.seedAbility?"尚未定主核心":"普通炮台";
     const parts=[speedLevel?"球速+"+speedLevel:null,lifeLevel?"续航+"+lifeLevel:null,powerLevel?"火力+"+powerLevel:null,volleyLevel?"散射+"+volleyLevel:null,splitLevel?"裂变+"+splitLevel:null,arcLevel?"电弧+"+arcLevel:null,shockLevel?"震荡+"+shockLevel:null,drillLevel?"钻头+"+drillLevel:null,hunterLevel?"追猎+"+hunterLevel:null,ricochetLevel?"蓄能+"+ricochetLevel:null,rateLevel?"射速+"+rateLevel:null].filter(Boolean);
-    ui.build.textContent=parts.length?parts.join(" · ")+(build.ranks.gun?" · 供弹R"+build.ranks.gun:""):build.ranks.gun?"高速供弹 R"+build.ranks.gun:"清屏成长 · 10波候选";
+    ui.build.textContent=parts.length?parts.join(" · ")+(build.ranks.gun?" · 供弹R"+build.ranks.gun:""):build.ranks.gun?"高速供弹 R"+build.ranks.gun:"清屏成长 · 20波候选";
     $("bossHud").classList.toggle("hidden",!boss||!boss.alive);
     if(boss&&boss.alive){$("bossText").textContent=boss.hp+" / "+boss.initialHp;$("bossFill").style.width=Math.max(0,boss.hp/boss.initialHp*100)+"%";}
   }
@@ -293,8 +293,40 @@
   }
   function createWavePlan(n){
     if(n===1){const intro=[];for(let row=0;row<5;row++)for(let col=1;col<=7;col++){const hp=row<2&&col%3===0?2:1;intro.push({x:12+col*BRICK_STEP_X,y:WAVE_START_Y+row*WAVE_ROW_GAP,hp,special:false});}return intro;}
+
+    // A single elite core in wave 5, with lower bricks for controlled ricochets.
+    if(isEliteWave(n)){
+      const plan=[],r=featuredRect();
+      for(let row=0;row<7;row++)for(let col=0;col<BRICK_COLUMNS;col++){
+        if(row>=4&&col>=3&&col<=5)continue; // Open a central entrance.
+        const x=12+col*BRICK_STEP_X,y=WAVE_START_Y+row*WAVE_ROW_GAP;
+        if(rectanglesOverlap({x,y,w:BRICK_W,h:BRICK_H},r,6))continue;
+        const anchor=(col===2||col===6)&&row<=4;
+        const hp=anchor?12+Math.floor(hash01(n,row,col,102)*9):row>=4?2+Math.floor(hash01(n,row,col,103)*3):3+Math.floor(hash01(n,row,col,104)*6);
+        plan.push({x,y,hp,special:false});
+      }
+      plan.push({...r,hp:32,isElite:true,color:"#ffbd65"});
+      return plan;
+    }
+    // Boss 10: top + flank armor ring; central bottom channel is truly open.
+    if(isBossWave(n)){
+      const plan=[],r=featuredRect();
+      for(let row=0;row<8;row++)for(let col=0;col<BRICK_COLUMNS;col++){
+        const upper=(row===0&&col>=2&&col<=6)||(row===1&&col>=2&&col<=6);
+        const flank=(row>=2&&row<=4&&(col===2||col===6));
+        const guide=(row>=4&&(col===1||col===7))||(row>=5&&(col===2||col===6));
+        // Empty central lower area lets the player shoot into the ring.
+        if(row>=4&&col>=3&&col<=5)continue;
+        if(!upper&&!flank&&!guide)continue;
+        const x=12+col*BRICK_STEP_X,y=WAVE_START_Y+row*WAVE_ROW_GAP;
+        if(rectanglesOverlap({x,y,w:BRICK_W,h:BRICK_H},r,5))continue;
+        const hp=upper||flank?22+Math.floor(hash01(n,row,col,141)*18):3+Math.floor(hash01(n,row,col,142)*5);
+        plan.push({x,y,hp,special:false,ringArmor:upper||flank});
+      }
+      return plan;
+    }
     const result=[],tier=Math.min(10,1+Math.floor((n-1)/2));
-    const bossWave=n%WAVE_BOSS_EVERY===0;
+    const bossWave=isBossWave(n);
     for(let row=0;row<WAVE_ROWS_COUNT;row++){
       for(let col=0;col<BRICK_COLUMNS;col++){
         // A couple of clean ricochet channels amid a large wall of targets.
@@ -304,16 +336,24 @@
         if(bossWave&&rectanglesOverlap({x,y,w:BRICK_W,h:BRICK_H},{x:138,y:108,w:84,h:53},5))continue;
         const special=(n*13+row*5+col)%23===0;
         let hp=brickHP(tier,n*11+row,col,special);
-        if(row>=WAVE_ROWS_COUNT-2){
+        if(n<=10&&row>=WAVE_ROWS_COUNT-2){
           // Most lower tiles are easy breaks, but 25% act as durable bounce
           // anchors. They must never form a thick deadly wall.
           const f=hash01(n,row,col,91);
           hp=f<.53?1:f<.75?2:f<.91?3:Math.min(14,3+Math.floor(n/2));
-        }else if(row>=5&&hp>1){
+        }else if(n<=10&&row>=5&&hp>1){
           hp=Math.max(2,Math.ceil(hp*.72));
         }
         if(n>=3&&n<=6&&hp>1)hp=Math.max(2,Math.ceil(hp*.85));
-        if(tier>=4&&hp>1)hp=Math.min(160,Math.round(hp*(1+(n-1)*.075)));
+        if(n<=10&&tier>=4&&hp>1)hp=Math.min(160,Math.round(hp*(1+(n-1)*.075)));
+        if(n>10&&!special){
+          // Durable wall next to 2-6 HP tiles, without artificial zero-HP trash.
+          const anchor=(col===2||col===6)&&row%3===1;
+          const nearAnchor=[1,3,5,7].includes(col)&&row%3!==2;
+          if(anchor)hp=(n<=15?25:19)+Math.floor(hash01(n,row,col,144)*(n<=15?19:15));
+          else if(nearAnchor)hp=2+Math.floor(hash01(n,row,col,145)*5);
+          hp=Math.max(2,hp);
+        }
         result.push({x,y,hp,special});
       }
     }
@@ -325,8 +365,8 @@
     summonSignals=[];ambientSignals=[];bossSummonClock=0;bossSummonTotal=0;bossSupportXP=0;
     const tiles=plan||createWavePlan(n);bricks=[];
     for(const tile of tiles)bricks.push(brickAt(tile.x,tile.y,tile.hp,
-      {special:tile.special,summonAge:0,summonSource:"wave"}));
-    if(n%WAVE_BOSS_EVERY===0)bossSpawn();
+      {...tile,special:tile.special,summonAge:0,summonSource:"wave"}));
+    if(isBossWave(n))bossSpawn();
     // Height compensation: preserve danger-line pressure across tall phone worlds.
     const bottom=Math.max(...bricks.map(b=>b.y+b.h));
     const referenceGap=455-(84+(WAVE_ROWS_COUNT-1)*WAVE_ROW_GAP+BRICK_H);
@@ -516,14 +556,14 @@
   function splitAt(ball,x,y){
     if(!splitLevel||ball.mini||ball.splitDone||ball.contacts<CFG.splitEvery[splitLevel])return;
     ball.splitDone=true;
-    const branch=build.coreBranch,count=branch==="split-a"?3:branch==="split-b"?2:CFG.splitCount[splitLevel];
+    const branch=build.coreBranch,count=Build.effects(build).splitCount;
     const solo=boss&&boss.alive&&livingCount()===1;
     const spread=solo?.15:branch==="split-a"?CFG.stormSpread:CFG.splitSpread;
     const theta=Math.atan2(ball.vx,-ball.vy);let made=0;
     for(let i=0;i<count;i++){
       if(balls.length>=MAX_BALLS){counters.suppressedChildren+=count-i;break;}
       const delta=count===1?.22:((i/(count-1))*2-1)*spread,child=makeBall(theta+delta,true);
-      child.x=x;child.y=y;child.pursuitLeft=Math.max(0,splitLevel-1);child.guideAt=elapsed+.16;child.huntsLeft=hunterLevel+(branch==="split-b"?CFG.huntTurns:0);child.huntChild=branch==="split-b";
+      child.x=x;child.y=y;child.pursuitLeft=Math.max(0,splitLevel-1);child.guideAt=elapsed+.16;child.huntsLeft=hunterLevel+(branch==="split-b"?Build.effects(build).childTurns:0);child.huntChild=branch==="split-b";
       child.lastHitId=ball.lastHitId;child.lastHitLife=0;balls.push(child);made++;
     }
     if(made){splitBursts++;bonusVolleyBalls+=made;counters.splitChildren+=made;record("split",{count:made});playSfx("split");setState("场内裂变 · +"+made+"颗真实弹球");}
@@ -618,7 +658,7 @@
     arcCharge++;
     if(arcCharge<CFG.arcEvery[arcLevel]||elapsed-lastArcRelease<CFG.arcCooldown)return false;
     const start={x:origin.x+origin.w/2,y:origin.y+origin.h/2};
-    const branch=build.coreBranch,limit=branch==="arc-a"?3:CFG.arcTargets[arcLevel];
+    const branch=build.coreBranch,limit=branch==="arc-a"?Build.effects(build).arcTargets:CFG.arcTargets[arcLevel];
     let from=start;const chosen=[],used=new Set([origin.id]);
     if(branch!=="arc-b")for(let i=0;i<limit;i++){
       const anchor=branch==="arc-a"?from:start;
@@ -636,7 +676,7 @@
     if(origin.alive&&missing>0&&!chosen.includes(origin))chosen.push(origin);
     arcCharge=0;lastArcRelease=elapsed;from=start;
     for(const b of chosen){
-      const next={x:b.x+b.w/2,y:b.y+b.h/2},damage=b===origin?(branch==="arc-b"?CFG.focusDamage:CFG.bossArcDamage)+missing*arcLevel:CFG.arcDamage[arcLevel];
+      const next={x:b.x+b.w/2,y:b.y+b.h/2},damage=b===origin?(branch==="arc-b"?CFG.focusDamage+(build.ranks["arc-b"]>1?3:0):CFG.bossArcDamage)+missing*arcLevel:CFG.arcDamage[arcLevel];
       const before=b.hp;hitBrick(b,"lightning",null,damage);const taken=before-b.hp;lightningDamage+=taken;
       if(b===origin){counters.arcSingleDamage+=taken;focusDamage+=taken;}
       if(!reducedMotion){const first=single?{x:next.x-18,y:next.y-20}:from;lightningArcs.push({points:[first,next],age:0,duration:.20});if(lightningArcs.length>30)lightningArcs.shift();}
@@ -801,8 +841,8 @@
   function bossSpawn(){
     if(boss&&boss.alive)return false;
     // Wave-clear upgrading supplies fewer skills than the old XP model.
-    const hp=52+Math.floor(Math.max(0,wave-4)/4)*24+bossDefeats*6;
-    boss=brickAt(138,108,hp,{w:84,h:53,isBoss:true,color:"#ab66f5"});
+    const hp=isBossWave(wave)?128:52+Math.floor(Math.max(0,wave-4)/4)*24+bossDefeats*6;
+    const r=featuredRect();boss=brickAt(r.x,r.y,hp,{w:r.w,h:r.h,isBoss:true,color:"#ab66f5"});
     bricks.push(boss);bossSummonClock=0;bossSummonTotal=0;bossSupportXP=0;summonSignals=[];
     alertUntil=elapsed+2.5;setState("第 "+wave+" 波 · BOSS 核心已降临！");
     if(phase==="playing")playSfx("giant");return true;
@@ -997,7 +1037,7 @@
     if(!emptyLatch){
       waveElapsed+=dt;
       const liveBefore=livingCount();if(liveBefore>0){waveMetrics.longestNoBreak=Math.max(waveMetrics.longestNoBreak,waveElapsed-waveMetrics.lastBreak);if(liveBefore<=5)waveMetrics.tailSeconds+=dt;if(liveBefore===1&&boss)waveMetrics.bossSoloSeconds+=dt;}
-      const speed=Math.min(8.4,FALL_BASE+Math.max(0,wave-1)*.09)*(wave%WAVE_BOSS_EVERY===0?.9:1)*CFG.fallScale*waveFallMultiplier;
+      const speed=Math.min(8.4,FALL_BASE+Math.max(0,wave-1)*.09)*(isBossWave(wave)?.9:1)*CFG.fallScale*waveFallMultiplier;
       for(const brick of bricks)if(brick.alive)brick.y+=speed*dt;
       const danger=bricks.find(b=>b.alive&&b.y+b.h>=DANGER_Y);
       if(danger){
@@ -1150,6 +1190,12 @@
     for(const brick of bricks){
       if(!brick.alive) continue;
       ctx.save();
+      if(brick.isElite){
+        ctx.shadowColor="#ffb34d";ctx.shadowBlur=20;ctx.fillStyle="#694126";
+        rounded(brick.x,brick.y,brick.w,brick.h,10);ctx.fill();ctx.lineWidth=3;ctx.strokeStyle="#ffd18d";ctx.stroke();ctx.shadowBlur=0;
+        ctx.fillStyle="#fff2d7";ctx.textAlign="center";ctx.font="900 19px system-ui";
+        ctx.fillText(String(brick.hp),brick.x+brick.w/2,brick.y+brick.h/2+6);ctx.restore();continue;
+      }
       if(brick.isBoss){
         ctx.shadowColor="#bd76ff";ctx.shadowBlur=25;ctx.fillStyle="#613d92";
         rounded(brick.x,brick.y,brick.w,brick.h,12);ctx.fill();
