@@ -62,3 +62,7 @@ canvas{width:100%;height:100%;object-fit:contain}
 .auto-skill-label input{width:18px;height:18px;flex:0 0 auto;accent-color:#65e8db}
 .one-hand-tip{line-height:1.5;color:#add6e6}
 @media(orientation:landscape){.skill-guide{width:176px;bottom:calc(100% + 4px)}}
+
+/* Prevent bottom-left HUD copy from overlapping left-handed skill button. */
+.skill-left .combat-status{left:116px;right:12px;align-items:flex-end}
+.skill-left .combat-status #stateText{text-align:right}
