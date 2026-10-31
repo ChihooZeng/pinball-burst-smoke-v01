@@ -64,9 +64,9 @@
   }
   return preview(s,d.id).deltas.length>0;
  }).map(d=>d.id);}
- function seed(s,id){if(s.seedAbility||!has(id)||DEFS[id].role!=='core')return false;const before=effects(s),previous=copy(s);s.seedAbility=id;apply(s,id);const after=effects(s);s.choiceHistory.push({wave:0,id,kind:'seed',before,after,deltas:deltasFor(previous,id,s,before,after)});return true;}
- function choose(s,id,wave){if(!has(id)||!eligible(s,wave).includes(id))return false;const p=preview(s,id);apply(s,id);s.choiceHistory.push({wave,id,kind:'upgrade',...p});return true;}
- function offer(s,wave){const pool=eligible(s,wave),out=[],add=id=>{if(pool.includes(id)&&!out.includes(id))out.push(id);},pick=list=>list.length?list[Math.floor(random(s)*list.length)]:null;
+ function seed(s,id,wave=0){if(s.seedAbility||!has(id)||DEFS[id].role!=='core')return false;const before=effects(s),previous=copy(s);s.seedAbility=id;apply(s,id);const after=effects(s);s.choiceHistory.push({wave,id,kind:wave>0?'upgrade':'seed',before,after,deltas:deltasFor(previous,id,s,before,after)});return true;}
+ function choose(s,id,wave){if(!s.seedAbility)return wave>=1&&['split','arc','gun'].includes(id)?seed(s,id,wave):false;if(!has(id)||!eligible(s,wave).includes(id))return false;const p=preview(s,id);apply(s,id);s.choiceHistory.push({wave,id,kind:'upgrade',...p});return true;}
+ function offer(s,wave){if(!s.seedAbility)return ['split','arc','gun'];const pool=eligible(s,wave),out=[],add=id=>{if(pool.includes(id)&&!out.includes(id))out.push(id);},pick=list=>list.length?list[Math.floor(random(s)*list.length)]:null;
   const branches=pool.filter(id=>DEFS[id].role==='branch');if(branches.length)branches.forEach(add);else add(preferred(s));
   add(pick(pool.filter(id=>DEFS[id].role==='base')));
   if(out.length<3)add(pick(pool.filter(id=>['core','auxiliary'].includes(DEFS[id].role)&&!out.includes(id))));
