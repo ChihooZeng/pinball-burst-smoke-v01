@@ -903,6 +903,43 @@
     alertUntil=elapsed+2.5;setState("第 "+wave+" 波 · BOSS 核心已降临！");
     if(phase==="playing")playSfx("giant");return true;
   }
+
+  // Final encounter only: finite, telegraphed Boss-driven reinforcements.
+  // Ordinary waves remain whole-wave-clear with no mid-wave replenishment.
+  function queueFinaleStage(stage){
+    if(!isFinaleWave(wave)||!boss||!boss.alive||stage<=finaleStage||stage>3)return 0;
+    const previous=finaleStage;
+    finaleStage=stage;
+    const picks=[],cols=stage===2?[0,8,1,7,2,6]:[2,6,1,7,0,8];
+    const offsets=stage===2?[-88,-60,-30,14,43,72,101]:[-92,-66,-38,6,38,69,98];
+    let count=0;
+    for(const dy of offsets)for(const col of cols){
+      if(count>=15)break;
+      // Entry corridor is kept open below the Boss.
+      if(dy>=14&&col>=3&&col<=5)continue;
+      const x=12+col*BRICK_STEP_X,y=boss.y+dy;
+      if(y<SUMMON_SAFE_TOP||y+BRICK_H>DANGER_Y-85)continue;
+      if(!isSlotFree(x,y))continue;
+      const high=(col===1||col===7)&&(dy<45);
+      const hp=high?(stage===2?35:49)+Math.floor(hash01(wave,stage,col,Math.floor(dy)+410)*(stage===2?24:29)):
+        (stage===2?11:14)+Math.floor(hash01(wave,stage,col,Math.floor(dy)+411)*(stage===2?18:22));
+      const sig={bossId:boss.id,dx:x-boss.x,dy:y-boss.y,age:0,delay:FINALE_WARNING,
+        targetId:null,w:BRICK_W,h:BRICK_H,hp,finale:true,finaleStage:stage};
+      summonSignals.push(sig);count++;picks.push({col,dy,hp});
+    }
+    finaleWaveSpawns[stage]=count;
+    finaleDamageCheckpoints.push({stage,hp:boss.hp,elapsed:waveElapsed,count});
+    record("finale_stage",{from:previous,to:stage,bossHp:boss.hp,queued:count});
+    alertUntil=elapsed+3.2;
+    setState("终局第 "+stage+"/3 阶段 · 新砖阵预警 "+count+" 块");
+    playSfx("shock");
+    return count;
+  }
+  function updateFinaleStages(){
+    if(!isFinaleWave(wave)||!boss||!boss.alive||summonSignals.some(sig=>sig.finale))return;
+    if(finaleStage===1&&(boss.hp<=FINALE_HP*.70||waveElapsed>=24))queueFinaleStage(2);
+    else if(finaleStage===2&&(boss.hp<=FINALE_HP*.35||waveElapsed>=46))queueFinaleStage(3);
+  }
   function summonBossBricks(){
     if(!boss||!boss.alive||bossSummonTotal>=BOSS_SUPPORT_LIMIT_TOTAL)return 0;
     const supports=bricks.filter(b=>b.alive&&b.bossSupport&&b.bossId===boss.id);
@@ -947,13 +984,13 @@
       const x=boss.x+sig.dx,y=boss.y+sig.dy;
       let tile=sig.targetId?bricks.find(b=>b.alive&&b.id===sig.targetId):null;
       if(tile){
-        tile.bossSupport=true;tile.bossId=boss.id;tile.summonAge=0;tile.summonSource="boss";
+        tile.bossSupport=true;tile.bossId=boss.id;tile.summonAge=0;tile.summonSource=sig.finale?"finale":"boss";
       }else if(isSlotFree(x,y)){
         tile=brickAt(x,y,sig.hp,{bossSupport:true,bossId:boss.id,
-          color:brickColor(sig.hp,false),summonAge:0,summonSource:"boss"});
+          color:brickColor(sig.hp,false),summonAge:0,summonSource:sig.finale?"finale":"boss"});
         bricks.push(tile);
       }
-      if(tile)burst(tile.x+tile.w/2,tile.y+tile.h/2,"#8cceff",5);
+      if(tile){if(sig.finale)waveStartingTargets++;burst(tile.x+tile.w/2,tile.y+tile.h/2,sig.finale?"#ffd389":"#8cceff",sig.finale?9:5);}
     }
   }
   function ambientHp(tier,r,c,special,source){
@@ -1032,7 +1069,12 @@
     bossDefeats++;
     const x=boss.x+boss.w/2,y=boss.y+boss.h/2;
     for(const b of bricks)if(b.alive&&b.bossSupport&&b.bossId===boss.id){
-      b.alive=false;score++;burst(b.x+b.w/2,b.y+b.h/2,"#8bd9ff",9);
+      if(isFinaleWave(wave)){
+        // Final victory still requires genuine destruction of every physical brick.
+        b.bossSupport=false;b.bossId=null;
+      }else{
+        b.alive=false;score++;burst(b.x+b.w/2,b.y+b.h/2,"#8bd9ff",9);
+      }
     }
     burst(x,y,"#d3a2ff",50);juice.onSplash({x,y});shake=.18;
     boss=null;summonSignals=[];alertUntil=elapsed+3;
@@ -1118,7 +1160,7 @@
       }
       // Guidance changes trajectories only; HP is never silently reduced.
       const live=bricks.filter(b=>b.alive);
-      if(!live.length&&!boss&&(!isFinaleWave(wave)||finaleStage===3)&&!summonSignals.some(sig=>sig.finale)){
+      if(!live.length&&!boss&&!summonSignals.some(sig=>sig.finale)){
         // No projectiles or active giant may carry over into the next wave.
         // Pause combat at this boundary; only the wave-clear reward grants XP level.
         balls=[];giant=null;shootClock=0;
@@ -1217,7 +1259,7 @@
         const x=boss.x+sig.dx,y=boss.y+sig.dy;
         const t=sig.age/sig.delay,pulse=.5+.5*Math.sin(t*9.42);
         ctx.globalAlpha=reducedMotion?.5:.27+.53*pulse;
-        ctx.lineWidth=1.6;ctx.strokeStyle="#8fe9ff";ctx.shadowColor="#7dcfff";
+        ctx.lineWidth=1.6;ctx.strokeStyle=sig.finale?"#ffd18e":"#8fe9ff";ctx.shadowColor=sig.finale?"#ffc86a":"#7dcfff";
         ctx.shadowBlur=renderQuality==="full"?12:2;
         ctx.setLineDash([3,4]);rounded(x,y,sig.w||BRICK_W,sig.h||BRICK_H,4);ctx.stroke();
         ctx.setLineDash([]);ctx.beginPath();ctx.moveTo(x+4,y+(sig.h||BRICK_H)/2);ctx.lineTo(x+(sig.w||BRICK_W)-4,y+(sig.h||BRICK_H)/2);ctx.stroke();
@@ -1256,11 +1298,12 @@
         ctx.fillText(String(brick.hp),brick.x+brick.w/2,brick.y+brick.h/2+6);ctx.restore();continue;
       }
       if(brick.isBoss){
-        ctx.shadowColor="#bd76ff";ctx.shadowBlur=25;ctx.fillStyle="#613d92";
+        ctx.shadowColor=brick.isFinalBoss?"#ff9c73":"#bd76ff";ctx.shadowBlur=brick.isFinalBoss?31:25;ctx.fillStyle=brick.isFinalBoss?"#7c335a":"#613d92";
         rounded(brick.x,brick.y,brick.w,brick.h,12);ctx.fill();
-        ctx.lineWidth=3;ctx.strokeStyle="#d89cff";ctx.stroke();ctx.shadowBlur=0;
-        ctx.fillStyle="#f6e8ff";ctx.font="900 17px system-ui";ctx.textAlign="center";
+        ctx.lineWidth=3;ctx.strokeStyle=brick.isFinalBoss?"#ffd6aa":"#d89cff";ctx.stroke();ctx.shadowBlur=0;
+        ctx.fillStyle="#fff3df";ctx.font=brick.isFinalBoss?"900 23px system-ui":"900 17px system-ui";ctx.textAlign="center";
         ctx.fillText(String(brick.hp),brick.x+brick.w/2,brick.y+brick.h/2+6);
+        if(brick.isFinalBoss){ctx.font="bold 9px system-ui";ctx.fillStyle="#ffe5c5";ctx.fillText("FINAL BOSS · "+finaleStage+"/3",brick.x+brick.w/2,brick.y+17);}
         ctx.restore();continue;
       }
       if(brick.summonAge!==undefined&&brick.summonAge<.38&&!reducedMotion){
@@ -1486,7 +1529,7 @@
   function snapshot() {
     return {damageDealt,shotsWithContact,currentWaveMetrics:waveMetrics?{...waveMetrics,longestNoBreak:Math.max(waveMetrics.longestNoBreak,waveElapsed-waveMetrics.lastBreak)}:null,precisionTurns,focusDamage,gunBonusDamage,weakpointDamage,weakpointCharge,waveFallMultiplier,worldWidth:W,worldHeight:H,dangerY:DANGER_Y,shooterY:shooter.y,growthFocus:build.growthFocus,pausedFrom,battleTime,bankDamage,temporaryBuffs:build.temporaryBuffs.map(b=>({...b})),buildSummary:Build.summary(build),waveReports:waveReports.map(r=>({...r})),seed:build.seed,seedAbility:build.seedAbility,coreFocus:build.coreFocus,coreBranch:build.coreBranch,ranks:{...build.ranks},routeWeights:{...build.routeWeights},
       choiceHistory:build.choiceHistory.map(c=>({...c})),...counters,shotsByBuild:{...counters.shotsByBuild},collisionChecks,physicsMeanMs:physicsSteps?physicsCostMs/physicsSteps:0,maxPhysicsMs,
-      phase,wave,score,aim,interval:Build.tuning(build).interval,fpsNow,renderQuality,physicsHz:120,level,xp,xpGoal,choiceQueue,choiceSet:choiceSet.join(","),powerLevel,volleyLevel,rateLevel,speedLevel,lifeLevel,rowIndex,screenClears,waveElapsed,waveSpawnCount,waveStartingTargets,waveUpgrades,bossSummonTotal,clearWindowActive,nearClearClock,replenishClock,cleanupWindow,cleanupStarted,cleanupActivations,bridgeTimer,bridgeBursts,bridgeTiles,upperOnlyBridgeCount,zoneCounts:zoneCounts(),clearPreviewCount:clearPreview.length,clearPreviewShown,summonWarningCount:summonSignals.length,ambientSummonClock,ambientSummonBursts,ambientSummonTiles,ambientSummonWarningCount:ambientSignals.length,overlapSummonCount,clearBurstCount,clearBurstTiles,bossActive:!!(boss&&boss.alive),bossHp:boss?.hp||0,bossDefeats,brickCount:livingCount(),surgeActive:elapsed<surgeUntil,hunterLevel,ricochetLevel,
+      phase,wave,score,aim,interval:Build.tuning(build).interval,fpsNow,renderQuality,physicsHz:120,level,xp,xpGoal,choiceQueue,choiceSet:choiceSet.join(","),powerLevel,volleyLevel,rateLevel,speedLevel,lifeLevel,rowIndex,screenClears,waveElapsed,waveSpawnCount,waveStartingTargets,waveUpgrades,bossSummonTotal,finaleStage,finaleWaveSpawns:[...finaleWaveSpawns],finaleDamageCheckpoints:[...finaleDamageCheckpoints],clearWindowActive,nearClearClock,replenishClock,cleanupWindow,cleanupStarted,cleanupActivations,bridgeTimer,bridgeBursts,bridgeTiles,upperOnlyBridgeCount,zoneCounts:zoneCounts(),clearPreviewCount:clearPreview.length,clearPreviewShown,summonWarningCount:summonSignals.length,ambientSummonClock,ambientSummonBursts,ambientSummonTiles,ambientSummonWarningCount:ambientSignals.length,overlapSummonCount,clearBurstCount,clearBurstTiles,bossActive:!!(boss&&boss.alive),bossHp:boss?.hp||0,bossDefeats,brickCount:livingCount(),surgeActive:elapsed<surgeUntil,hunterLevel,ricochetLevel,
       charge,activeBalls:balls.length,giantActive:!!giant,skillsUsed,ricochetTriggers,elapsed,
       splitLevel,shockLevel,drillLevel,arcLevel,powerShots,shotsFired,brickContacts,shotMaxContacts,splitBursts,chainBursts,giantRebounds,
       giantBrickRebounds,giantWallRebounds,giantTotalHits,
@@ -1563,6 +1606,8 @@
       reset,begin,jumpToBoss10,addRow,bossSpawn,summonBossBricks,generateSurvival,addExperience,offerChoice,chooseUpgrade,
       createWavePlan,spawnWave,planClearBurst,
       spawnClearBurst,
+      queueFinaleStage,updateFinaleStages,
+      finaleDetails(){return {stage:finaleStage,spawns:[...finaleWaveSpawns],checkpoints:[...finaleDamageCheckpoints],pending:summonSignals.filter(x=>x.finale).length};},
       colorForHp:hp=>brickColor(hp,false),skillStage,
       chooseIndex(index){return chooseUpgrade(choiceSet[index]);},
       forceSurvivalTime(t){elapsed=t;},
