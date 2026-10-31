@@ -37,7 +37,8 @@
 
   const BOSS_INTERVAL=110, SURGE_INTERVAL=75, FALL_BASE=6.8, MAX_BRICKS=168;
   const START_ROWS=6, SPAWN_INTERVAL=3.5, PHYSICS_DT=1/120, MAX_FRAME_STEPS=6;
-  const AMBIENT_SUMMON_INTERVAL=8.4, SUMMON_SAFE_TOP=48, SUMMON_SAFE_BOTTOM=DANGER_Y-88;
+  const AMBIENT_SUMMON_INTERVAL=8.4, SUMMON_SAFE_TOP=48;
+  let SUMMON_SAFE_BOTTOM=DANGER_Y-88;
   const UPPER_LIMIT=175, LOWER_START=275, BRIDGE_BOTTOM=335;
   const BRIDGE_WARNING=1.0, BOSS_WARNING=1.0, CLEAR_CELEBRATE=.60, CLEAR_WARNING=.90, CLEAR_GRACE=2.1;
   const WAVE_ROWS_COUNT=9, WAVE_ROW_GAP=28, WAVE_BOSS_EVERY=10;
@@ -418,7 +419,7 @@
   }
   function reset(){
     H=Math.round(Math.max(560,Math.min(900,360*(window.innerHeight||560)/(window.innerWidth||360))));
-    DANGER_Y=H-105;canvas.height=H;shooter.y=H-37;
+    DANGER_Y=H-105;SUMMON_SAFE_BOTTOM=DANGER_Y-88;canvas.height=H;shooter.y=H-37;
     WAVE_START_Y=window.innerWidth?Math.max(84,Math.ceil((document.querySelector(".topbar").getBoundingClientRect().height+28)*W/window.innerWidth)):84;
     pausedFrom=null;battleTime=0;waveReports=[];bankDamage=0;lockBackground(false);$("pauseOverlay").classList.add("hidden");
     gunTarget=null;gunStreak=0;gunLast=-99;precisionTurns=focusDamage=gunBonusDamage=weakpointDamage=weakpointCharge=damageDealt=shotsWithContact=0;build=Build.createState(initialSeed===null?Math.floor(Math.random()*4294967296):initialSeed);events=[];arcCharge=0;lastArcRelease=-99;fanClock=0;gunFlash=0;
