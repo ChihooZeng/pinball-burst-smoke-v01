@@ -1061,7 +1061,7 @@
     if(choiceQueue>0)offerChoice();
     const message=$("finalRushLabel");
     if(elapsed<alertUntil){message.classList.add("active");message.textContent=emptyLatch?"PERFECT CLEAR · 第 "+wave+" 波清屏":boss&&boss.alive?"BOSS · 第 "+wave+" 波":"WAVE "+wave;}
-    else if(boss&&boss.alive&&livingCount()===1&&waveElapsed%6>=4){message.classList.add("active");message.textContent="核心弱点 · 直接撞击 +1";}
+    else if(boss&&boss.alive&&livingCount()===1&&waveElapsed%6>=4){message.classList.add("active");message.textContent="核心弱点 · 命中额外充能 +4";}
     else if(livingCount()>0&&livingCount()<=5&&waveElapsed>12){message.classList.add("active");message.textContent="残局追击 · 精准弹道";}
     else message.classList.remove("active");
     uiClock+=dt;
