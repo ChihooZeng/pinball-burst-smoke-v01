@@ -335,7 +335,7 @@
         const x=12+col*BRICK_STEP_X,y=WAVE_START_Y+row*WAVE_ROW_GAP;
         if(bossWave&&rectanglesOverlap({x,y,w:BRICK_W,h:BRICK_H},{x:138,y:108,w:84,h:53},5))continue;
         const special=(n*13+row*5+col)%23===0;
-        let hp=brickHP(tier,n*11+row,col,special);
+        let hp=brickHP(n>10?n:tier,n*11+row,col,special);
         if(n<=10&&row>=WAVE_ROWS_COUNT-2){
           // Most lower tiles are easy breaks, but 25% act as durable bounce
           // anchors. They must never form a thick deadly wall.
