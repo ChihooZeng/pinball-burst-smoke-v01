@@ -41,8 +41,8 @@
   let SUMMON_SAFE_BOTTOM=DANGER_Y-88;
   const UPPER_LIMIT=175, LOWER_START=275, BRIDGE_BOTTOM=335;
   const BRIDGE_WARNING=1.0, BOSS_WARNING=1.0, CLEAR_CELEBRATE=.60, CLEAR_WARNING=.90, CLEAR_GRACE=2.1;
-  const WAVE_ROWS_COUNT=9, WAVE_ROW_GAP=33, WAVE_BOSS_EVERY=10;
-  const BOSS_SUPPORT_LIMIT_TOTAL=12, BOSS_SUPPORT_INTERVAL=7.0;
+  const WAVE_ROWS_COUNT=9, WAVE_ROW_GAP=31, WAVE_BOSS_EVERY=10;
+  const BOSS_SUPPORT_LIMIT_TOTAL=23, BOSS_SUPPORT_INTERVAL=4.6;
   const WAVE_ROWS=[8,9,10,11,9,10,11,10,11,11,9,10,11,10,11,11,10,11,10,11];
   const isBossWave=n=>n===10||n===20,isEliteWave=n=>n===5,isFinaleWave=n=>n===20;
   const featuredRect=()=>({x:138,y:WAVE_START_Y+58,w:84,h:53});
@@ -69,7 +69,7 @@
   const GIANT_SPEED = 610, GIANT_LIFETIME = 5, GIANT_MAX_BOUNCES = 80;
   const GIANT_PIERCE_HP=5, GIANT_HEAVY_DAMAGE=3, GIANT_PIERCE_LIMIT=10;
   const BASE_ARMOR_DAMAGE=1, POWER_ARMOR_DAMAGE=3;
-  const SHOT_RADIUS = 3.45, BRICK_COLUMNS = 9, BRICK_W = 29, BRICK_H = 22, BRICK_STEP_X = 38.5, BRICK_STEP_Y = 35;
+  const SHOT_RADIUS = 3.45, SHOT_HIT_RADIUS = 2.7, BRICK_COLUMNS = 9, BRICK_W = 29, BRICK_H = 22, BRICK_STEP_X = 38.5, BRICK_STEP_Y = 33;
   const FINAL_RUSH_THRESHOLD=8;
   // 30% -> 15% -> last eight bricks. These are experimental thresholds.
   const ELECTRIC_AWAKEN_RATIO=.30,ELECTRIC_BUILD_RATIO=.15;
@@ -645,7 +645,7 @@
   }
   function makeBall(angle,mini=false){
     const t=Build.tuning(build),buffSpeed=Build.buffModifiers(build).speed,speed=t.speed*buffSpeed;
-    return {x:shooter.x,y:shooter.y-28,vx:Math.sin(angle)*speed,vy:-Math.cos(angle)*speed,r:mini?SHOT_RADIUS*.83:SHOT_RADIUS,
+    return {x:shooter.x,y:shooter.y-28,vx:Math.sin(angle)*speed,vy:-Math.cos(angle)*speed,r:mini?SHOT_HIT_RADIUS*.83:SHOT_HIT_RADIUS,visualR:mini?SHOT_RADIUS*.83:SHOT_RADIUS,
       life:0,maxLife:mini?Math.min(CFG.childTTL,t.ttl):t.ttl,trail:[],contacts:0,mini,splitDone:false,drill:false,
       drillLeft:0,chargeStacks:0,huntsLeft:hunterLevel,damage:t.damage,
       buffSpeed,lastHitId:null,lastHitLife:-99,lastArcAt:-99};
@@ -695,7 +695,7 @@
     if(build.coreBranch==="gun-a")offset=(shotNumber%2?1:-1)*.012;
     if(build.coreBranch==="gun-b")offset=Math.sin(fanClock*Math.PI*2/CFG.fanPeriod)*CFG.fanAngle;
     lastShotAngle=aim+offset;const shot=makeBall(lastShotAngle);
-    if(drillLevel>0&&shotNumber%(drillLevel===1?4:3)===0){shot.drill=true;shot.drillLeft=drillLevel===1?3:5;shot.r=SHOT_RADIUS*1.35;powerShots++;playSfx("drill");}
+    if(drillLevel>0&&shotNumber%(drillLevel===1?4:3)===0){shot.drill=true;shot.drillLeft=drillLevel===1?3:5;shot.r=SHOT_HIT_RADIUS*1.35;shot.visualR=SHOT_RADIUS*1.35;powerShots++;playSfx("drill");}
     balls.push(shot);gunFlash=.07;counters.shotsByBuild[Build.preferred(build)||'base']++;
     counters.maxBallsAlive=Math.max(counters.maxBallsAlive,balls.length);
     record("shot",{angle:+(aim+offset).toFixed(5),ttl:shot.maxLife,interval:t.interval});beep(245,.045,.011);return true;
@@ -971,7 +971,7 @@
     const offsets=stage===2?[-88,-60,-30,14,43,72,101]:[-92,-66,-38,6,38,69,98];
     let count=0;
     for(const dy of offsets)for(const col of cols){
-      if(count>=15)break;
+      if(count>=18)break;
       // Entry corridor is kept open below the Boss.
       if(dy>=14&&col>=3&&col<=5)continue;
       const x=12+col*BRICK_STEP_X,y=boss.y+dy;
@@ -986,11 +986,11 @@
     }
     // A full armored field can block the side-flank slots. Keep a small
     // reserve of safe *upper* positions so stage 3 still creates real targets.
-    if(count<10){
+    if(count<13){
       const rows=[SUMMON_SAFE_TOP+8,SUMMON_SAFE_TOP+36,SUMMON_SAFE_TOP+64,boss.y-125,boss.y-98];
       const fallbackCols=stage===2?[0,2,4,6,8,1,7,3,5]:[1,3,5,7,0,8,2,6,4];
       for(const y of rows)for(const col of fallbackCols){
-        if(count>=12)break;
+        if(count>=16)break;
         const x=12+col*BRICK_STEP_X;
         if(y+BRICK_H>Math.min(SUMMON_SAFE_BOTTOM,DANGER_Y-85))continue;
         if(!isSlotFree(x,y))continue;
@@ -1014,37 +1014,43 @@
     if(finaleStage===1&&(boss.hp<=FINALE_HP*.70||waveElapsed>=24))queueFinaleStage(2);
     else if(finaleStage===2&&(boss.hp<=FINALE_HP*.35||waveElapsed>=46))queueFinaleStage(3);
   }
+  // Boss 10 has finite, *real* reinforcement bricks. No converted old bricks:
+  // the player must see physical new targets instead of a support marker.
   function summonBossBricks(){
-    if(!boss||!boss.alive||bossSummonTotal>=BOSS_SUPPORT_LIMIT_TOTAL)return 0;
+    if(!boss||!boss.alive||isFinaleWave(wave)||bossSummonTotal>=BOSS_SUPPORT_LIMIT_TOTAL)return 0;
     const supports=bricks.filter(b=>b.alive&&b.bossSupport&&b.bossId===boss.id);
     const pending=summonSignals.filter(sig=>sig.bossId===boss.id);
-    const summonCount=Math.min(4,2+Math.floor(level/5));
-    const supportCap=Math.min(14,8+Math.floor(level/3)+bossDefeats);
-    // Fill free grid columns on either side of the core, or recruit existing
-    // ordinary tiles instead of stacking solids in the same collision space.
-    const rows=[-60,-30,0,30,60,90],cols=[0,1,2,6,7,8];
-    let queued=0;
-    for(let j=0;j<rows.length*cols.length&&queued<summonCount&&
-      supports.length+pending.length+queued<supportCap;j++){
-      const index=(j+Math.floor(elapsed/5)*3)%(rows.length*cols.length);
-      const col=cols[index%cols.length],ry=rows[Math.floor(index/cols.length)];
-      const x=12+col*BRICK_STEP_X,y=boss.y+ry;
+    const aliveCap=16,perBurst=4;
+    const count=Math.min(perBurst,BOSS_SUPPORT_LIMIT_TOTAL-bossSummonTotal,
+      aliveCap-supports.length-pending.length,MAX_BRICKS-livingCount()-pending.length);
+    if(count<=0)return 0;
+    // Top and wings; the center/bottom lane stays clear for authentic ricochets.
+    const rows=[-90,-60,-30,0,30,60,90,120],cols=[0,8,1,7,2,6,3,5,4];
+    const slots=[];
+    for(let ri=0;ri<rows.length;ri++)for(let ci=0;ci<cols.length;ci++){
+      const dy=rows[ri],col=cols[ci];
+      if(dy>=0&&col>=3&&col<=5)continue;
+      const x=12+col*BRICK_STEP_X,y=boss.y+dy;
       if(y<SUMMON_SAFE_TOP||y+BRICK_H>SUMMON_SAFE_BOTTOM)continue;
-      const existing=bricks.find(t=>t.alive&&!t.isBoss&&!t.bossSupport&&
-        Math.abs(t.x-x)<BRICK_W/2&&Math.abs(t.y-y)<BRICK_H/2);
-      if(existing){
-        if(summonSignals.some(sig=>sig.targetId===existing.id))continue;
-        summonSignals.push({bossId:boss.id,dx:existing.x-boss.x,dy:existing.y-boss.y,
-          age:0,delay:BOSS_WARNING,targetId:existing.id,w:BRICK_W,h:BRICK_H,hp:existing.hp});
-        queued++;
-      }else if(isSlotFree(x,y)){
-        summonSignals.push({bossId:boss.id,dx:x-boss.x,dy:y-boss.y,
-          age:0,delay:BOSS_WARNING,targetId:null,w:BRICK_W,h:BRICK_H,
-          hp:2+Math.floor(hash01(boss.id,Math.floor(elapsed/5),j)*7)});
-        queued++;
-      }
+      if(!isSlotFree(x,y))continue;
+      slots.push({x,y,dy,col,weight:hash01(boss.id,Math.floor(waveElapsed/4.6),ri*11+ci)});
     }
-    if(queued){bossSummonTotal+=queued;setState("Boss 召唤 · 有限辅助砖正在凝聚");}
+    // Prefer nearer wings but rotate selections so each burst changes the shape.
+    slots.sort((u,v)=>u.weight-v.weight);
+    let queued=0;
+    for(const loc of slots){
+      if(queued>=count)break;
+      if(!isSlotFree(loc.x,loc.y))continue;
+      const hp=8+Math.floor(hash01(boss.id,bossSummonTotal+queued,loc.col,19)*13);
+      summonSignals.push({bossId:boss.id,dx:loc.x-boss.x,dy:loc.y-boss.y,
+        age:0,delay:BOSS_WARNING,targetId:null,w:BRICK_W,h:BRICK_H,hp});
+      queued++;
+    }
+    if(queued){
+      bossSummonTotal+=queued;
+      record("boss_summon",{wave,batch:queued,total:bossSummonTotal});
+      setState("Boss 增援 · "+queued+"块新砖预警 · 保护弹射入口");
+    }
     return queued;
   }
   function updateSummonSignals(dt){
@@ -1210,8 +1216,9 @@
       waveElapsed+=dt;
       const liveBefore=livingCount();if(liveBefore>0){waveMetrics.longestNoBreak=Math.max(waveMetrics.longestNoBreak,waveElapsed-waveMetrics.lastBreak);if(liveBefore<=5)waveMetrics.tailSeconds+=dt;if(liveBefore===1&&boss)waveMetrics.bossSoloSeconds+=dt;}
       const latePressure=wave>=11&&wave<=19?1+(wave-10)*.022:1;
-      const finalePressure=isFinaleWave(wave)?.24+.08*(finaleStage-1):1;
-      const speed=Math.min(8.4,FALL_BASE+Math.max(0,wave-1)*.09)*(isBossWave(wave)?.9:1)*CFG.fallScale*waveFallMultiplier*latePressure*finalePressure;
+      const finalePressure=isFinaleWave(wave)?.29+.09*(finaleStage-1):1;
+      const bossPressure=wave===10?1.04:isFinaleWave(wave)?.9:1;
+      const speed=Math.min(8.4,FALL_BASE+Math.max(0,wave-1)*.09)*bossPressure*CFG.fallScale*waveFallMultiplier*latePressure*finalePressure;
       for(const brick of bricks)if(brick.alive)brick.y+=speed*dt;
       const danger=bricks.find(b=>b.alive&&b.y+b.h>=DANGER_Y);
       if(danger){
@@ -1448,10 +1455,10 @@
     }
     for(const b of balls){
       b.trail.forEach((p,i)=>{const t=1-i/b.trail.length;ctx.fillStyle="rgba(139,224,250,"+(.18*t)+")";
-        ctx.beginPath();ctx.arc(p.x,p.y,Math.max(1,b.r*t*.7),0,Math.PI*2);ctx.fill();});
+        ctx.beginPath();ctx.arc(p.x,p.y,Math.max(1,(b.visualR||b.r)*t*.7),0,Math.PI*2);ctx.fill();});
       ctx.shadowColor=b.drill?"#ffb05d":b.chargeStacks?"#fced83":b.mini?"#c39fff":"#b9f2ff";
       ctx.shadowBlur=b.drill?18:11;ctx.fillStyle=b.drill?"#ffcc67":b.chargeStacks?"#fff5b0":b.mini?"#dbbaff":"#edfaff";
-      ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
+      ctx.beginPath();ctx.arc(b.x,b.y,b.visualR||b.r,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
     }
     if(giant){
       ctx.save();ctx.strokeStyle="#ffe1a36b";ctx.lineWidth=23;ctx.lineCap="round";
@@ -1627,7 +1634,7 @@
       waveTotal,waveRows:WAVE_ROWS[wave-1],waveCount:MAX_WAVES,
       electricAwakenAt:Math.ceil(waveTotal*.30),electricBuildAt:Math.ceil(waveTotal*.15),
       giantHits:giant?.collisions||0,giantBounces:giant?.bounces||0,
-      combo,maxCombo,hitCount,shotRadius:SHOT_RADIUS,shotSpeed:BALL_SPEED,brickWidth:BRICK_W,brickHeight:BRICK_H,
+      combo,maxCombo,hitCount,shotRadius:SHOT_RADIUS,shotCollisionRadius:SHOT_HIT_RADIUS,shotSpeed:BALL_SPEED,brickWidth:BRICK_W,brickHeight:BRICK_H,
       brickPitchX:BRICK_STEP_X,brickPitchY:BRICK_STEP_Y,
       fxRings:impactRings.length,fxText:floatTexts.length,fxParticles:particles.length,
       visualImpact:juice.snapshot()};
