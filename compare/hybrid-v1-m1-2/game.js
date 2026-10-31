@@ -5,7 +5,8 @@
   let H = 560, DANGER_Y=455, WAVE_START_Y=84;
   let pausedFrom=null, focusBeforePause=null, battleTime=0, waveMetrics=null, waveReports=[], bankDamage=0;
   let gunTarget=null,gunStreak=0,gunLast=-99;
-  let precisionTurns=0,focusDamage=0,gunBonusDamage=0,weakpointDamage=0,damageDealt=0,shotsWithContact=0;
+  let precisionTurns=0,focusDamage=0,gunBonusDamage=0,weakpointDamage=0,weakpointCharge=0,damageDealt=0,shotsWithContact=0;
+  let waveFallMultiplier=1;
   let build,events=[],counters,arcCharge=0,lastArcRelease=-99,fanClock=0,gunFlash=0,lastShotAngle=0;
   let collisionChecks=0,physicsCostMs=0,physicsSteps=0,maxPhysicsMs=0;
   const initialSeed=Number.isFinite(window.__PINBALL_SEED__)?window.__PINBALL_SEED__>>>0:null;
@@ -283,8 +284,8 @@
         // A couple of clean ricochet channels amid a large wall of targets.
         if(row===WAVE_ROWS_COUNT-1&&(col===2||col===6))continue;
         if(row===WAVE_ROWS_COUNT-2&&col===4)continue;
-        if(bossWave&&row>=2&&row<=4&&col>=3&&col<=5)continue;
         const x=12+col*BRICK_STEP_X,y=WAVE_START_Y+row*WAVE_ROW_GAP;
+        if(bossWave&&rectanglesOverlap({x,y,w:BRICK_W,h:BRICK_H},{x:138,y:108,w:84,h:53},5))continue;
         const special=(n*13+row*5+col)%23===0;
         let hp=brickHP(tier,n*11+row,col,special);
         if(row>=WAVE_ROWS_COUNT-2){
@@ -310,6 +311,12 @@
     for(const tile of tiles)bricks.push(brickAt(tile.x,tile.y,tile.hp,
       {special:tile.special,summonAge:0,summonSource:"wave"}));
     if(n%WAVE_BOSS_EVERY===0)bossSpawn();
+    // Height compensation: preserve danger-line pressure across tall phone worlds.
+    const bottom=Math.max(...bricks.map(b=>b.y+b.h));
+    const referenceGap=455-(84+(WAVE_ROWS_COUNT-1)*WAVE_ROW_GAP+BRICK_H);
+    const gap=Math.max(0,DANGER_Y-bottom);
+    waveFallMultiplier=Math.max(1,Math.min(3.2,1+Math.max(0,gap/referenceGap-1)*.70));
+    record("wave_pressure",{wave:n,fallMultiplier:+waveFallMultiplier.toFixed(3),gap:+gap.toFixed(1)});
     waveStartingTargets=livingCount();
     clearPreview=[];clearPreviewShown=false;clearWindowActive=false;
     waveSpawnCount++;clearBurstCount=Math.max(0,n-1);clearBurstTiles=tiles.length;
@@ -326,7 +333,7 @@
     DANGER_Y=H-105;canvas.height=H;shooter.y=H-37;
     WAVE_START_Y=window.innerWidth?Math.max(84,Math.ceil((document.querySelector(".topbar").getBoundingClientRect().height+28)*W/window.innerWidth)):84;
     pausedFrom=null;battleTime=0;waveReports=[];bankDamage=0;lockBackground(false);$("pauseOverlay").classList.add("hidden");
-    gunTarget=null;gunStreak=0;gunLast=-99;precisionTurns=focusDamage=gunBonusDamage=weakpointDamage=damageDealt=shotsWithContact=0;build=Build.createState(initialSeed===null?Math.floor(Math.random()*4294967296):initialSeed);events=[];arcCharge=0;lastArcRelease=-99;fanClock=0;gunFlash=0;
+    gunTarget=null;gunStreak=0;gunLast=-99;precisionTurns=focusDamage=gunBonusDamage=weakpointDamage=weakpointCharge=damageDealt=shotsWithContact=0;build=Build.createState(initialSeed===null?Math.floor(Math.random()*4294967296):initialSeed);events=[];arcCharge=0;lastArcRelease=-99;fanClock=0;gunFlash=0;
     counters={splitChildren:0,arcReleases:0,arcSingleDamage:0,budgetReclaims:0,suppressedShots:0,suppressedChildren:0,maxBallsAlive:0,wallBounces:0,shotsByBuild:{split:0,arc:0,gun:0}};
     collisionChecks=0;physicsCostMs=0;physicsSteps=0;maxPhysicsMs=0;
     wave=1;score=0;phase="ready";charge=0;elapsed=0;level=1;xp=0;xpGoal=34;
@@ -623,18 +630,21 @@
   function directContact(block,ball,incoming=null){
     if(!block.alive)return false;
     if(!ball.mini&&!ball.contacted){ball.contacted=true;shotsWithContact++;}
-    const bonus=Build.buffModifiers(build).damage;
+    const bonus=0; // Timed special-brick buffs cannot raise direct hit damage.
     let pressure=0;
     const gunRank=Build.effectiveRank(build,"gun");
     if(!ball.mini&&gunRank>1&&Build.preferred(build)==="gun"){
       gunStreak=gunTarget===block.id&&elapsed-gunLast<=2?gunStreak+1:1;gunTarget=block.id;gunLast=elapsed;
       pressure=Math.min(gunRank-1,Math.floor((gunStreak-1)/3));
     }
-    const weak=block.isBoss&&livingCount()===1&&waveElapsed%6>=4?1:0;
-    gunBonusDamage+=Math.min(pressure,Math.max(0,block.hp-1));weakpointDamage+=weak;
-    const damage=pressure+weak+(ball.damage||Build.tuning(build).damage)+bonus+(ball.drill?drillLevel+1:0)+ball.chargeStacks;
+    const weak=block.isBoss&&livingCount()===1&&waveElapsed%6>=4;
+    if(weak){addCharge(4);weakpointCharge+=4;} // Boss weakpoint grants extra charge, not +1 hidden damage.
+    gunBonusDamage+=Math.min(pressure,Math.max(0,block.hp-1));
+    const damage=pressure+(ball.damage||Build.tuning(build).damage)+bonus+(ball.drill?drillLevel+1:0)+ball.chargeStacks;
     bankDamage+=Math.min(ball.chargeStacks,Math.max(0,block.hp-(damage-ball.chargeStacks)));
+    const hpBefore=block.hp;
     const destroyed=hitBrick(block,ball.drill?"drill":"normal",incoming,damage);
+    record("direct_hit",{target:block.id,before:hpBefore,after:block.hp,base:ball.damage||Build.tuning(build).damage,gunPressure:pressure,drill:ball.drill?drillLevel+1:0,wallCharge:ball.chargeStacks,bossWeakpointEnergy:weak?4:0});
     ball.contacts++;brickContacts++;shotMaxContacts=Math.max(shotMaxContacts,ball.contacts);
     ball.chargeStacks=0;splitAt(ball,ball.x,ball.y);triggerLightning(block,ball);return destroyed;
   }
@@ -969,7 +979,7 @@
     if(!emptyLatch){
       waveElapsed+=dt;
       const liveBefore=livingCount();if(liveBefore>0){waveMetrics.longestNoBreak=Math.max(waveMetrics.longestNoBreak,waveElapsed-waveMetrics.lastBreak);if(liveBefore<=5)waveMetrics.tailSeconds+=dt;if(liveBefore===1&&boss)waveMetrics.bossSoloSeconds+=dt;}
-      const speed=Math.min(8.4,FALL_BASE+Math.max(0,wave-1)*.09)*(wave%WAVE_BOSS_EVERY===0?.9:1)*CFG.fallScale;
+      const speed=Math.min(8.4,FALL_BASE+Math.max(0,wave-1)*.09)*(wave%WAVE_BOSS_EVERY===0?.9:1)*CFG.fallScale*waveFallMultiplier;
       for(const brick of bricks)if(brick.alive)brick.y+=speed*dt;
       const danger=bricks.find(b=>b.alive&&b.y+b.h>=DANGER_Y);
       if(danger){
@@ -1031,7 +1041,7 @@
     if(phase!=="playing")return;
     if(!emptyLatch){
       fanClock+=dt;gunFlash=Math.max(0,gunFlash-dt);
-      const fireInterval=Build.tuning(build).interval;
+      const fireInterval=Build.tuning(build).interval/Build.buffModifiers(build).rate;
       if(shootClock>=fireInterval){shootClock-=fireInterval;fire();}
       const currentBalls=balls.slice(),kept=currentBalls.filter(b=>updateBall(b,dt));
       const newborn=balls.filter(b=>!currentBalls.includes(b));balls=kept.concat(newborn).slice(0,MAX_BALLS);
@@ -1258,7 +1268,7 @@
   function renderBuildPanel(){
     const q=Build.summary(build),t=q.stats,m=q.modifiers;
     $("pauseSubtitle").textContent="第 "+wave+" / 10 波 · "+(q.focus?Build.DEFS[q.focus].name:"自由方向")+(q.branch?" · "+Build.DEFS[q.branch].name:"");
-    $("buildStats").textContent="撞击伤害 "+t.damage+(m.damage?" + "+m.damage+" 临时":"")+"   射速 "+(1/t.interval).toFixed(2)+"发/秒\n球速 "+(t.speed*m.speed).toFixed(0)+"   留场 "+t.ttl.toFixed(1)+"秒   场上 "+balls.length+" / "+MAX_BALLS+"球";
+    $("buildStats").textContent="普通球伤害 "+t.damage+"   当前射速 "+(m.rate/t.interval).toFixed(2)+"发/秒\n球速 "+(t.speed*m.speed).toFixed(0)+"   留场 "+t.ttl.toFixed(1)+"秒   场上 "+balls.length+" / "+MAX_BALLS+"球";
     $("buildSkills").textContent=q.skills.map(k=>k.name+" · R"+k.rank+"\n"+k.effect).join("\n\n");
     const last=q.history.at(-1);
     $("lastUpgrade").textContent=last?Build.DEFS[last.id].name+"\n"+last.deltas.map(d=>d.text).join("；")+"\n伤害 "+last.before.damage+" → "+last.after.damage+"；射速 "+(1/last.before.interval).toFixed(2)+" → "+(1/last.after.interval).toFixed(2)+"发/秒":"尚未升级";
@@ -1346,7 +1356,7 @@
     draw();requestAnimationFrame(frame);
   }
   function snapshot() {
-    return {damageDealt,shotsWithContact,currentWaveMetrics:waveMetrics?{...waveMetrics,longestNoBreak:Math.max(waveMetrics.longestNoBreak,waveElapsed-waveMetrics.lastBreak)}:null,precisionTurns,focusDamage,gunBonusDamage,weakpointDamage,worldWidth:W,worldHeight:H,dangerY:DANGER_Y,shooterY:shooter.y,growthFocus:build.growthFocus,pausedFrom,battleTime,bankDamage,temporaryBuffs:build.temporaryBuffs.map(b=>({...b})),buildSummary:Build.summary(build),waveReports:waveReports.map(r=>({...r})),seed:build.seed,seedAbility:build.seedAbility,coreFocus:build.coreFocus,coreBranch:build.coreBranch,ranks:{...build.ranks},routeWeights:{...build.routeWeights},
+    return {damageDealt,shotsWithContact,currentWaveMetrics:waveMetrics?{...waveMetrics,longestNoBreak:Math.max(waveMetrics.longestNoBreak,waveElapsed-waveMetrics.lastBreak)}:null,precisionTurns,focusDamage,gunBonusDamage,weakpointDamage,weakpointCharge,waveFallMultiplier,worldWidth:W,worldHeight:H,dangerY:DANGER_Y,shooterY:shooter.y,growthFocus:build.growthFocus,pausedFrom,battleTime,bankDamage,temporaryBuffs:build.temporaryBuffs.map(b=>({...b})),buildSummary:Build.summary(build),waveReports:waveReports.map(r=>({...r})),seed:build.seed,seedAbility:build.seedAbility,coreFocus:build.coreFocus,coreBranch:build.coreBranch,ranks:{...build.ranks},routeWeights:{...build.routeWeights},
       choiceHistory:build.choiceHistory.map(c=>({...c})),...counters,shotsByBuild:{...counters.shotsByBuild},collisionChecks,physicsMeanMs:physicsSteps?physicsCostMs/physicsSteps:0,maxPhysicsMs,
       phase,wave,score,aim,interval:Build.tuning(build).interval,fpsNow,renderQuality,physicsHz:120,level,xp,xpGoal,choiceQueue,choiceSet:choiceSet.join(","),powerLevel,volleyLevel,rateLevel,speedLevel,lifeLevel,rowIndex,screenClears,waveElapsed,waveSpawnCount,waveStartingTargets,waveUpgrades,bossSummonTotal,clearWindowActive,nearClearClock,replenishClock,cleanupWindow,cleanupStarted,cleanupActivations,bridgeTimer,bridgeBursts,bridgeTiles,upperOnlyBridgeCount,zoneCounts:zoneCounts(),clearPreviewCount:clearPreview.length,clearPreviewShown,summonWarningCount:summonSignals.length,ambientSummonClock,ambientSummonBursts,ambientSummonTiles,ambientSummonWarningCount:ambientSignals.length,overlapSummonCount,clearBurstCount,clearBurstTiles,bossActive:!!(boss&&boss.alive),bossHp:boss?.hp||0,bossDefeats,brickCount:livingCount(),surgeActive:elapsed<surgeUntil,hunterLevel,ricochetLevel,
       charge,activeBalls:balls.length,giantActive:!!giant,skillsUsed,ricochetTriggers,elapsed,
