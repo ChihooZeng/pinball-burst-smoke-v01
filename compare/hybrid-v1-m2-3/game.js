@@ -1041,6 +1041,9 @@
       const y=rows[ri],x=12+col*BRICK_STEP_X;
       if(y>=boss.y-12&&col>=3&&col<=5)continue; // preserve bottom firing lane
       if(y>boss.y+boss.h+105&&col>=2&&col<=6)continue; // never spawn a bottom gate
+      // Fresh reinforcements need meaningful travel time before the danger line;
+      // the entire formation still descends at full Boss speed.
+      if(y+BRICK_H>DANGER_Y-134)continue;
       if(!isSlotFree(x,y))continue;
       const band=y<boss.y-20?0:y<boss.y+boss.h+32?1:2;
       banks[band].push({x,y,col,band,score:hash01(boss.id,Math.floor(waveElapsed/BOSS_SUPPORT_INTERVAL),ri*11+col)});
