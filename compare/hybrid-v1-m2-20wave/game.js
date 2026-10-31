@@ -420,6 +420,29 @@
     shootClock=Build.tuning(build).interval-CFG.firstShot;
     record("intro_start");setState("第1波 · 滑动瞄准，普通炮台开始破坏");updateUI();return true;
   }
+
+  // Test-only entry on the isolated experiment page. Simulates nine legitimate
+  // wave-end choices so Boss 10 is judged using a viable, readable build.
+  function jumpToBoss10(){
+    reset();
+    const route=$("bossRoute").value;
+    const loadouts={
+      split:["split","split","power","split-a","split","rate","speed","power","life"],
+      arc:["arc","arc","power","arc-a","arc","rate","speed","power","life"],
+      gun:["gun","gun","power","gun-a","gun","rate","speed","power","life"]
+    };
+    const picks=loadouts[route]||loadouts.split;
+    for(let i=0;i<picks.length;i++){
+      if(!Build.choose(build,picks[i],i+1))throw Error("Boss preview build prerequisite failed at wave "+(i+1));
+    }
+    syncBuild();screenClears=9;level=10;waveUpgrades=9;charge=100;
+    balls=[];giant=null;emptyLatch=false;choiceSet=[];choiceQueue=0;
+    phase="playing";$("startOverlay").classList.add("hidden");ui.choice.classList.add("hidden");
+    unlockSound();spawnWave(10);shootClock=Build.tuning(build).interval-CFG.firstShot;
+    record("debug_jump",{targetWave:10,route,simulatedUpgrades:picks});
+    setState("第10关 · BOSS弹射阵型 · 调试直达（已配成长Build）");
+    updateUI();return true;
+  }
   function livingCount(){return bricks.reduce((n,b)=>n+(b.alive?1:0),0);}
   function stageForRemaining(remaining){
     if(remaining<=0)return electricStage;
@@ -1381,6 +1404,7 @@
   $("skillSide").addEventListener("change",e=>{skillSide=e.target.value==="left"?"left":"right";store(SIDE_KEY,skillSide);applySkillSide();});
   $("autoSkill").addEventListener("change",e=>{autoSkill=!!e.target.checked;store(AUTO_KEY,autoSkill?"yes":"no");});
   $("start").addEventListener("click",begin);
+  $("jumpBoss").addEventListener("click",jumpToBoss10);
   for(let i=0;i<3;i++)$("choice"+i).addEventListener("click",()=>{unlockSound();chooseUpgrade(choiceSet[i]);});
   $("again").addEventListener("click",()=>{unlockSound();reset();begin();});
   $("reset").addEventListener("click",()=>{unlockSound();reset();begin();});
@@ -1500,7 +1524,7 @@
       hitForTest(id,source="normal",points=2){const b=bricks.find(x=>x.id===id);return b?hitBrick(b,source,null,points):false;},
       playSfx,unlockSound,
       hitById(id,source="normal"){const b=bricks.find(x=>x.id===id);if(b)hitBrick(b,source);updateUI();},
-      reset,begin,addRow,bossSpawn,summonBossBricks,generateSurvival,addExperience,offerChoice,chooseUpgrade,
+      reset,begin,jumpToBoss10,addRow,bossSpawn,summonBossBricks,generateSurvival,addExperience,offerChoice,chooseUpgrade,
       createWavePlan,spawnWave,planClearBurst,
       spawnClearBurst,
       colorForHp:hp=>brickColor(hp,false),skillStage,
