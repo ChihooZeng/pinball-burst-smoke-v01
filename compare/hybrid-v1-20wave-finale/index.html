@@ -5,28 +5,29 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no"/>
   <meta name="theme-color" content="#08182b"/>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%2212%22 fill=%22%2308192a%22 stroke=%22%2366ebf2%22 stroke-width=%223%22/%3E%3C/svg%3E"/>
-  <title>弹珠超载 · 20关Build Lab · 精英与Boss</title>
-  <link rel="stylesheet" href="./style.css?v=w20"/>
+  <title>弹珠超载 · 20关高压终局 · 三阶段Boss</title>
+  <link rel="stylesheet" href="./style.css?v=w20f"/>
 </head>
 <body>
   <main class="shell">
-    <header class="topbar"><div class="combat-summary"><span id="waveLabel">第1 / 10波</span><span id="xpLabel">准备开始</span></div><button id="pause" class="icon-btn" aria-label="设置与暂停" type="button">⚙</button></header>
+    <header class="topbar"><div class="combat-summary"><span id="waveLabel">第1 / 20波</span><span id="xpLabel">准备开始</span></div><button id="pause" class="icon-btn" aria-label="设置与暂停" type="button">⚙</button></header>
     <section class="arena">
       <canvas id="game" width="360" height="560" aria-label="弹珠超载：整波砖阵缓慢下降，完全清屏后进入下一波，左右滑动调整弹球角度"></canvas>
       <div id="finalRushLabel" class="floating-label" role="status"></div>
       <div class="boss-hud hidden" id="bossHud"><div><span>核心 BOSS</span><strong id="bossText">60 / 60</strong></div><div class="boss-track"><div id="bossFill"></div></div></div>
       <div class="ult-wrap"><div id="skillGuide" class="skill-guide hidden" role="status">首次技能提示：松开瞄准后点这里，方向会保留</div><button id="giant" type="button" disabled>超载冲锋 0%</button></div>
       <div class="overlay" id="startOverlay" role="dialog" aria-modal="true" aria-labelledby="startTitle">
-        <div class="start-icon">◉</div><small class="label">SPLIT / ARC / GUN · 20 WAVE BUILD LAB</small>
-        <h2 id="startTitle">弹珠超载 · 20关Build Lab</h2>
-        <p>20关成长测试：第5关精英砖、第10关Boss护甲环，11–15关成型，16–20关爽快展示。完整游戏仍以50关为目标。</p>
+        <div class="start-icon">◉</div><small class="label">SPLIT / ARC / GUN · FINAL BOSS LAB</small>
+        <h2 id="startTitle">弹珠超载 · 20关高压终局</h2>
+        <p>20关压力进阶：第5关精英、第10关护甲Boss，11–19关高低HP交错升级；第20关挑战888HP三阶段最终Boss。完整目标仍是50关。</p>
         <button class="cta" id="start" type="button">开始20关挑战</button>
         <div class="boss-preview"><label for="bossRoute">直达第10关Boss · 测试流派</label>
           <select id="bossRoute" aria-label="测试Boss的成熟流派"><option value="split">裂变Build</option><option value="arc">电弧Build</option><option value="gun">机枪Build</option></select>
           <button id="jumpBoss" type="button">直达第10关 Boss</button>
-          <small>调试专用 · 自动配置前9次升级，不计入正常通关成绩</small>
+          <button id="jumpFinalBoss" class="final-boss-jump" type="button">直达第20关 最终Boss</button>
+          <small>调试专用 · 自动配置9或19次升级，跳关不计入正常通关成绩</small>
         </div>
-        <a class="comparison-link" href="../hybrid-v1-m1-3/">原M1.3对照</a> · <a class="comparison-link" href="../hybrid-v1-m1-2/">M1.2对照</a> · <a class="comparison-link" href="../hybrid-v1-m1-1/">M1.1对照</a> · <a class="comparison-link" href="../hybrid-v1-m1-soft-balance/">调弱基准对照</a> · <a class="comparison-link" href="../hybrid-v27-feel-lab/?feel=tempo">Feel Lab B 对照</a> · <a class="comparison-link" href="../hybrid-v17-sustain/">v0.17 对照</a>
+        <a class="comparison-link" href="../hybrid-v1-m2-20wave/">旧20关对照</a> · <a class="comparison-link" href="../hybrid-v1-m1-3/">原M1.3对照</a> · <a class="comparison-link" href="../hybrid-v1-m1-2/">M1.2对照</a> · <a class="comparison-link" href="../hybrid-v1-m1-1/">M1.1对照</a> · <a class="comparison-link" href="../hybrid-v1-m1-soft-balance/">调弱基准对照</a> · <a class="comparison-link" href="../hybrid-v27-feel-lab/?feel=tempo">Feel Lab B 对照</a> · <a class="comparison-link" href="../hybrid-v17-sustain/">v0.17 对照</a>
         <small class="overlay-tip">移动端需要首次点击才能启用音效</small>
       </div>
       <div class="overlay hidden" id="choiceOverlay" role="dialog" aria-modal="true" aria-labelledby="choiceTitle">
@@ -68,6 +69,6 @@
       <div id="hunterDetails"></div><div id="bounceDetails"></div><div id="splitDetails"></div><div id="chainDetails"></div><div id="pierceDetails"></div><div id="arcDetails"></div>
     </div>
   </main>
-  <script src="./juice-fx.js?v=w20" defer></script><script src="./builds.js?v=w20" defer></script><script src="./game.js?v=w20" defer></script>
+  <script src="./juice-fx.js?v=w20f" defer></script><script src="./builds.js?v=w20f" defer></script><script src="./game.js?v=w20f" defer></script>
 </body>
 </html>
