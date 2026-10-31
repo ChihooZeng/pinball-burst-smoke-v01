@@ -256,7 +256,7 @@
     const parts=[speedLevel?"球速+"+speedLevel:null,lifeLevel?"续航+"+lifeLevel:null,powerLevel?"火力+"+powerLevel:null,volleyLevel?"散射+"+volleyLevel:null,splitLevel?"裂变+"+splitLevel:null,arcLevel?"电弧+"+arcLevel:null,shockLevel?"震荡+"+shockLevel:null,drillLevel?"钻头+"+drillLevel:null,hunterLevel?"追猎+"+hunterLevel:null,ricochetLevel?"蓄能+"+ricochetLevel:null,rateLevel?"射速+"+rateLevel:null].filter(Boolean);
     ui.build.textContent=parts.length?parts.join(" · ")+(build.ranks.gun?" · 供弹R"+build.ranks.gun:""):build.ranks.gun?"高速供弹 R"+build.ranks.gun:"清屏成长 · 20波候选";
     $("bossHud").classList.toggle("hidden",!boss||!boss.alive);
-    if(boss&&boss.alive){$("bossText").textContent=(isFinaleWave(wave)?"终局 "+finaleStage+"/3 · ":"")+boss.hp+" / "+boss.initialHp;$("bossFill").style.width=Math.max(0,boss.hp/boss.initialHp*100)+"%";}
+    if(boss&&boss.alive){const guarded=boss.isFinalBoss&&boss.hp<=finaleHpFloor();$("bossText").textContent=(isFinaleWave(wave)?"终局 "+finaleStage+"/3"+(guarded?" · 阶段护盾":"")+" · ":"")+boss.hp+" / "+boss.initialHp;$("bossFill").style.width=Math.max(0,boss.hp/boss.initialHp*100)+"%";}
   }
   function brickAt(x,y,hp,extra={}){
     const special=!!extra.special;
@@ -350,8 +350,8 @@
         if(!top&&!wall&&!guide)continue;
         if(row>=4&&col>=3&&col<=5)continue;
         if(rectanglesOverlap({x,y,w:BRICK_W,h:BRICK_H},r,6))continue;
-        const hp=top?66+Math.floor(hash01(n,row,col,301)*33):
-          wall?42+Math.floor(hash01(n,row,col,302)*29):8+Math.floor(hash01(n,row,col,303)*8);
+        const hp=top?43+Math.floor(hash01(n,row,col,301)*24):
+          wall?32+Math.floor(hash01(n,row,col,302)*20):7+Math.floor(hash01(n,row,col,303)*7);
         result.push({x,y,hp,special:false,finaleArmor:top||wall});
       }
       return result;
@@ -570,6 +570,14 @@
     floatTexts.push({x,y,text,color,age:0});
     if(floatTexts.length>36)floatTexts.shift();
   }
+  // Visible, fixed HP gates ensure all three advertised final-Boss waves can occur.
+  // They never add damage; extra real projectile hits cannot skip a stage.
+  function finaleHpFloor(){
+    if(!boss||!boss.alive||!isFinaleWave(wave))return 0;
+    if(finaleStage===1)return Math.floor(FINALE_HP*.70);
+    if(finaleStage===2)return Math.floor(FINALE_HP*.35);
+    return summonSignals.some(sig=>sig.finale)?1:0;
+  }
   // Direct projectile hits drive the run. Secondary shock/arc hits never recurse.
   function hitBrick(b,source="normal",impact=null,points=1){
     if(!b.alive)return false;
@@ -579,12 +587,14 @@
       const damage=source==="giantHeavy"?GIANT_HEAVY_DAMAGE:
         (source==="normal"||source==="drill")?Math.max(BASE_ARMOR_DAMAGE,points):
         (source==="shock"||source==="lightning")?Math.max(1,points):1;
-      const taken=Math.min(b.hp,damage);
+      const guard=b.isFinalBoss?finaleHpFloor():0;
+      const taken=Math.min(Math.max(0,b.hp-guard),damage);
       b.hp-=taken;armorHits+=taken;damageDealt+=taken;
+      if(guard>0&&taken===0){setState("终局护盾 · 下一阶段砖阵即将入场");record("finale_guard",{stage:finaleStage,hp:b.hp});}
       b.bonk=.12;impactVisual(b.x+b.w/2,b.y+b.h/2,b.hp===0);
-      numberPop(b.x+b.w/2,b.y-1,"−"+taken,"#ffdfb2");
+      numberPop(b.x+b.w/2,b.y-1,taken?"−"+taken:"阶段护盾",taken?"#ffdfb2":"#ffe0ab");
       if(b.hp>0){
-        b.color=brickColor(b.hp,b.special);
+        if(!b.isFinalBoss)b.color=brickColor(b.hp,b.special);
         if(b.hp<=2&&!b.cracked){b.cracked=true;armorCracks++;}
         burst(b.x+b.w/2,b.y+b.h/2,"#ffd29d",4);
         juice.onArmor(b,impact);playSfx("armor");
@@ -945,8 +955,8 @@
       if(y<SUMMON_SAFE_TOP||y+BRICK_H>DANGER_Y-85)continue;
       if(!isSlotFree(x,y))continue;
       const high=(col===1||col===7)&&(dy<45);
-      const hp=high?(stage===2?35:49)+Math.floor(hash01(wave,stage,col,Math.floor(dy)+410)*(stage===2?24:29)):
-        (stage===2?11:14)+Math.floor(hash01(wave,stage,col,Math.floor(dy)+411)*(stage===2?18:22));
+      const hp=high?(stage===2?26:35)+Math.floor(hash01(wave,stage,col,Math.floor(dy)+410)*(stage===2?18:23)):
+        (stage===2?8:10)+Math.floor(hash01(wave,stage,col,Math.floor(dy)+411)*(stage===2?16:19));
       const sig={bossId:boss.id,dx:x-boss.x,dy:y-boss.y,age:0,delay:FINALE_WARNING,
         targetId:null,w:BRICK_W,h:BRICK_H,hp,finale:true,finaleStage:stage};
       summonSignals.push(sig);count++;picks.push({col,dy,hp});
@@ -1160,7 +1170,7 @@
       waveElapsed+=dt;
       const liveBefore=livingCount();if(liveBefore>0){waveMetrics.longestNoBreak=Math.max(waveMetrics.longestNoBreak,waveElapsed-waveMetrics.lastBreak);if(liveBefore<=5)waveMetrics.tailSeconds+=dt;if(liveBefore===1&&boss)waveMetrics.bossSoloSeconds+=dt;}
       const latePressure=wave>=11&&wave<=19?1+(wave-10)*.028:1;
-      const finalePressure=isFinaleWave(wave)?.62+.10*(finaleStage-1):1;
+      const finalePressure=isFinaleWave(wave)?.24+.08*(finaleStage-1):1;
       const speed=Math.min(8.4,FALL_BASE+Math.max(0,wave-1)*.09)*(isBossWave(wave)?.9:1)*CFG.fallScale*waveFallMultiplier*latePressure*finalePressure;
       for(const brick of bricks)if(brick.alive)brick.y+=speed*dt;
       const danger=bricks.find(b=>b.alive&&b.y+b.h>=DANGER_Y);
@@ -1631,7 +1641,7 @@
       reset,begin,jumpToBoss10,jumpToFinalBoss,addRow,bossSpawn,summonBossBricks,generateSurvival,addExperience,offerChoice,chooseUpgrade,
       createWavePlan,spawnWave,planClearBurst,
       spawnClearBurst,
-      queueFinaleStage,updateFinaleStages,
+      queueFinaleStage,updateFinaleStages,finaleHpFloor,
       finaleDetails(){return {stage:finaleStage,spawns:[...finaleWaveSpawns],checkpoints:[...finaleDamageCheckpoints],pending:summonSignals.filter(x=>x.finale).length};},
       colorForHp:hp=>brickColor(hp,false),skillStage,
       chooseIndex(index){return chooseUpgrade(choiceSet[index]);},
