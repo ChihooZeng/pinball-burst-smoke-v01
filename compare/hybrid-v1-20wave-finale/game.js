@@ -322,8 +322,8 @@
       plan.push({...r,hp:32,isElite:true,color:"#ffbd65"});
       return plan;
     }
-    // Boss 10: top + flank armor ring; central bottom channel is truly open.
-    if(isBossWave(n)){
+    // Boss 10 only; wave 20 has its own three-phase finale below.
+    if(n===10){
       const plan=[],r=featuredRect();
       for(let row=0;row<8;row++)for(let col=0;col<BRICK_COLUMNS;col++){
         const upper=(row===0&&col>=2&&col<=6)||(row===1&&col>=2&&col<=6);
