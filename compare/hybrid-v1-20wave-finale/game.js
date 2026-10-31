@@ -961,6 +961,23 @@
         targetId:null,w:BRICK_W,h:BRICK_H,hp,finale:true,finaleStage:stage};
       summonSignals.push(sig);count++;picks.push({col,dy,hp});
     }
+    // A full armored field can block the side-flank slots. Keep a small
+    // reserve of safe *upper* positions so stage 3 still creates real targets.
+    if(count<10){
+      const rows=[SUMMON_SAFE_TOP+8,SUMMON_SAFE_TOP+36,SUMMON_SAFE_TOP+64,boss.y-125,boss.y-98];
+      const fallbackCols=stage===2?[0,2,4,6,8,1,7,3,5]:[1,3,5,7,0,8,2,6,4];
+      for(const y of rows)for(const col of fallbackCols){
+        if(count>=12)break;
+        const x=12+col*BRICK_STEP_X;
+        if(y+BRICK_H>Math.min(SUMMON_SAFE_BOTTOM,DANGER_Y-85))continue;
+        if(!isSlotFree(x,y))continue;
+        const hp=(stage===2?13:19)+Math.floor(hash01(wave,stage,col,Math.floor(y)+522)*19);
+        summonSignals.push({bossId:boss.id,dx:x-boss.x,dy:y-boss.y,
+          age:0,delay:FINALE_WARNING,targetId:null,w:BRICK_W,h:BRICK_H,
+          hp,finale:true,finaleStage:stage});
+        picks.push({col,dy:y-boss.y,hp});count++;
+      }
+    }
     finaleWaveSpawns[stage]=count;
     finaleDamageCheckpoints.push({stage,hp:boss.hp,elapsed:waveElapsed,count});
     record("finale_stage",{from:previous,to:stage,bossHp:boss.hp,queued:count});
