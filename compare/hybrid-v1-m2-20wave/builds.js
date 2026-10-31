@@ -1,7 +1,7 @@
 /* M1: permanent build state and effective player-facing changes. No DOM dependency. */
 (function(root,factory){const api=factory();if(typeof module==='object')module.exports=api;else root.PinballBuilds=api;})(typeof window==='object'?window:globalThis,()=>{
  'use strict';
- const CONFIG={maxBalls:32,maxWaves:10,productWaves:50,baseDamage:1,firstShot:.12,
+ const CONFIG={maxBalls:32,maxWaves:20,productWaves:50,baseDamage:1,firstShot:.12,
   arcCooldown:.45,arcEvery:[0,3,2,2],arcTargets:[0,1,2,3],arcRange:[0,110,110,140],arcDamage:[0,1,2,3],focusDamage:3,bossArcDamage:2,
   splitEvery:[0,2,2,1],splitCount:[0,1,2,2],splitSpread:.45,stormSpread:.8,huntTurns:2,childTTL:4.1,
   gunInterval:[0,.35,.27,.20],gunTTL:4.1,lineInterval:.17,fanInterval:.18,fanAngle:.28,fanPeriod:1.8,gunMinInterval:.12,gunRateStep:.012,auxGunInterval:.70,auxGunMinInterval:.55,
@@ -13,7 +13,7 @@
  for(const [id,name,cap] of [['rate','射速训练',5],['power','火力强化',3],['speed','弹速训练',3],['life','弹跳续航',3]])def(id,name,'base','base',cap);
  for(const [id,name] of [['hunter','追猎弯弹'],['drill','钻头穿阵'],['shock','震荡核心'],['bank','撞墙蓄势']])def(id,name,'auxiliary','auxiliary',2);
  for(const [f,names] of [['split',['星海风暴','猎星裂变']],['arc',['雷网蔓延','雷霆聚能']],['gun',['直线压制','扇形扫射']]])
-  ['a','b'].forEach((side,i)=>def(f+'-'+side,names[i],f,'branch',1,{minClearedWave:4,prerequisites:[{id:f,rank:2}],excludedWith:[f+'-'+(side==='a'?'b':'a')]}));
+  ['a','b'].forEach((side,i)=>def(f+'-'+side,names[i],f,'branch',2,{minClearedWave:4,prerequisites:[{id:f,rank:2}],excludedWith:[f+'-'+(side==='a'?'b':'a')]}));
  const BUFFS={power:{name:'急速',duration:15,description:'炮台射速 +10%'},speed:{name:'疾行',duration:30,description:'弹球速度 +15%'}};
  const copy=s=>JSON.parse(JSON.stringify(s));
  const has=id=>Object.hasOwn(DEFS,id);
@@ -22,14 +22,14 @@
  function preferred(s){return s.coreFocus||s.growthFocus||s.seedAbility;}
  function effectiveRank(s,id){return s.ranks[id]||0;}
  function tuning(s){const gun=effectiveRank(s,'gun'),isGun=gun>0&&preferred(s)==='gun',branch=s.coreBranch;
-  let interval=isGun?(branch==='gun-a'?CONFIG.lineInterval:branch==='gun-b'?CONFIG.fanInterval:CONFIG.gunInterval[gun]):gun?CONFIG.auxGunInterval:CONFIG.normalInterval;
+  let interval=isGun?(branch==='gun-a'?(CONFIG.lineInterval-(s.ranks['gun-a']>1?.02:0)):branch==='gun-b'?(CONFIG.fanInterval-(s.ranks['gun-b']>1?.02:0)):CONFIG.gunInterval[gun]):gun?CONFIG.auxGunInterval:CONFIG.normalInterval;
   interval=Math.max(isGun?CONFIG.gunMinInterval:gun?CONFIG.auxGunMinInterval:CONFIG.normalMinInterval,interval-(s.ranks.rate||0)*(gun?CONFIG.gunRateStep:CONFIG.normalRateStep));
   return {interval,isGun,ttl:(isGun?CONFIG.gunTTL:CONFIG.normalTTL)+(s.ranks.life||0)*(isGun?CONFIG.gunLifeStep:CONFIG.lifeStep),speed:CONFIG.speed+(s.ranks.speed||0)*CONFIG.speedStep,damage:CONFIG.baseDamage+(s.ranks.power||0),splitRank:effectiveRank(s,'split'),arcRank:effectiveRank(s,'arc')};
  }
  function effects(s){const t=tuning(s),r=s.ranks,b=s.coreBranch,split=t.splitRank,arc=t.arcRank;
   return {interval:t.interval,damage:t.damage,speed:t.speed,ttl:t.ttl,
-   splitCount:split?(b==='split-a'?3:b==='split-b'?2:CONFIG.splitCount[split]):0,splitEvery:CONFIG.splitEvery[split],splitSpread:split?(b==='split-a'?CONFIG.stormSpread:CONFIG.splitSpread):0,childTurns:b==='split-b'?CONFIG.huntTurns:0,splitPursuit:Math.max(0,split-1),gunPressure:preferred(s)==='gun'?Math.max(0,(r.gun||0)-1):0,
-   arcEvery:CONFIG.arcEvery[arc],arcTargets:arc?(b==='arc-b'?0:b==='arc-a'?3:CONFIG.arcTargets[arc]):0,arcRange:arc&&b!=='arc-b'?CONFIG.arcRange[arc]:0,arcDamage:arc&&b!=='arc-b'?CONFIG.arcDamage[arc]:0,arcSolo:arc?(b==='arc-b'?CONFIG.focusDamage:CONFIG.bossArcDamage)+(b==='arc-a'?3:CONFIG.arcTargets[arc])*arc:0,arcNet:b==='arc-a',arcFocus:b==='arc-b',
+   splitCount:split?(b==='split-a'?(s.ranks['split-a']>1?4:3):b==='split-b'?2:CONFIG.splitCount[split]):0,splitEvery:CONFIG.splitEvery[split],splitSpread:split?(b==='split-a'?CONFIG.stormSpread:CONFIG.splitSpread):0,childTurns:b==='split-b'?CONFIG.huntTurns+(s.ranks['split-b']>1?1:0):0,splitPursuit:Math.max(0,split-1),gunPressure:preferred(s)==='gun'?Math.max(0,(r.gun||0)-1):0,
+   arcEvery:CONFIG.arcEvery[arc],arcTargets:arc?(b==='arc-b'?0:b==='arc-a'?(s.ranks['arc-a']>1?4:3):CONFIG.arcTargets[arc]):0,arcRange:arc&&b!=='arc-b'?CONFIG.arcRange[arc]:0,arcDamage:arc&&b!=='arc-b'?CONFIG.arcDamage[arc]:0,arcSolo:arc?(b==='arc-b'?CONFIG.focusDamage:CONFIG.bossArcDamage)+(b==='arc-a'?(s.ranks['arc-a']>1?4:3):CONFIG.arcTargets[arc])*arc+(b==='arc-b'&&s.ranks['arc-b']>1?3:0):0,arcNet:b==='arc-a',arcFocus:b==='arc-b',
    hunter:r.hunter||0,drillEvery:r.drill?(r.drill===1?4:3):0,drillPierces:r.drill?(r.drill===1?3:5):0,drillDamage:r.drill?r.drill+1:0,
    shockEvery:r.shock?(r.shock===1?4:3):0,shockTargets:r.shock?(r.shock===1?2:4):0,shockDamage:r.shock||0,shockRadius:r.shock?(r.shock===1?75:95):0,
    bankStep:r.bank||0,bankCap:(r.bank||0)*2,fan:b==='gun-b',line:b==='gun-a'};
@@ -57,7 +57,7 @@
  function preview(s,id){if(!has(id))return null;const t=copy(s),before=effects(s);apply(t,id);const after=effects(t);return {before,after,deltas:deltasFor(s,id,t,before,after)};}
  function eligible(s,wave){if(!s.seedAbility)return [];return Object.values(DEFS).filter(d=>{
   const n=s.ranks[d.id]||0;if(n>=d.maxRank||wave<d.minClearedWave||!d.prerequisites.every(p=>(s.ranks[p.id]||0)>=p.rank)||d.excludedWith.some(id=>s.ranks[id]))return false;
-  if(d.role==='branch'&&(s.coreFocus||d.family!==s.growthFocus))return false;
+  if(d.role==='branch'&&(d.family!==s.growthFocus||(s.coreBranch&&s.coreBranch!==d.id)||(!s.coreBranch&&s.coreFocus)||(n>=1&&wave<11)))return false;
   if(d.role==='core'){
    if(!n&&['split','arc','gun'].filter(id=>s.ranks[id]).length>=2)return false;
    if(n&&s.growthFocus&&d.id!==s.growthFocus)return false;
@@ -87,6 +87,7 @@
  const d=DEFS[id];if(!d)return {title:'暂无强化',description:''};
  if(!s.seedAbility){const t=copy(s);seed(t,id);return {title:d.name,description:'新能力：'+abilityText(t,id)};}
  const p=preview(s,id),a=p.before,z=p.after,delta=k=>z[k]-a[k],num=n=>fmt(n);
+ if(d.role==='branch'&&s.ranks[id])return {title:d.name,description:{'split-a':'每次裂变额外 +1颗小球','split-b':'裂变小球撞墙追猎 +1次','arc-a':'电弧额外跳向 +1个目标','arc-b':'集中放电伤害 +3','gun-a':'直线射速 +13.3%','gun-b':'扇面射速 +12.5%'}[id]};
  if(d.role==='branch')return {title:d.name,description:{
   'split-a':'一次分裂3颗小球，散射更广（替换原效果）',
   'split-b':'小球撞墙后可额外追踪目标2次（替换原效果）',
