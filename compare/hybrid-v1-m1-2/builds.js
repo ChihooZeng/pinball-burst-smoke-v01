@@ -14,7 +14,7 @@
  for(const [id,name] of [['hunter','追猎弯弹'],['drill','钻头穿阵'],['shock','震荡核心'],['bank','撞墙蓄势']])def(id,name,'auxiliary','auxiliary',2);
  for(const [f,names] of [['split',['星海风暴','猎星裂变']],['arc',['雷网蔓延','雷霆聚能']],['gun',['直线压制','扇形扫射']]])
   ['a','b'].forEach((side,i)=>def(f+'-'+side,names[i],f,'branch',1,{minClearedWave:4,prerequisites:[{id:f,rank:2}],excludedWith:[f+'-'+(side==='a'?'b':'a')]}));
- const BUFFS={power:{name:'强击',duration:15,description:'直接撞击伤害 +1'},speed:{name:'疾行',duration:30,description:'弹球速度 +15%'}};
+ const BUFFS={power:{name:'急速',duration:15,description:'炮台射速 +10%'},speed:{name:'疾行',duration:30,description:'弹球速度 +15%'}};
  const copy=s=>JSON.parse(JSON.stringify(s));
  const has=id=>Object.hasOwn(DEFS,id);
  function createState(seed=2701){return {seed:seed>>>0,rng:seed>>>0,seedAbility:null,growthFocus:null,coreFocus:null,coreBranch:null,coreUltimate:null,ranks:{},routeWeights:{split:0,arc:0,gun:0},choiceHistory:[],temporaryBuffs:[],recovery:{power:0,speed:0,life:0}};}
@@ -52,7 +52,7 @@
   for(const [k,text] of [['arcNet','获得跨目标跳传'],['arcFocus','改为命中目标集中放电'],['fan','获得扇面逐发扫射'],['line','获得直线集中压制']])if(after[k]&&!before[k])ds.push({key:k,value:1,text});
   return ds;
  }
- function abilityText(s,id){const e=effects(s);return id==='split'?`每${e.splitEvery}次撞击生成${e.splitCount}颗真实子球（同屏预算内）`:id==='arc'?`每${e.arcEvery}次命中向${e.arcTargets}个目标传播伤害；未用传播位按等级转为命中目标聚能，孤立放电${e.arcSolo}伤害`:'炮台持续连射真实弹球';}
+ function abilityText(s,id){const e=effects(s);return id==='split'?`弹球每撞砖${e.splitEvery}次，分裂出${e.splitCount}颗小球`:id==='arc'?`每击中${e.arcEvery}次，闪电攻击附近${e.arcTargets}块砖`:'炮台快速连续发射弹球';}
  function deltasFor(s,id,t,before,after){const ds=changes(before,after);return DEFS[id].role==='core'&&!s.ranks[id]?[{key:'ability',value:1,text:'获得新能力：'+abilityText(t,id)},...ds.filter(d=>['rate','damage','speed','ttl'].includes(d.key))]:ds;}
  function preview(s,id){if(!has(id))return null;const t=copy(s),before=effects(s);apply(t,id);const after=effects(t);return {before,after,deltas:deltasFor(s,id,t,before,after)};}
  function eligible(s,wave){if(!s.seedAbility)return [];return Object.values(DEFS).filter(d=>{
@@ -83,14 +83,35 @@
   if(DEFS[id].role==='branch')return {'split-a':'扩大裂变散角；孤立Boss收窄','split-b':'子球撞墙额外2次有限转向','arc-a':'在不同目标间跳传','arc-b':'改为集中单体放电','gun-a':'集中直线逐发','gun-b':'扇面连续逐发'}[id];
   return {rate:`总射速${fmt(1/e.interval)}发/秒`,power:`总撞击伤害${e.damage}`,speed:`球速${e.speed}`,life:`留场${fmt(e.ttl)}秒`}[id]||'';
  }
- function card(s,id){const d=DEFS[id];if(!d)return {title:'暂无强化',description:''};
-  if(!s.seedAbility){const t=copy(s);seed(t,id);return {title:d.name,description:'获得新能力：'+abilityText(t,id)};}
-  const p=preview(s,id),commit=d.role==='core'&&(s.ranks[id]||0)===1&&!s.growthFocus;
-  return {title:d.name,description:p.deltas.map(x=>x.text).join('；')+(commit?'；确立培养方向，另一核心保留R1':'')+(id==='split'||id==='split-a'?'（受同屏球量限制）':'')};
- }
+ function card(s,id){
+ const d=DEFS[id];if(!d)return {title:'暂无强化',description:''};
+ if(!s.seedAbility){const t=copy(s);seed(t,id);return {title:d.name,description:'新能力：'+abilityText(t,id)};}
+ const p=preview(s,id),a=p.before,z=p.after,delta=k=>z[k]-a[k],num=n=>fmt(n);
+ if(d.role==='branch')return {title:d.name,description:{
+  'split-a':'一次分裂3颗小球，散射更广（替换原效果）',
+  'split-b':'小球撞墙后可额外追踪目标2次（替换原效果）',
+  'arc-a':'闪电改为连续跳向附近目标（与另一分支二选一）',
+  'arc-b':'闪电改为集中攻击命中目标（替换群攻）',
+  'gun-a':'炮台改为高速直线连续射击（与另一分支二选一）',
+  'gun-b':'炮台改为高速扇形连续扫射（与另一分支二选一）'
+ }[id]};
+ if(id==='power')return {title:d.name,description:'普通球每次撞砖伤害 +'+num(delta('damage'))};
+ if(id==='rate')return {title:d.name,description:'炮台射速 +'+num((a.interval/z.interval-1)*100)+'%'};
+ if(id==='speed')return {title:d.name,description:'弹球飞行速度 +'+num((z.speed/a.speed-1)*100)+'%'};
+ if(id==='life')return {title:d.name,description:'弹球留场时间 +'+num(delta('ttl'))+'秒'};
+ if(id==='split')return {title:d.name,description:delta('splitCount')>0?'每次分裂多 '+num(delta('splitCount'))+'颗小球':delta('splitEvery')<0?'升级后首次撞砖就能分裂':'小球追踪次数 +'+num(delta('splitPursuit'))};
+ if(id==='arc')return {title:d.name,description:delta('arcTargets')>0?'闪电额外攻击 '+num(delta('arcTargets'))+'块砖':delta('arcEvery')<0?'更快放电：每击中'+z.arcEvery+'次触发':'单体闪电伤害 +'+num(delta('arcSolo'))};
+ if(id==='gun')return {title:d.name,description:delta('gunPressure')>0?'连续命中同一目标，可多造成 '+num(delta('gunPressure'))+'点伤害':'炮台射速 +'+num((a.interval/z.interval-1)*100)+'%'};
+ if(id==='hunter')return {title:d.name,description:'撞墙后追踪目标次数 +'+num(delta('hunter'))};
+ if(id==='bank')return {title:d.name,description:'每次撞侧墙，下一击伤害额外 +'+num(delta('bankStep'))};
+ if(id==='drill')return {title:d.name,description:'穿透球最多再穿过 '+num(delta('drillPierces'))+'块砖'};
+ if(id==='shock')return {title:d.name,description:'打碎砖块时，震荡额外命中 '+num(delta('shockTargets'))+'个目标'};
+ const chosen=p.deltas.find(x=>x.value>0)||p.deltas[0];
+ return {title:d.name,description:chosen?chosen.text:'强化当前能力'};
+}
  function grantBuff(s,id){if(!Object.hasOwn(BUFFS,id))return false;let b=s.temporaryBuffs.find(b=>b.id===id);if(!b){b={id,remaining:0};s.temporaryBuffs.push(b);}b.remaining=BUFFS[id].duration;return true;}
  function tickBuffs(s,dt){if(!(dt>0))return;for(const b of s.temporaryBuffs)b.remaining=Math.max(0,b.remaining-dt);s.temporaryBuffs=s.temporaryBuffs.filter(b=>b.remaining>1e-8);}
- function buffModifiers(s){return {damage:s.temporaryBuffs.some(b=>b.id==='power')?1:0,speed:s.temporaryBuffs.some(b=>b.id==='speed')?1.15:1};}
+ function buffModifiers(s){return {damage:0,rate:s.temporaryBuffs.some(b=>b.id==='power')?1.10:1,speed:s.temporaryBuffs.some(b=>b.id==='speed')?1.15:1};}
  function summary(s){return {stats:tuning(s),effects:effects(s),focus:preferred(s),branch:s.coreBranch,skills:Object.keys(s.ranks).map(id=>({id,name:DEFS[id].name,rank:s.ranks[id],effect:effectText(s,id)})),history:copy(s.choiceHistory),buffs:s.temporaryBuffs.map(b=>({...b,...BUFFS[b.id]})),modifiers:buffModifiers(s)};}
  return {CONFIG,DEFS,BUFFS,createState,seed,random,eligible,offer,choose,effectiveRank,tuning,effects,preview,card,preferred,summary,grantBuff,tickBuffs,buffModifiers};
 });
