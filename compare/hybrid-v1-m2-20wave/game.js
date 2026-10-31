@@ -33,16 +33,18 @@
     for(let i=0;i<3;i++){const card=Build.card(build,choiceSet[i]);$("choiceTitle"+i).textContent=card.title;$("choiceDesc"+i).textContent=card.description;}
     ui.choice.classList.remove("hidden");
   }
-  function finishPrototype(){phase="complete";balls=[];giant=null;ui.win.classList.remove("hidden");$("winTitle").textContent="M1.3 · 10波挑战完成";ui.final.textContent="构筑："+Build.DEFS[build.coreBranch||build.seedAbility].name+" · 用时 "+Math.round(elapsed)+" 秒 · 击碎 "+score+" 块。请反馈手感，后续内容等待验收。";record("complete");setState("M1候选 · 等待真人手感验收");updateUI();}
+  function finishPrototype(){phase="complete";balls=[];giant=null;ui.win.classList.remove("hidden");$("winTitle").textContent="20波试玩 · 挑战完成";ui.final.textContent="构筑："+Build.DEFS[build.coreBranch||build.seedAbility].name+" · 用时 "+Math.round(elapsed)+" 秒 · 击碎 "+score+" 块。请反馈手感，后续内容等待验收。";record("complete");setState("M1候选 · 等待真人手感验收");updateUI();}
 
   const BOSS_INTERVAL=110, SURGE_INTERVAL=75, FALL_BASE=6.8, MAX_BRICKS=168;
   const START_ROWS=6, SPAWN_INTERVAL=3.5, PHYSICS_DT=1/120, MAX_FRAME_STEPS=6;
   const AMBIENT_SUMMON_INTERVAL=8.4, SUMMON_SAFE_TOP=48, SUMMON_SAFE_BOTTOM=DANGER_Y-88;
   const UPPER_LIMIT=175, LOWER_START=275, BRIDGE_BOTTOM=335;
   const BRIDGE_WARNING=1.0, BOSS_WARNING=1.0, CLEAR_CELEBRATE=.60, CLEAR_WARNING=.90, CLEAR_GRACE=2.1;
-  const WAVE_ROWS_COUNT=9, WAVE_ROW_GAP=28, WAVE_BOSS_EVERY=4;
+  const WAVE_ROWS_COUNT=9, WAVE_ROW_GAP=28, WAVE_BOSS_EVERY=10;
   const BOSS_SUPPORT_LIMIT_TOTAL=12, BOSS_SUPPORT_INTERVAL=7.0;
-  const WAVE_ROWS=[8,9,10,11,9,10,11,10,11,11];
+  const WAVE_ROWS=[8,9,10,11,9,10,11,10,11,11,9,10,11,10,11,11,10,11,10,11];
+  const isBossWave=n=>n===10,isEliteWave=n=>n===5;
+  const featuredRect=()=>({x:138,y:WAVE_START_Y+58,w:84,h:53});
   const FIRE_INTERVAL=1.14, MAX_UPGRADE_LEVEL=2;
   const MAX_BALLS = CFG.maxBalls, BALL_SPEED = CFG.speed, BALL_TTL = CFG.normalTTL, MAX_CHARGE = 100;
   const GIANT_SPEED = 610, GIANT_LIFETIME = 5, GIANT_MAX_BOUNCES = 80;
@@ -94,6 +96,11 @@
   }
   function brickHP(n,r,c,special){
     if(special)return 1;
+    if(n>10){const v=hash01(n,r,c),early=n<=15;
+      if(v<(early?.33:.42))return 2+Math.floor(hash01(n,r,c,71)*4);
+      if(v<(early?.68:.75))return 6+Math.floor(hash01(n,r,c,72)*(early?9:6));
+      if(v<.93)return (early?16:12)+Math.floor(hash01(n,r,c,73)*(early?18:12));
+      return (early?34:24)+Math.floor(hash01(n,r,c,74)*(early?16:15));}
     const profile=HP_PROFILES[Math.min(9,n-1)],roll=hash01(n,r,c);
     const tier=roll<profile.cut[0]?0:roll<profile.cut[1]?1:roll<profile.cut[2]?2:3;
     const [low,high]=profile.tiers[tier];
@@ -215,7 +222,7 @@
   function setState(label) { ui.state.textContent = label; }
   function updateUI(){
     const clock=Math.floor(elapsed),mm=String(Math.floor(clock/60)).padStart(2,"0"),ss=String(clock%60).padStart(2,"0");
-    ui.wave.textContent=mm+":"+ss;$("waveLabel").textContent="第"+wave+" / 10波";ui.score.textContent=String(score);
+    ui.wave.textContent=mm+":"+ss;$("waveLabel").textContent="第"+wave+" / "+MAX_WAVES+"波";ui.score.textContent=String(score);
     ui.rate.textContent="LV."+level;ui.balls.textContent=String(livingCount());
     ui.charge.textContent=Math.floor(charge)+"%";ui.fill.style.width=charge+"%";
     const cleared=Math.max(0,waveStartingTargets-livingCount());
@@ -1279,7 +1286,7 @@
   }
   function renderBuildPanel(){
     const q=Build.summary(build),t=q.stats,m=q.modifiers;
-    $("pauseSubtitle").textContent="第 "+wave+" / 10 波 · "+(q.focus?Build.DEFS[q.focus].name:"自由方向")+(q.branch?" · "+Build.DEFS[q.branch].name:"");
+    $("pauseSubtitle").textContent="第 "+wave+" / "+MAX_WAVES+"波 · "+(q.focus?Build.DEFS[q.focus].name:"自由方向")+(q.branch?" · "+Build.DEFS[q.branch].name:"");
     $("buildStats").textContent="普通球伤害 "+t.damage+"   当前射速 "+(m.rate/t.interval).toFixed(2)+"发/秒\n球速 "+(t.speed*m.speed).toFixed(0)+"   留场 "+t.ttl.toFixed(1)+"秒   场上 "+balls.length+" / "+MAX_BALLS+"球";
     $("buildSkills").textContent=q.skills.map(k=>k.name+" · R"+k.rank+"\n"+k.effect).join("\n\n");
     const last=q.history.at(-1);
