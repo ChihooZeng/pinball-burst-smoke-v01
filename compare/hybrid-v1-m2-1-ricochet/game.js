@@ -41,7 +41,7 @@
   let SUMMON_SAFE_BOTTOM=DANGER_Y-88;
   const UPPER_LIMIT=175, LOWER_START=275, BRIDGE_BOTTOM=335;
   const BRIDGE_WARNING=1.0, BOSS_WARNING=1.0, CLEAR_CELEBRATE=.60, CLEAR_WARNING=.90, CLEAR_GRACE=2.1;
-  const WAVE_ROWS_COUNT=9, WAVE_ROW_GAP=28, WAVE_BOSS_EVERY=10;
+  const WAVE_ROWS_COUNT=9, WAVE_ROW_GAP=33, WAVE_BOSS_EVERY=10;
   const BOSS_SUPPORT_LIMIT_TOTAL=12, BOSS_SUPPORT_INTERVAL=7.0;
   const WAVE_ROWS=[8,9,10,11,9,10,11,10,11,11,9,10,11,10,11,11,10,11,10,11];
   const isBossWave=n=>n===10||n===20,isEliteWave=n=>n===5,isFinaleWave=n=>n===20;
@@ -56,19 +56,20 @@
     return 29+Math.floor(t*3)+Math.floor(hash01(n,row,col,209)*(15+t*2));
   }
   function latePatternHasBrick(n,row,col){
+    // Dense but navigable. Distinct corridors are left intact, not solid 9x9 slabs.
     const type=(n-11)%5;
-    if(type===0)return !(row>=5&&col>=3&&col<=5);
-    if(type===1)return !(row>=2&&row<=6&&Math.abs(col-4)<=Math.floor(row/3));
+    if(type===0)return !(row>=6&&col>=3&&col<=5&&!(row===8&&col===3));
+    if(type===1)return !(row>=2&&row<=6&&col===4 || row>=4&&row<=5&&col===3);
     if(type===2)return !(row>=2&&row<=7&&col===(row+1)%7+1);
-    if(type===3)return !(row>=4&&row<=6&&(col===2||col===6));
-    return !(row>=3&&row<=7&&(col===3||col===5));
+    if(type===3)return !(row>=5&&row<=6&&(col===2||col===6));
+    return !(row>=3&&row<=6&&(col===3||col===5));
   }
   const FIRE_INTERVAL=1.14, MAX_UPGRADE_LEVEL=2;
   const MAX_BALLS = CFG.maxBalls, BALL_SPEED = CFG.speed, BALL_TTL = CFG.normalTTL, MAX_CHARGE = 100;
   const GIANT_SPEED = 610, GIANT_LIFETIME = 5, GIANT_MAX_BOUNCES = 80;
   const GIANT_PIERCE_HP=5, GIANT_HEAVY_DAMAGE=3, GIANT_PIERCE_LIMIT=10;
   const BASE_ARMOR_DAMAGE=1, POWER_ARMOR_DAMAGE=3;
-  const SHOT_RADIUS = 3.45, BRICK_COLUMNS = 9, BRICK_W = 29, BRICK_H = 22, BRICK_STEP_X = 38.5, BRICK_STEP_Y = 30;
+  const SHOT_RADIUS = 3.45, BRICK_COLUMNS = 9, BRICK_W = 29, BRICK_H = 22, BRICK_STEP_X = 38.5, BRICK_STEP_Y = 35;
   const FINAL_RUSH_THRESHOLD=8;
   // 30% -> 15% -> last eight bricks. These are experimental thresholds.
   const ELECTRIC_AWAKEN_RATIO=.30,ELECTRIC_BUILD_RATIO=.15;
@@ -323,20 +324,22 @@
       plan.push({...r,hp:32,isElite:true,color:"#ffbd65"});
       return plan;
     }
-    // Boss 10 only; wave 20 has its own three-phase finale below.
+    // Boss 10: actual high-HP armor ring; 3 center columns below Boss stay open.
     if(n===10){
       const plan=[],r=featuredRect();
       for(let row=0;row<8;row++)for(let col=0;col<BRICK_COLUMNS;col++){
-        const upper=(row===0&&col>=2&&col<=6)||(row===1&&col>=2&&col<=6);
-        const flank=(row>=2&&row<=4&&(col===2||col===6));
-        const guide=(row>=4&&(col===1||col===7))||(row>=5&&(col===2||col===6));
-        // Empty central lower area lets the player shoot into the ring.
-        if(row>=4&&col>=3&&col<=5)continue;
-        if(!upper&&!flank&&!guide)continue;
+        const top=row===0&&col>=2&&col<=6;
+        const corner=row===1&&(col===1||col===2||col===6||col===7);
+        const sides=row>=2&&row<=4&&(col===1||col===2||col===6||col===7);
+        const lowerRim=row===5&&(col===1||col===2||col===6||col===7);
+        const guide=row>=6&&(col===0||col===1||col===7||col===8)||(row===7&&(col===2||col===6));
+        if(!top&&!corner&&!sides&&!lowerRim&&!guide)continue;
+        if(row>=5&&col>=3&&col<=5)continue;
         const x=12+col*BRICK_STEP_X,y=WAVE_START_Y+row*WAVE_ROW_GAP;
-        if(rectanglesOverlap({x,y,w:BRICK_W,h:BRICK_H},r,5))continue;
-        const hp=upper||flank?22+Math.floor(hash01(n,row,col,141)*18):3+Math.floor(hash01(n,row,col,142)*5);
-        plan.push({x,y,hp,special:false,ringArmor:upper||flank});
+        if(rectanglesOverlap({x,y,w:BRICK_W,h:BRICK_H},r,7))continue;
+        const armor=top||corner||sides||lowerRim;
+        const hp=armor?26+Math.floor(hash01(n,row,col,141)*20):4+Math.floor(hash01(n,row,col,142)*6);
+        plan.push({x,y,hp,special:false,ringArmor:armor});
       }
       return plan;
     }
@@ -400,11 +403,15 @@
     for(const tile of tiles)bricks.push(brickAt(tile.x,tile.y,tile.hp,
       {...tile,special:tile.special,summonAge:0,summonSource:"wave"}));
     if(isBossWave(n))bossSpawn();
-    // Height compensation: preserve danger-line pressure across tall phone worlds.
+    // Compensate for added 5px vertical pitch so the same phone does not
+    // suddenly lose ~40px of its original warning time.
     const bottom=Math.max(...bricks.map(b=>b.y+b.h));
-    const referenceGap=455-(84+(WAVE_ROWS_COUNT-1)*WAVE_ROW_GAP+BRICK_H);
     const gap=Math.max(0,DANGER_Y-bottom);
-    waveFallMultiplier=n===1?1:Math.max(1,Math.min(3.2,1+Math.max(0,gap/referenceGap-1)*.70));
+    const extraHeight=(n===1?4:n===5?6:n===10||n===20?7:8)*(WAVE_ROW_GAP-28);
+    const virtualOldGap=gap+extraHeight;
+    const oldReferenceGap=455-(84+8*28+BRICK_H);
+    const oldHeightFactor=Math.max(1,Math.min(3.2,1+Math.max(0,virtualOldGap/oldReferenceGap-1)*.70));
+    waveFallMultiplier=n===1?1:oldHeightFactor*Math.max(.58,gap/Math.max(1,virtualOldGap));
     record("wave_pressure",{wave:n,fallMultiplier:+waveFallMultiplier.toFixed(3),gap:+gap.toFixed(1)});
     waveStartingTargets=livingCount();
     clearPreview=[];clearPreviewShown=false;clearWindowActive=false;
@@ -1186,7 +1193,7 @@
     if(!emptyLatch){
       waveElapsed+=dt;
       const liveBefore=livingCount();if(liveBefore>0){waveMetrics.longestNoBreak=Math.max(waveMetrics.longestNoBreak,waveElapsed-waveMetrics.lastBreak);if(liveBefore<=5)waveMetrics.tailSeconds+=dt;if(liveBefore===1&&boss)waveMetrics.bossSoloSeconds+=dt;}
-      const latePressure=wave>=11&&wave<=19?1+(wave-10)*.028:1;
+      const latePressure=wave>=11&&wave<=19?1+(wave-10)*.022:1;
       const finalePressure=isFinaleWave(wave)?.24+.08*(finaleStage-1):1;
       const speed=Math.min(8.4,FALL_BASE+Math.max(0,wave-1)*.09)*(isBossWave(wave)?.9:1)*CFG.fallScale*waveFallMultiplier*latePressure*finalePressure;
       for(const brick of bricks)if(brick.alive)brick.y+=speed*dt;

@@ -2,7 +2,7 @@
 (function(root,factory){const api=factory();if(typeof module==='object')module.exports=api;else root.PinballBuilds=api;})(typeof window==='object'?window:globalThis,()=>{
  'use strict';
  const CONFIG={maxBalls:32,maxWaves:20,productWaves:50,baseDamage:1,firstShot:.12,
-  arcCooldown:.45,arcEvery:[0,3,2,2],arcTargets:[0,1,2,3],arcRange:[0,110,110,140],arcDamage:[0,1,2,3],focusDamage:3,bossArcDamage:2,
+  arcCooldown:.45,arcEvery:[0,3,2,2],arcTargets:[0,2,3,4],arcRange:[0,124,138,150],arcDamage:[0,1,2,3],focusDamage:3,bossArcDamage:2,
   splitEvery:[0,2,2,1],splitCount:[0,1,2,2],splitSpread:.45,stormSpread:.8,huntTurns:2,childTTL:4.1,
   gunInterval:[0,.35,.27,.20],gunTTL:4.1,lineInterval:.17,fanInterval:.18,fanAngle:.28,fanPeriod:1.8,gunMinInterval:.12,gunRateStep:.012,auxGunInterval:.70,auxGunMinInterval:.55,
   normalInterval:.86,normalMinInterval:.55,normalRateStep:.075,normalTTL:8.4,speed:330,speedStep:15,lifeStep:.7,gunLifeStep:.2,fallScale:.84,
@@ -52,7 +52,7 @@
   for(const [k,text] of [['arcNet','获得跨目标跳传'],['arcFocus','改为命中目标集中放电'],['fan','获得扇面逐发扫射'],['line','获得直线集中压制']])if(after[k]&&!before[k])ds.push({key:k,value:1,text});
   return ds;
  }
- function abilityText(s,id){const e=effects(s);return id==='split'?`弹球每撞砖${e.splitEvery}次，分裂出${e.splitCount}颗小球`:id==='arc'?`每击中${e.arcEvery}次，闪电攻击附近${e.arcTargets}块砖`:'炮台快速连续发射弹球';}
+ function abilityText(s,id){const e=effects(s);return id==='split'?`弹球每撞砖${e.splitEvery}次，分裂出${e.splitCount}颗小球`:id==='arc'?`每击中${e.arcEvery}次，闪电攻击附近${e.arcTargets}块砖；击碎后继续跳电，最多6目标`:'炮台快速连续发射弹球';}
  function deltasFor(s,id,t,before,after){const ds=changes(before,after);return DEFS[id].role==='core'&&!s.ranks[id]?[{key:'ability',value:1,text:'获得新能力：'+abilityText(t,id)},...ds.filter(d=>['rate','damage','speed','ttl'].includes(d.key))]:ds;}
  function preview(s,id){if(!has(id))return null;const t=copy(s),before=effects(s);apply(t,id);const after=effects(t);return {before,after,deltas:deltasFor(s,id,t,before,after)};}
  function eligible(s,wave){if(!s.seedAbility)return [];return Object.values(DEFS).filter(d=>{
@@ -101,7 +101,7 @@
  if(id==='speed')return {title:d.name,description:'弹球飞行速度 +'+num((z.speed/a.speed-1)*100)+'%'};
  if(id==='life')return {title:d.name,description:'弹球留场时间 +'+num(delta('ttl'))+'秒'};
  if(id==='split')return {title:d.name,description:delta('splitCount')>0?'每次分裂多 '+num(delta('splitCount'))+'颗小球':delta('splitEvery')<0?'升级后首次撞砖就能分裂':'小球追踪次数 +'+num(delta('splitPursuit'))};
- if(id==='arc')return {title:d.name,description:delta('arcTargets')>0?'闪电额外攻击 '+num(delta('arcTargets'))+'块砖':delta('arcEvery')<0?'更快放电：每击中'+z.arcEvery+'次触发':'单体闪电伤害 +'+num(delta('arcSolo'))};
+ if(id==='arc')return {title:d.name,description:delta('arcTargets')>0?'闪电额外攻击 '+num(delta('arcTargets'))+'块砖；击碎可续传':delta('arcEvery')<0?'更快放电：每击中'+z.arcEvery+'次触发':'单体闪电伤害 +'+num(delta('arcSolo'))};
  if(id==='gun')return {title:d.name,description:delta('gunPressure')>0?'连续命中同一目标，可多造成 '+num(delta('gunPressure'))+'点伤害':'炮台射速 +'+num((a.interval/z.interval-1)*100)+'%'};
  if(id==='hunter')return {title:d.name,description:'撞墙后追踪目标次数 +'+num(delta('hunter'))};
  if(id==='bank')return {title:d.name,description:'每次撞侧墙，下一击伤害额外 +'+num(delta('bankStep'))};
