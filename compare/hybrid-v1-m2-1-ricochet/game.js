@@ -761,25 +761,41 @@
       const anchor=branch==="arc-a"?from:start;
       const candidates=bricks.filter(b=>b.alive&&!used.has(b.id)&&Math.hypot(b.x+b.w/2-anchor.x,b.y+b.h/2-anchor.y)<=CFG.arcRange[arcLevel]);
       candidates.sort((a,b)=>Math.hypot(a.x+a.w/2-anchor.x,a.y+a.h/2-anchor.y)-Math.hypot(b.x+b.w/2-anchor.x,b.y+b.h/2-anchor.y));
-      if(!candidates.length)break;const next=candidates[0];used.add(next.id);chosen.push(next);from={x:next.x+next.w/2,y:next.y+next.h/2};
+      if(!candidates.length)break;
+      const next=candidates[0];used.add(next.id);chosen.push(next);from={x:next.x+next.w/2,y:next.y+next.h/2};
     }
     let single=false;
     if(!chosen.length){
-      // No remote damage across an empty board: discharge only at the real hit.
       if(!origin.alive)return false;
       chosen.push(origin);single=true;
     }
     const missing=branch==="arc-b"?CFG.arcTargets[arcLevel]:Math.max(0,limit-chosen.filter(b=>b!==origin).length);
     if(origin.alive&&missing>0&&!chosen.includes(origin))chosen.push(origin);
+    // Every bolt is one finite attack. A kill may chain to the next nearby
+    // *distinct* real brick, but cannot recursively trigger more Arc releases.
+    const maxTargets=branch==="arc-b"?chosen.length:Math.min(6,limit+Math.min(2,arcLevel)+(branch==="arc-a"?1:0));
     arcCharge=0;lastArcRelease=elapsed;from=start;
-    for(const b of chosen){
-      const next={x:b.x+b.w/2,y:b.y+b.h/2},damage=b===origin?(branch==="arc-b"?CFG.focusDamage+(build.ranks["arc-b"]>1?3:0):CFG.bossArcDamage)+missing*arcLevel:CFG.arcDamage[arcLevel];
+    let extraHops=0;
+    for(let i=0;i<chosen.length&&i<maxTargets;i++){
+      const b=chosen[i];
+      if(!b.alive)continue;
+      const next={x:b.x+b.w/2,y:b.y+b.h/2};
+      const damage=b===origin?(branch==="arc-b"?CFG.focusDamage+(build.ranks["arc-b"]>1?3:0):CFG.bossArcDamage)+missing*arcLevel:CFG.arcDamage[arcLevel];
       const before=b.hp;hitBrick(b,"lightning",null,damage);const taken=before-b.hp;lightningDamage+=taken;
       if(b===origin){counters.arcSingleDamage+=taken;focusDamage+=taken;}
       if(!reducedMotion){const first=single?{x:next.x-18,y:next.y-20}:from;lightningArcs.push({points:[first,next],age:0,duration:.20});if(lightningArcs.length>30)lightningArcs.shift();}
       from=next;
+      if(branch!=="arc-b"&&before>0&&!b.alive&&chosen.length<maxTargets){
+        const follow=bricks.filter(t=>t.alive&&!used.has(t.id)&&Math.hypot(t.x+t.w/2-next.x,t.y+t.h/2-next.y)<=CFG.arcRange[arcLevel]);
+        follow.sort((a,b)=>Math.hypot(a.x+a.w/2-next.x,a.y+a.h/2-next.y)-Math.hypot(b.x+b.w/2-next.x,b.y+b.h/2-next.y));
+        if(follow.length){const hit=follow[0];used.add(hit.id);chosen.push(hit);extraHops++;}
+      }
     }
-    counters.arcReleases++;lightningTriggers++;record("arc",{targets:chosen.map(b=>b.id),single});playSfx("arc");setState(single?"电荷聚能 · 单体放电":"电弧传播 · "+chosen.length+"个目标");return true;
+    counters.arcReleases++;lightningTriggers++;
+    record("arc",{targets:chosen.map(b=>b.id),single,extraHops,cap:maxTargets});
+    playSfx("arc");
+    setState(single?"电荷聚能 · 单体放电":extraHops?"电弧连锁 · 追加"+extraHops+"次跳电":"电弧传播 · "+chosen.length+"个目标");
+    return true;
   }
   function directContact(block,ball,incoming=null){
     if(!block.alive)return false;
