@@ -42,7 +42,7 @@
   const UPPER_LIMIT=175, LOWER_START=275, BRIDGE_BOTTOM=335;
   const BRIDGE_WARNING=1.0, BOSS_WARNING=1.0, CLEAR_CELEBRATE=.60, CLEAR_WARNING=.90, CLEAR_GRACE=2.1;
   const WAVE_ROWS_COUNT=9, WAVE_ROW_GAP=31, WAVE_BOSS_EVERY=10;
-  const BOSS_SUPPORT_LIMIT_TOTAL=23, BOSS_SUPPORT_INTERVAL=4.6;
+  const BOSS_SUPPORT_LIMIT_TOTAL=70, BOSS_SUPPORT_INTERVAL=3.8;
   const WAVE_ROWS=[8,9,10,11,9,10,11,10,11,11,9,10,11,10,11,11,10,11,10,11];
   const isBossWave=n=>n===10||n===20,isEliteWave=n=>n===5,isFinaleWave=n=>n===20;
   const featuredRect=()=>({x:138,y:WAVE_START_Y+58,w:84,h:53});
@@ -773,6 +773,11 @@
     if(origin.alive&&missing>0&&!chosen.includes(origin))chosen.push(origin);
     // Every bolt is one finite attack. A kill may chain to the next nearby
     // *distinct* real brick, but cannot recursively trigger more Arc releases.
+    // When a ball hits durable Boss armor, keep that physical hit target in
+    // the lightning network instead of letting nearby filler bricks steal its slot.
+    if(branch!=="arc-b"&&origin.alive&&(origin.isBoss||origin.ringArmor||origin.isElite||origin.bossSupport)){
+      if(!chosen.includes(origin)){chosen.unshift(origin);if(chosen.length>limit)chosen.pop();}
+    }
     const maxTargets=branch==="arc-b"?chosen.length:Math.min(6,limit+Math.min(2,arcLevel)+(branch==="arc-a"?1:0));
     arcCharge=0;lastArcRelease=elapsed;from=start;
     let extraHops=0;
@@ -780,7 +785,8 @@
       const b=chosen[i];
       if(!b.alive)continue;
       const next={x:b.x+b.w/2,y:b.y+b.h/2};
-      const damage=b===origin?(branch==="arc-b"?CFG.focusDamage+(build.ranks["arc-b"]>1?3:0):CFG.bossArcDamage)+missing*arcLevel:CFG.arcDamage[arcLevel];
+      const armorBonus=(b.isBoss||b.ringArmor||b.isElite||b.bossSupport)?Build.effects(build).arcArmorBonus:0;
+      const damage=(b===origin?(branch==="arc-b"?CFG.focusDamage+(build.ranks["arc-b"]>1?3:0):CFG.bossArcDamage)+missing*arcLevel:CFG.arcDamage[arcLevel])+armorBonus;
       const before=b.hp;hitBrick(b,"lightning",null,damage);const taken=before-b.hp;lightningDamage+=taken;
       if(b===origin){counters.arcSingleDamage+=taken;focusDamage+=taken;}
       if(!reducedMotion){const first=single?{x:next.x-18,y:next.y-20}:from;lightningArcs.push({points:[first,next],age:0,duration:.20});if(lightningArcs.length>30)lightningArcs.shift();}
@@ -1016,40 +1022,51 @@
   }
   // Boss 10 has finite, *real* reinforcement bricks. No converted old bricks:
   // the player must see physical new targets instead of a support marker.
+  // Boss10: multi-row assault waves of NEW physical HP bricks, not converted labels.
+  // Ordinary stages still get no replacement spawns; Boss20 uses its own finite phases.
   function summonBossBricks(){
     if(!boss||!boss.alive||isFinaleWave(wave)||bossSummonTotal>=BOSS_SUPPORT_LIMIT_TOTAL)return 0;
-    const supports=bricks.filter(b=>b.alive&&b.bossSupport&&b.bossId===boss.id);
+    const existing=bricks.filter(b=>b.alive&&b.bossSupport&&b.bossId===boss.id);
     const pending=summonSignals.filter(sig=>sig.bossId===boss.id);
-    const aliveCap=16,perBurst=4;
-    const count=Math.min(perBurst,BOSS_SUPPORT_LIMIT_TOTAL-bossSummonTotal,
-      aliveCap-supports.length-pending.length,MAX_BRICKS-livingCount()-pending.length);
-    if(count<=0)return 0;
-    // Top and wings; the center/bottom lane stays clear for authentic ricochets.
-    const rows=[-90,-60,-30,0,30,60,90,120],cols=[0,8,1,7,2,6,3,5,4];
-    const slots=[];
-    for(let ri=0;ri<rows.length;ri++)for(let ci=0;ci<cols.length;ci++){
-      const dy=rows[ri],col=cols[ci];
-      if(dy>=0&&col>=3&&col<=5)continue;
-      const x=12+col*BRICK_STEP_X,y=boss.y+dy;
-      if(y<SUMMON_SAFE_TOP||y+BRICK_H>SUMMON_SAFE_BOTTOM)continue;
+    const perWave=14,aliveCap=48;
+    const budget=Math.min(perWave,BOSS_SUPPORT_LIMIT_TOTAL-bossSummonTotal,
+      aliveCap-existing.length-pending.length,MAX_BRICKS-livingCount()-pending.length);
+    if(budget<=0)return 0;
+    // Choose rows across the *whole field*, not only the highest empty row.
+    // Side wings remain available below the Boss, center is reserved for entry.
+    const rows=[];
+    for(let y=SUMMON_SAFE_TOP+3;y+BRICK_H<SUMMON_SAFE_BOTTOM;y+=WAVE_ROW_GAP)rows.push(y);
+    const banks=[[],[],[]];
+    for(let ri=0;ri<rows.length;ri++)for(let col=0;col<BRICK_COLUMNS;col++){
+      const y=rows[ri],x=12+col*BRICK_STEP_X;
+      if(y>=boss.y-12&&col>=3&&col<=5)continue; // preserve bottom firing lane
+      if(y>boss.y+boss.h+105&&col>=2&&col<=6)continue; // never spawn a bottom gate
       if(!isSlotFree(x,y))continue;
-      slots.push({x,y,dy,col,weight:hash01(boss.id,Math.floor(waveElapsed/4.6),ri*11+ci)});
+      const band=y<boss.y-20?0:y<boss.y+boss.h+32?1:2;
+      banks[band].push({x,y,col,band,score:hash01(boss.id,Math.floor(waveElapsed/BOSS_SUPPORT_INTERVAL),ri*11+col)});
     }
-    // Prefer nearer wings but rotate selections so each burst changes the shape.
-    slots.sort((u,v)=>u.weight-v.weight);
-    let queued=0;
-    for(const loc of slots){
-      if(queued>=count)break;
-      if(!isSlotFree(loc.x,loc.y))continue;
-      const hp=8+Math.floor(hash01(boss.id,bossSummonTotal+queued,loc.col,19)*13);
-      summonSignals.push({bossId:boss.id,dx:loc.x-boss.x,dy:loc.y-boss.y,
+    for(const bank of banks)bank.sort((a,b)=>a.score-b.score);
+    const taken=[0,0,0];let queued=0;
+    // Round robin spreads formations among available upper/middle/lower rows.
+    for(let turn=0;turn<BRICK_COLUMNS*20&&queued<budget;turn++){
+      const preferred=(turn+Math.floor(bossSummonTotal/perWave))%3;
+      const band=[preferred,(preferred+1)%3,(preferred+2)%3].find(i=>taken[i]<banks[i].length);
+      if(band===undefined)break;
+      const slot=banks[band][taken[band]++];
+      if(!isSlotFree(slot.x,slot.y))continue;
+      const heavy=(slot.col===1||slot.col===7)&&(queued%4===0);
+      const hp=heavy?22+Math.floor(hash01(boss.id,bossSummonTotal+queued,slot.col,24)*17):
+        7+Math.floor(hash01(boss.id,bossSummonTotal+queued,slot.col,19)*15);
+      summonSignals.push({bossId:boss.id,dx:slot.x-boss.x,dy:slot.y-boss.y,
         age:0,delay:BOSS_WARNING,targetId:null,w:BRICK_W,h:BRICK_H,hp});
       queued++;
     }
     if(queued){
+      const ordinal=1+Math.floor(bossSummonTotal/perWave);
       bossSummonTotal+=queued;
-      record("boss_summon",{wave,batch:queued,total:bossSummonTotal});
-      setState("Boss 增援 · "+queued+"块新砖预警 · 保护弹射入口");
+      record("boss_summon",{wave,batch:queued,total:bossSummonTotal,assault:ordinal,
+        pendingPhysicalBricks:pending.length+queued});
+      setState("Boss 第"+ordinal+"波增援 · "+queued+"块真实数字砖预警");
     }
     return queued;
   }
@@ -1216,8 +1233,8 @@
       waveElapsed+=dt;
       const liveBefore=livingCount();if(liveBefore>0){waveMetrics.longestNoBreak=Math.max(waveMetrics.longestNoBreak,waveElapsed-waveMetrics.lastBreak);if(liveBefore<=5)waveMetrics.tailSeconds+=dt;if(liveBefore===1&&boss)waveMetrics.bossSoloSeconds+=dt;}
       const latePressure=wave>=11&&wave<=19?1+(wave-10)*.022:1;
-      const finalePressure=isFinaleWave(wave)?.29+.09*(finaleStage-1):1;
-      const bossPressure=wave===10?1.04:isFinaleWave(wave)?.9:1;
+      const finalePressure=isFinaleWave(wave)?.34+.11*(finaleStage-1):1;
+      const bossPressure=wave===10?1.20:isFinaleWave(wave)?.9:1;
       const speed=Math.min(8.4,FALL_BASE+Math.max(0,wave-1)*.09)*bossPressure*CFG.fallScale*waveFallMultiplier*latePressure*finalePressure;
       for(const brick of bricks)if(brick.alive)brick.y+=speed*dt;
       const danger=bricks.find(b=>b.alive&&b.y+b.h>=DANGER_Y);

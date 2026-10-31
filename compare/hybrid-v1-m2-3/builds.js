@@ -85,6 +85,7 @@
  }
  function card(s,id){
  const d=DEFS[id];if(!d)return {title:'暂无强化',description:''};
+ if((s.ranks[id]||0)>=d.maxRank)return {title:d.name,description:'已满级'};
  if(!s.seedAbility){const t=copy(s);seed(t,id);return {title:d.name,description:'新能力：'+abilityText(t,id)};}
  const p=preview(s,id);if(!p)return {title:d.name,description:'已满级'};const a=p.before,z=p.after,delta=k=>z[k]-a[k],num=n=>fmt(n);
  if(d.role==='branch'&&s.ranks[id])return {title:d.name,description:{'split-a':'每次裂变额外 +1颗小球','split-b':'裂变小球撞墙追猎 +1次','arc-a':'电弧额外跳向 +1个目标','arc-b':'集中放电伤害 +3','gun-a':'直线射速 +13.3%','gun-b':'扇面射速 +12.5%'}[id]};
