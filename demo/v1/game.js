@@ -722,6 +722,44 @@
     homingTurns++;playSfx("hunt");
     return true;
   }
+  // Laser lab: low-cost analytical ray casting. No extra ball instances or chain recursion.
+  // Laser is a secondary continuous weapon, not a new turret class or ultimate.
+  function traceLaser(){
+    const e=Build.effects(build),maxPierce=e.laserPierce;
+    if(!maxPierce)return {segments:[],targets:[]};
+    let x=shooter.x,y=shooter.y-32,dx=Math.sin(aim),dy=-Math.cos(aim);
+    let remaining=H+W*2,bounces=0;
+    const segments=[],targets=[],seen=new Set();
+    for(let step=0;step<9&&remaining>.02;step++){
+      const topT=dy<-.00001?-y/dy:Infinity;
+      const wallT=dx>.00001?(W-x)/dx:dx<-.00001?-x/dx:Infinity;
+      const boundT=Math.min(topT,wallT,remaining);
+      if(!(boundT>.00001))break;
+      let selected=null,selectedT=boundT;
+      for(const b of bricks){
+        if(!b.alive||seen.has(b.id))continue;
+        const tx0=Math.abs(dx)<.00001?(x>=b.x&&x<=b.x+b.w?-Infinity:Infinity):(b.x-x)/dx;
+        const tx1=Math.abs(dx)<.00001?(x>=b.x&&x<=b.x+b.w?Infinity:-Infinity):(b.x+b.w-x)/dx;
+        const ty0=(b.y-y)/dy,ty1=(b.y+b.h-y)/dy;
+        const tEnter=Math.max(0,Math.min(tx0,tx1),Math.min(ty0,ty1));
+        const tExit=Math.min(Math.max(tx0,tx1),Math.max(ty0,ty1));
+        if(tExit>=tEnter&&tEnter<selectedT){selected=b;selectedT=tEnter;}
+      }
+      const endX=x+dx*selectedT,endY=y+dy*selectedT;
+      segments.push({x1:x,y1:y,x2:endX,y2:endY});
+      if(selected){
+        targets.push(selected);seen.add(selected.id);
+        if(targets.length>=maxPierce)break;
+        remaining-=selectedT+.02;x=endX+dx*.02;y=endY+dy*.02;
+        continue;
+      }
+      remaining-=selectedT;
+      if(wallT<=topT&&wallT<=selectedT+.00001&&bounces<e.laserReflections){
+        bounces++;dx=-dx;x=endX+dx*.02;y=endY+dy*.02;remaining-=.02;
+      }else break;
+    }
+    return {segments,targets};
+  }
   function fire(){
     if(phase!=="playing"||emptyLatch)return false;
     const t=Build.tuning(build);
@@ -1387,11 +1425,11 @@
       if(!live.length&&!boss&&!summonSignals.some(sig=>sig.finale)){
         // No projectiles or active giant may carry over into the next wave.
         // Pause combat at this boundary; only the wave-clear reward grants XP level.
-        balls=[];giant=null;shootClock=0;
+        balls=[];giant=null;shootClock=0;laserSegments=[];
         lightningArcs=[];combo=0;comboVisibility=0;
         emptyLatch=true;clearWindowActive=true;
         screenClears++;clearFlash=1;record("wave_clear",{duration:+waveElapsed.toFixed(3),build:build.coreBranch||build.seedAbility});
-        waveReports.push({wave,duration:+waveElapsed.toFixed(3),breaks:waveMetrics.breaks,breaksPerSecond:waveMetrics.breaks/Math.max(.01,waveElapsed),longestNoBreak:waveMetrics.longestNoBreak,tailSeconds:waveMetrics.tailSeconds,bossSoloSeconds:waveMetrics.bossSoloSeconds,shots:shotsFired-waveMetrics.shots,children:counters.splitChildren-waveMetrics.children,reclaims:counters.budgetReclaims-waveMetrics.reclaims,suppressedShots:counters.suppressedShots-waveMetrics.suppressed,suppressedChildren:counters.suppressedChildren-waveMetrics.suppressedChildren,startGap:+waveStartGap.toFixed(1),closestGap:+closestDangerGap.toFixed(1),nearDangerSeconds:+nearDangerSeconds.toFixed(2)});
+        waveReports.push({wave,duration:+waveElapsed.toFixed(3),breaks:waveMetrics.breaks,breaksPerSecond:waveMetrics.breaks/Math.max(.01,waveElapsed),longestNoBreak:waveMetrics.longestNoBreak,tailSeconds:waveMetrics.tailSeconds,bossSoloSeconds:waveMetrics.bossSoloSeconds,shots:shotsFired-waveMetrics.shots,laserHits:laserWaveHits,children:counters.splitChildren-waveMetrics.children,reclaims:counters.budgetReclaims-waveMetrics.reclaims,suppressedShots:counters.suppressedShots-waveMetrics.suppressed,suppressedChildren:counters.suppressedChildren-waveMetrics.suppressedChildren,startGap:+waveStartGap.toFixed(1),closestGap:+closestDangerGap.toFixed(1),nearDangerSeconds:+nearDangerSeconds.toFixed(2)});
         if(screenClears>=MAX_WAVES){finishPrototype();return;}
         build.recovery={power:0,speed:0,life:0};arcCharge=0;lastArcRelease=-99;
         level++;waveUpgrades++;choiceQueue++;choiceReason="wave";
@@ -1427,13 +1465,30 @@
       if(autoSkill&&build.seedAbility&&charge>=MAX_CHARGE&&!giant)activateEquippedSkill();
       const fireInterval=Build.tuning(build).interval/Build.buffModifiers(build).rate;
       if(shootClock>=fireInterval){shootClock-=fireInterval;fire();}
+      const laser=Build.effects(build);
+      if(laser.laserPierce){
+        const ray=traceLaser();laserSegments=ray.segments;
+        laserClock+=dt;
+        const cadence=laser.laserInterval/Build.buffModifiers(build).rate;
+        if(laserClock>=cadence){
+          laserClock-=cadence;
+          const before=damageDealt;
+          for(const target of ray.targets){
+            if(!target.alive||bossVictory)break;
+            hitBrick(target,"normal",null,laser.laserDamage);
+            laserHits++;laserWaveHits++;
+          }
+          laserDamage+=damageDealt-before;
+          if(ray.targets.length)record("laser_tick",{targets:ray.targets.length,damage:damageDealt-before});
+        }
+      }else{laserSegments=[];laserClock=0;}
       const currentBalls=balls.slice(),kept=currentBalls.filter(b=>updateBall(b,dt));
       const newborn=balls.filter(b=>!currentBalls.includes(b));balls=kept.concat(newborn).slice(0,MAX_BALLS);
       updateLightningChains();
       lightningArcs.forEach(e=>e.age+=dt);lightningArcs=lightningArcs.filter(e=>e.age<e.duration);
       updateGiant(dt);
     }
-    if(bossVictory){lightningArcs=[];lightningChains=[];}
+    if(bossVictory){lightningArcs=[];lightningChains=[];laserSegments=[];}
     particles.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=.97;p.vy*=.97;p.life-=dt;});
     particles=particles.filter(p=>p.life>0);
     for(const b of bricks)if(b.alive&&b.bonk>0)b.bonk=Math.max(0,b.bonk-dt);
@@ -1597,6 +1652,15 @@
       ctx.beginPath();ctx.moveTo(shooter.x,shooter.y-17);
       ctx.lineTo(shooter.x+Math.sin(aim)*220,shooter.y-17-Math.cos(aim)*220);
       ctx.stroke();ctx.restore();
+    }
+    if(phase==="playing"&&!emptyLatch&&!bossVictory&&laserSegments.length){
+      ctx.save();ctx.globalAlpha=.76;ctx.strokeStyle="#92f5ee";
+      ctx.lineWidth=2.5;ctx.lineCap="round";ctx.shadowColor="#69ebff";
+      ctx.shadowBlur=renderQuality==="full"?6:1;
+      for(const part of laserSegments){
+        ctx.beginPath();ctx.moveTo(part.x1,part.y1);ctx.lineTo(part.x2,part.y2);ctx.stroke();
+      }
+      ctx.restore();
     }
     for(const b of balls){
       b.trail.forEach((p,i)=>{const t=1-i/b.trail.length;ctx.fillStyle="rgba(139,224,250,"+(.18*t)+")";
@@ -1766,7 +1830,7 @@
     draw();requestAnimationFrame(frame);
   }
   function snapshot() {
-    return {damageDealt,shotsWithContact,currentWaveMetrics:waveMetrics?{...waveMetrics,longestNoBreak:Math.max(waveMetrics.longestNoBreak,waveElapsed-waveMetrics.lastBreak)}:null,precisionTurns,focusDamage,gunBonusDamage,weakpointDamage,weakpointCharge,waveFallMultiplier,dangerGap:Number.isFinite(dangerGap())?+dangerGap().toFixed(1):null,waveStartGap:Number.isFinite(waveStartGap)?+waveStartGap.toFixed(1):null,nearDangerSeconds:+nearDangerSeconds.toFixed(2),pressureWarningStage,worldWidth:W,worldHeight:H,dangerY:DANGER_Y,shooterY:shooter.y,growthFocus:build.growthFocus,pausedFrom,battleTime,bankDamage,temporaryBuffs:build.temporaryBuffs.map(b=>({...b})),buildSummary:Build.summary(build),waveReports:waveReports.map(r=>({...r})),seed:build.seed,seedAbility:build.seedAbility,coreFocus:build.coreFocus,coreBranch:build.coreBranch,ranks:{...build.ranks},routeWeights:{...build.routeWeights},
+    return {laserHits,laserWaveHits,laserDamage,laserActive:laserSegments.length>0,laserSegmentCount:laserSegments.length,damageDealt,shotsWithContact,currentWaveMetrics:waveMetrics?{...waveMetrics,longestNoBreak:Math.max(waveMetrics.longestNoBreak,waveElapsed-waveMetrics.lastBreak)}:null,precisionTurns,focusDamage,gunBonusDamage,weakpointDamage,weakpointCharge,waveFallMultiplier,dangerGap:Number.isFinite(dangerGap())?+dangerGap().toFixed(1):null,waveStartGap:Number.isFinite(waveStartGap)?+waveStartGap.toFixed(1):null,nearDangerSeconds:+nearDangerSeconds.toFixed(2),pressureWarningStage,worldWidth:W,worldHeight:H,dangerY:DANGER_Y,shooterY:shooter.y,growthFocus:build.growthFocus,pausedFrom,battleTime,bankDamage,temporaryBuffs:build.temporaryBuffs.map(b=>({...b})),buildSummary:Build.summary(build),waveReports:waveReports.map(r=>({...r})),seed:build.seed,seedAbility:build.seedAbility,coreFocus:build.coreFocus,coreBranch:build.coreBranch,ranks:{...build.ranks},routeWeights:{...build.routeWeights},
       choiceHistory:build.choiceHistory.map(c=>({...c})),...counters,shotsByBuild:{...counters.shotsByBuild},collisionChecks,physicsMeanMs:physicsSteps?physicsCostMs/physicsSteps:0,maxPhysicsMs,
       phase,wave,score,aim,interval:Build.tuning(build).interval,fpsNow,renderQuality,physicsHz:120,level,xp,xpGoal,choiceQueue,choiceSet:choiceSet.join(","),powerLevel,volleyLevel,rateLevel,speedLevel,lifeLevel,rowIndex,screenClears,waveElapsed,waveSpawnCount,waveStartingTargets,waveUpgrades,bossSummonTotal,finaleStage,finaleWaveSpawns:[...finaleWaveSpawns],finaleDamageCheckpoints:[...finaleDamageCheckpoints],clearWindowActive,nearClearClock,replenishClock,cleanupWindow,cleanupStarted,cleanupActivations,bridgeTimer,bridgeBursts,bridgeTiles,upperOnlyBridgeCount,zoneCounts:zoneCounts(),clearPreviewCount:clearPreview.length,clearPreviewShown,summonWarningCount:summonSignals.length,ambientSummonClock,ambientSummonBursts,ambientSummonTiles,ambientSummonWarningCount:ambientSignals.length,overlapSummonCount,clearBurstCount,clearBurstTiles,bossActive:!!(boss&&boss.alive),bossHp:boss?.hp||0,bossDefeats,brickCount:livingCount(),surgeActive:elapsed<surgeUntil,hunterLevel,ricochetLevel,
       charge,activeBalls:balls.length,giantActive:!!giant,skillsUsed,ricochetTriggers,elapsed,
