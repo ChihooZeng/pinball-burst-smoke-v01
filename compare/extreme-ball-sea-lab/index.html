@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#071525">
+<title>弹珠超载 · 球海极限爽感实验室（独立测试）</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,-apple-system,"PingFang SC",sans-serif;background:#06111f;color:#edf9ff}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse 90% 55% at 50% 5%,#19345c 0%,#06111f 70%);min-height:100vh}
+main{width:min(100%,455px);margin:auto;padding:12px 12px calc(18px + env(safe-area-inset-bottom))}
+header{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:8px}
+small{color:#9fb8d3}h1{font-size:19px;margin:0;font-weight:800;letter-spacing:.4px}button,select{font:inherit}
+button{border:1px solid #367b9c;background:#143f60;color:#f0fdff;border-radius:10px;padding:11px 12px;font-weight:700;cursor:pointer}
+button:active{transform:scale(.97)}button.primary{background:linear-gradient(120deg,#1eb0bf,#4c69c9);border:0;color:#fff}
+button:disabled{opacity:.4}
+.pill{color:#ffdfae;border:1px solid #776047;padding:4px 7px;border-radius:99px;font-size:11px;white-space:nowrap}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin-bottom:8px}
+.stat{background:#11263bd9;border:1px solid #1f3d56;border-radius:9px;padding:7px 4px;text-align:center}
+.stat b{display:block;font-size:17px;font-variant-numeric:tabular-nums;color:#b1f6ff}.stat span{font-size:10px;color:#a1bbcc}
+.stage{position:relative;border:1px solid #315270;border-radius:14px;overflow:hidden;box-shadow:0 13px 40px #0008}
+canvas{display:block;width:100%;height:auto;touch-action:none;background:#081729}
+.dialog{position:absolute;inset:0;background:#061222ed;display:flex;flex-direction:column;justify-content:center;align-items:stretch;padding:21px;gap:11px;z-index:3}
+.dialog.hidden{display:none}
+.dialog h2{font-size:25px;line-height:1.2;margin:0;text-align:center}.dialog p{font-size:13px;line-height:1.65;color:#b5d1de;margin:0}
+.dialog label{font-size:12px;color:#abc7d7;display:grid;gap:5px}
+.dialog select{width:100%;border:1px solid #45758b;background:#13304b;color:white;padding:11px;border-radius:9px}
+.buttons{display:flex;gap:7px;margin-top:9px}.buttons button{flex:1;min-width:0;font-size:13px}
+.note{font-size:12px;color:#9bbad0;line-height:1.5;margin-top:10px}
+#toast{min-height:18px;color:#a8eaff;font-size:12px;margin-top:7px}
+legend{font-size:11px;color:#a4d2e7}
+@media (max-width:370px){main{padding:7px 7px 13px}.stat b{font-size:15px}.buttons button{padding:9px 4px;font-size:12px}.dialog{padding:16px}}
+</style>
+</head>
+<body>
+<main>
+<header><div><small>独立测试 · 不进入主线</small><h1>弹珠超载 · 球海实验室</h1></div><span class="pill">NO FALL · SPLIT CHAOS</span></header>
+<div class="stats" aria-live="polite">
+<div class="stat"><b id="balls">0</b><span>真实弹球</span></div>
+<div class="stat"><b id="hits">0</b><span>累计撞击</span></div>
+<div class="stat"><b id="clears">0</b><span>击碎砖块</span></div>
+<div class="stat"><b id="fps">--</b><span>FPS</span></div>
+</div>
+<div class="stage">
+<canvas id="field" width="360" height="610" aria-label="无限时间、砖块不下落的极限分裂弹球物理测试，触摸或拖动调整炮台方向"></canvas>
+<div class="dialog" id="launch">
+ <small style="text-align:center;color:#6ff2ec">EXPERIMENTAL · EXTREME SPLIT</small>
+ <h2>超大数字 × 超多弹球</h2>
+ <p>只管调整炮台角度。炮台自动连续射击，撞上砖块后层层分裂；砖块永不下落，无警戒线、无失败时间。清空后会自动补满新阵列。</p>
+ <label>真实弹球性能档位
+  <select id="capacity"><option value="350">狂潮 · 350颗（手机优先）</option><option value="900" selected>暴走 · 900颗（推荐）</option><option value="2200">极限 · 2200颗（高性能设备）</option></select>
+ </label>
+ <label>砖块数字大小
+  <select id="hp"><option value="9999" selected>超高耐久 · 9,999 / 49,999</option><option value="99999">巨额耐久 · 99,999 / 499,999</option></select>
+ </label>
+ <button class="primary" id="start">开始极限测试</button>
+ <small style="line-height:1.5;text-align:center">实验允许大量真实弹球，但仍限制最高同时数量，防止浏览器死机。此测试不用于正式游戏平衡。</small>
+</div>
+</div>
+<div class="buttons">
+ <button id="boost" class="primary" disabled>再加 200 颗</button>
+ <button id="newBricks" disabled>重新铺满砖阵</button>
+ <button id="restart" disabled>重新设置</button>
+</div>
+<div id="toast">已准备独立实验场。</div>
+<div class="note">提示：向左、右滑动瞄准。弹球撞到底部会弹回，形成持续球海；真正的弹球数量与实时帧率会显示在上方。旧版本和主线Demo完全不受影响。</div>
+</main>
+<script>
+(function(){
+"use strict";
+var W=360,H=610,canvas=document.getElementById("field"),ctx=canvas.getContext("2d");
+var $=function(id){return document.getElementById(id)};
+var balls=[],bricks=[],grid=new Map(),bursts=[],sparks=[],hits=0,clears=0,round=0,aim=0,live=false,paused=false;
+var maxBalls=900,baseHP=9999,clock=0,shotClock=0,fireInterval=.135,damage=145,frame=0,fps=60,visualLite=false;
+var latest=performance.now(),fpsClock=0,fpsFrames=0,nextId=1,spawnQueue=[],capacityWarning=0,pointerDown=false;
+var CELL=42,cellCols=12,PI2=Math.PI*2,muted=false,audio=null,lastTone=0,lowFpsCount=0;
+function rand(a,b){return a+Math.random()*(b-a)}
+function pos(c){return Math.max(0,Math.min(c,359))}
+function tone(freq){if(muted||performance.now()-lastTone<65)return;lastTone=performance.now();try{
+ if(!audio)audio=new (window.AudioContext||window.webkitAudioContext)();
+ if(audio.state==="suspended")audio.resume();
+ var o=audio.createOscillator(),v=audio.createGain(),t=audio.currentTime;
+ o.type="sine";o.frequency.setValueAtTime(freq,t);o.frequency.exponentialRampToValueAtTime(freq*.65,t+.06);
+ v.gain.setValueAtTime(.018,t);v.gain.exponentialRampToValueAtTime(.0001,t+.07);
+ o.connect(v);v.connect(audio.destination);o.start();o.stop(t+.07);
+}catch(e){}}
+function cellKey(x,y){return Math.floor(x/CELL)+Math.floor(y/CELL)*cellCols}
+function indexBricks(){
+ grid=new Map();
+ for(var i=0;i<bricks.length;i++){
+  var b=bricks[i],x0=Math.floor((b.x-5)/CELL),x1=Math.floor((b.x+b.w+5)/CELL);
+  var y0=Math.floor((b.y-5)/CELL),y1=Math.floor((b.y+b.h+5)/CELL);
+  for(var yy=y0;yy<=y1;yy++)for(var xx=x0;xx<=x1;xx++){
+   var key=xx+yy*cellCols,list=grid.get(key);if(!list){list=[];grid.set(key,list)}list.push(b);
+  }
+ }
+}
+function makeBricks(){
+ bricks=[];round++;
+ var anchor=round%3;
+ for(var row=0;row<8;row++)for(var col=0;col<9;col++){
+  if((row===7&&(col===3||col===5))||(row===4&&col===4))continue;
+  var factor=(row<=1&&col>=2&&col<=6)?5:1;
+  var hp=Math.round(baseHP*factor*(.80+((row*7+col*3+anchor)%5)*.10));
+  bricks.push({x:12+col*38.5,y:58+row*31,w:29,h:22,hp:hp,maxHp:hp,alive:true,hits:0,id:nextId++});
+ }
+ indexBricks();
+ $("toast").textContent="第 "+round+" 轮超高耐久砖阵 · 固定位置，绝不下落。";
+}
+function spawnBall(x,y,angle,depth,speed){
+ var v=speed||rand(255,360);var radius=depth===0?3.5:depth===1?2.75:2.3;
+ return {x:x,y:y,vx:Math.sin(angle)*v,vy:-Math.cos(angle)*v,r:radius,depth:depth,life:0,maxLife:depth===0?10.5:depth===1?8.7:7.2,
+ split:false,lastBrick:0,lastHitAt:-99,trailX:x,trailY:y};
+}
+function emitShot(angle,x,y,depth,speed){
+ if(balls.length>=maxBalls)return false;
+ balls.push(spawnBall(x,y,angle,depth,speed));return true;
+}
+function shoot(){
+ // Rapid real shots; growth also comes from 3 generations of brick-triggered splitting.
+ emitShot(180,558,aim+rand(-.045,.045),0,315);
+}
+function scheduleSplit(ball,x,y){
+ if(ball.depth>=3||ball.split)return;
+ ball.split=true;
+ var qty=ball.depth===0?12:ball.depth===1?5:3,angle=Math.atan2(ball.vx,-ball.vy),spread=ball.depth===0?1.28:1.65;
+ var slots=Math.max(0,maxBalls-balls.length-spawnQueue.length),made=Math.min(qty,slots);
+ for(var k=0;k<made;k++){
+  var a=angle+(made===1?0:(k/(made-1)*2-1)*spread)+rand(-.075,.075);
+  spawnQueue.push({x:x,y:y,a:a,depth:ball.depth+1,speed:rand(265,395)});
+ }
+ if(made>=3)bursts.push({x:x,y:y,age:0,max:.33,amount:made});
+}
+function impact(x,y,big){
+ if(sparks.length>125)return;
+ if(big)for(var i=0;i<(visualLite?2:6);i++)sparks.push({x:x,y:y,vx:rand(-75,75),vy:rand(-65,65),life:.22});
+}
+function breakBrick(b){
+ if(!b.alive)return;
+ b.alive=false;clears++;impact(b.x+14.5,b.y+11,true);tone(730);
+ if(bricks.every(function(v){return !v.alive})){
+  makeBricks();
+ }
+}
+function hitBrick(ball,b,dt){
+ if(!b.alive)return;
+ if(ball.lastBrick===b.id&&ball.life-ball.lastHitAt<.065)return;
+ ball.lastBrick=b.id;ball.lastHitAt=ball.life;
+ hits++;b.hits++;
+ var mult=ball.depth===0?1:ball.depth===1?.68:.48;
+ b.hp=Math.max(0,b.hp-Math.round(damage*mult));
+ if(b.hp===0)breakBrick(b);
+ else if(hits%5===0)tone(320+ball.depth*90);
+ if(b.hits%3===0)impact(ball.x,ball.y,false);
+ scheduleSplit(ball,ball.x,ball.y);
+}
+function updateBall(ball,dt){
+ ball.life+=dt;
+ if(ball.life>=ball.maxLife)return false;
+ ball.trailX=ball.x;ball.trailY=ball.y;
+ // Bounded physical substeps; each ball tests only nearby hashed bricks.
+ var loops=Math.max(1,Math.ceil(Math.max(Math.abs(ball.vx),Math.abs(ball.vy))*dt/5.4));
+ var step=dt/loops;
+ for(var n=0;n<loops;n++){
+  var oldX=ball.x,oldY=ball.y;
+  ball.x+=ball.vx*step;ball.y+=ball.vy*step;
+  if(ball.x<ball.r){ball.x=ball.r;ball.vx=Math.abs(ball.vx)}
+  if(ball.x>W-ball.r){ball.x=W-ball.r;ball.vx=-Math.abs(ball.vx)}
+  if(ball.y<ball.r+3){ball.y=ball.r+3;ball.vy=Math.abs(ball.vy)}
+  // The floor is reflective: nothing falls out and no game-over timer exists.
+  if(ball.y>H-16-ball.r){ball.y=H-16-ball.r;ball.vy=-Math.abs(ball.vy)}
+  var nearby=grid.get(cellKey(ball.x,ball.y));
+  if(!nearby)continue;
+  for(var i=0;i<nearby.length;i++){
+   var b=nearby[i];
+   if(!b.alive||ball.x+ball.r<b.x||ball.x-ball.r>b.x+b.w||ball.y+ball.r<b.y||ball.y-ball.r>b.y+b.h)continue;
+   var px=Math.max(b.x,Math.min(ball.x,b.x+b.w)),py=Math.max(b.y,Math.min(ball.y,b.y+b.h));
+   var dx=ball.x-px,dy=ball.y-py,d2=dx*dx+dy*dy;
+   if(d2>ball.r*ball.r)continue;
+   // Restore collision normal from prior movement to avoid trapped balls.
+   var nx=0,ny=0;
+   if(d2>.00001){var d=Math.sqrt(d2);nx=dx/d;ny=dy/d}
+   else if(oldY+ball.r<=b.y)ny=-1;
+   else if(oldY-ball.r>=b.y+b.h)ny=1;
+   else if(oldX+ball.r<=b.x)nx=-1;
+   else if(oldX-ball.r>=b.x+b.w)nx=1;
+   else ny=ball.vy>0?-1:1;
+   ball.x=px+nx*(ball.r+.30);ball.y=py+ny*(ball.r+.30);
+   var dot=ball.vx*nx+ball.vy*ny;
+   if(dot<0){ball.vx-=2*dot*nx;ball.vy-=2*dot*ny}
+   hitBrick(ball,b,step);
+   break;
+  }
+ }
+ return true;
+}
+function update(dt){
+ if(!live)return;
+ clock+=dt;shotClock+=dt;
+ while(shotClock>=fireInterval){shotClock-=fireInterval;shoot()}
+ // Spawn queued children in manageable increments to avoid a single huge hitch.
+ var born=Math.min(55,spawnQueue.length,Math.max(0,maxBalls-balls.length));
+ for(var k=0;k<born;k++){var p=spawnQueue.pop();emitShot(p.x,p.y,p.a,p.depth,p.speed)}
+ if(balls.length>=maxBalls&&spawnQueue.length){spawnQueue.length=0;capacityWarning=clock+2}
+ var kept=[];
+ for(var i=0;i<balls.length;i++)if(updateBall(balls[i],dt))kept.push(balls[i]);
+ balls=kept;
+ for(var j=bursts.length-1;j>=0;j--){bursts[j].age+=dt;if(bursts[j].age>bursts[j].max)bursts.splice(j,1)}
+ for(var j=sparks.length-1;j>=0;j--){var p=sparks[j];p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;if(p.life<=0)sparks.splice(j,1)}
+}
+function roundRect(x,y,w,h,r){ctx.beginPath();ctx.roundRect(x,y,w,h,r)}
+function draw(){
+ ctx.clearRect(0,0,W,H);
+ var bg=ctx.createLinearGradient(0,0,0,H);bg.addColorStop(0,"#0d2542");bg.addColorStop(1,"#071324");ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+ ctx.strokeStyle="#1b3551";ctx.lineWidth=.55;
+ for(var x=0;x<W;x+=30){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}
+ for(var y=0;y<H;y+=32){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+ for(var i=0;i<bricks.length;i++){
+  var b=bricks[i];if(!b.alive)continue;
+  var ratio=b.hp/b.maxHp,hue=b.maxHp>=baseHP*4?326:186+(i%5)*24;
+  ctx.fillStyle="hsl("+hue+" 70% "+(26+(1-ratio)*18)+"%)";
+  if(!visualLite){ctx.shadowColor="hsl("+hue+" 95% 65%)";ctx.shadowBlur=5}
+  roundRect(b.x,b.y,b.w,b.h,4);ctx.fill();
+  ctx.shadowBlur=0;ctx.strokeStyle="hsla("+hue+" 95% 77% / .9)";ctx.lineWidth=1;ctx.stroke();
+  ctx.fillStyle="#f7fcff";ctx.font="bold "+(b.hp>=100000?"8":"9")+"px system-ui";
+  ctx.textAlign="center";ctx.fillText(String(b.hp),b.x+b.w/2,b.y+15);
+  if(ratio<.75){ctx.fillStyle="#91ffe1";ctx.fillRect(b.x+2,b.y+19,(b.w-4)*ratio,2)}
+ }
+ for(var i=0;i<bursts.length;i++){
+  var b=bursts[i],q=b.age/b.max;
+  ctx.globalAlpha=.65*(1-q);ctx.strokeStyle="#78f5ed";ctx.lineWidth=3*(1-q)+.6;
+  ctx.beginPath();ctx.arc(b.x,b.y,3+q*29,0,PI2);ctx.stroke()
+ }ctx.globalAlpha=1;
+ if(!visualLite)for(var i=0;i<sparks.length;i++){var q=sparks[i];ctx.globalAlpha=q.life/.22;ctx.fillStyle="#d1f9ff";ctx.fillRect(q.x,q.y,2,2)}ctx.globalAlpha=1;
+ for(var i=0;i<balls.length;i++){
+  var b=balls[i];
+  ctx.strokeStyle=b.depth===0?"#b4f8ff55":b.depth===1?"#c9b0ff55":"#a5d6ff45";
+  if(!visualLite&&balls.length<900){ctx.lineWidth=b.r*.85;ctx.beginPath();ctx.moveTo(b.trailX,b.trailY);ctx.lineTo(b.x,b.y);ctx.stroke()}
+  ctx.fillStyle=b.depth===0?"#f4ffff":b.depth===1?"#dfbaff":b.depth===2?"#a9f0ff":"#8fd5ff";
+  ctx.beginPath();ctx.arc(b.x,b.y,Math.max(1.35,b.r),0,PI2);ctx.fill();
+ }
+ ctx.save();ctx.translate(180,565);ctx.rotate(aim);
+ ctx.fillStyle="#2c94a9";roundRect(-15,-10,30,28,8);ctx.fill();
+ ctx.fillStyle="#d8faff";roundRect(-5,-27,10,24,4);ctx.fill();
+ ctx.restore();
+ ctx.save();ctx.strokeStyle="#7deef155";ctx.setLineDash([5,7]);ctx.lineWidth=1.4;
+ ctx.beginPath();ctx.moveTo(180,546);ctx.lineTo(180+Math.sin(aim)*220,546-Math.cos(aim)*220);ctx.stroke();ctx.restore();
+ if(live){
+  ctx.textAlign="center";ctx.fillStyle="#a7e8f0";ctx.font="bold 11px system-ui";
+  ctx.fillText("INFINITE TIME  ·  NO FALL  ·  "+round+" 砖阵",180,22);
+  if(clock<2){ctx.font="bold 22px system-ui";ctx.fillStyle="#e6f9ff";ctx.fillText("球海暴走!",180,368)}
+  if(capacityWarning>clock){ctx.fillStyle="#ffe2a6";ctx.font="bold 12px system-ui";ctx.fillText("已达到当前性能档位 · 弹球正在循环更新",180,346)}
+ }
+}
+function updateLabels(){
+ $("balls").textContent=balls.length.toLocaleString();
+ $("hits").textContent=hits.toLocaleString();
+ $("clears").textContent=clears.toLocaleString();
+ $("fps").textContent=fps;
+}
+function loop(now){
+ var dt=Math.min(.033,(now-latest)/1000||.016);latest=now;
+ if(live)update(dt);
+ draw();
+ fpsClock+=dt;fpsFrames++;
+ if(fpsClock>.9){
+  fps=Math.round(fpsFrames/fpsClock);visualLite=fps<36||balls.length>1200;
+  updateLabels();fpsFrames=0;fpsClock=0;
+ }
+ requestAnimationFrame(loop);
+}
+function aimFromEvent(e){var rect=canvas.getBoundingClientRect(),x=(e.clientX-rect.left)/rect.width*W;aim=Math.max(-1.08,Math.min(1.08,(x-180)/180*1.08))}
+canvas.addEventListener("pointerdown",function(e){if(!live)return;e.preventDefault();pointerDown=true;canvas.setPointerCapture(e.pointerId);aimFromEvent(e)});
+canvas.addEventListener("pointermove",function(e){if(!live||!pointerDown)return;e.preventDefault();aimFromEvent(e)});
+canvas.addEventListener("pointerup",function(){pointerDown=false});canvas.addEventListener("pointercancel",function(){pointerDown=false});
+function begin(){
+ maxBalls=Number($("capacity").value)||900;baseHP=Number($("hp").value)||9999;
+ balls=[];spawnQueue=[];sparks=[];bursts=[];hits=clears=clock=shotClock=0;nextId=1;round=0;fps=60;visualLite=false;capacityWarning=0;
+ makeBricks();live=true;$("launch").classList.add("hidden");
+ ["boost","newBricks","restart"].forEach(function(x){$(x).disabled=false});
+ // Prime the arena so the player sees multiple trajectories immediately.
+ for(var i=0;i<18;i++)emitShot(180,558,rand(-.90,.90),0,rand(280,380));
+ updateLabels();
+ tone(540);
+}
+$("start").addEventListener("click",begin);
+$("restart").addEventListener("click",function(){live=false;balls=[];spawnQueue=[];$("launch").classList.remove("hidden");["boost","newBricks","restart"].forEach(function(x){$(x).disabled=true});updateLabels()});
+$("newBricks").addEventListener("click",function(){if(live){makeBricks();tone(600)}});
+$("boost").addEventListener("click",function(){if(!live)return;var n=0;for(var i=0;i<200;i++){if(!emitShot(180,554,rand(-1.1,1.1),Math.random()<.3?1:0,rand(260,405)))break;n++} $("toast").textContent="额外加入 "+n+" 颗真实弹球 · 当前 "+balls.length+"/"+maxBalls+"。";if(n<200)capacityWarning=clock+2;updateLabels();tone(480)});
+document.addEventListener("visibilitychange",function(){if(document.hidden){live=false;paused=true}else if(paused){live=true;paused=false;latest=performance.now()}});
+requestAnimationFrame(loop);
+window.__BallSeaLab={stats:function(){return {ballCount:balls.length,cap:maxBalls,hits:hits,broken:clears,round:round,fps:fps,stationary:true,active:live,pending:spawnQueue.length,baseHP:baseHP}},addBalls:function(n){for(var i=0;i<(n||100);i++)if(!emitShot(180,554,rand(-1,1),0,300))break},resetBricks:makeBricks};
+})();
+</script>
+</body>
+</html>
