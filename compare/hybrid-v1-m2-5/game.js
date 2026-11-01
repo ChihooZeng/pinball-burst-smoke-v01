@@ -754,19 +754,27 @@
     ball.y+=normal.ny*(normal.overlap+.42);
   }
   // Electric arc is a selected upgrade, not a passive that waits for cleanup.
+  // Lightning now travels and damages targets ONE AT A TIME, not all at once.
+  // Arc's finite queue is independent from physical collisions, so visual
+  // steps cannot recursively spawn lightning or freeze the simulation.
   function triggerLightning(origin,ball){
-    if(!arcLevel||!origin||!ball||ball.mini||ball.contacts===undefined)return false;
+    if(!arcLevel||!origin||!ball||ball.mini||ball.contacts===undefined||bossVictory)return false;
     arcCharge++;
     if(arcCharge<CFG.arcEvery[arcLevel]||elapsed-lastArcRelease<CFG.arcCooldown)return false;
     const start={x:origin.x+origin.w/2,y:origin.y+origin.h/2};
-    const branch=build.coreBranch,limit=branch==="arc-a"?Build.effects(build).arcTargets:CFG.arcTargets[arcLevel];
-    let from=start;const chosen=[],used=new Set([origin.id]);
+    const branch=build.coreBranch,effect=Build.effects(build);
+    const limit=branch==="arc-a"?effect.arcTargets:CFG.arcTargets[arcLevel];
+    const chosen=[],used=new Set([origin.id]);
+    let from=start;
     if(branch!=="arc-b")for(let i=0;i<limit;i++){
       const anchor=branch==="arc-a"?from:start;
-      const candidates=bricks.filter(b=>b.alive&&!used.has(b.id)&&Math.hypot(b.x+b.w/2-anchor.x,b.y+b.h/2-anchor.y)<=CFG.arcRange[arcLevel]);
-      candidates.sort((a,b)=>Math.hypot(a.x+a.w/2-anchor.x,a.y+a.h/2-anchor.y)-Math.hypot(b.x+b.w/2-anchor.x,b.y+b.h/2-anchor.y));
+      const candidates=bricks.filter(b=>b.alive&&!used.has(b.id)&&
+        Math.hypot(b.x+b.w/2-anchor.x,b.y+b.h/2-anchor.y)<=CFG.arcRange[arcLevel]);
+      candidates.sort((a,b)=>Math.hypot(a.x+a.w/2-anchor.x,a.y+a.h/2-anchor.y)-
+        Math.hypot(b.x+b.w/2-anchor.x,b.y+b.h/2-anchor.y));
       if(!candidates.length)break;
-      const next=candidates[0];used.add(next.id);chosen.push(next);from={x:next.x+next.w/2,y:next.y+next.h/2};
+      const target=candidates[0];chosen.push(target);used.add(target.id);
+      from={x:target.x+target.w/2,y:target.y+target.h/2};
     }
     let single=false;
     if(!chosen.length){
@@ -775,37 +783,70 @@
     }
     const missing=branch==="arc-b"?CFG.arcTargets[arcLevel]:Math.max(0,limit-chosen.filter(b=>b!==origin).length);
     if(origin.alive&&missing>0&&!chosen.includes(origin))chosen.push(origin);
-    // Every bolt is one finite attack. A kill may chain to the next nearby
-    // *distinct* real brick, but cannot recursively trigger more Arc releases.
-    // When a ball hits durable Boss armor, keep that physical hit target in
-    // the lightning network instead of letting nearby filler bricks steal its slot.
+    // Never leave the actual hit Boss / armored anchor out of the electrical network.
     if(branch!=="arc-b"&&origin.alive&&(origin.isBoss||origin.ringArmor||origin.isElite||origin.bossSupport)){
       if(!chosen.includes(origin)){chosen.unshift(origin);if(chosen.length>limit)chosen.pop();}
     }
-    const maxTargets=branch==="arc-b"?chosen.length:Math.min(6,limit+Math.min(2,arcLevel)+(branch==="arc-a"?1:0));
-    arcCharge=0;lastArcRelease=elapsed;from=start;
-    let extraHops=0;
-    for(let i=0;i<chosen.length&&i<maxTargets;i++){
-      const b=chosen[i];
-      if(!b.alive)continue;
-      const next={x:b.x+b.w/2,y:b.y+b.h/2};
-      const armorBonus=(b.isBoss||b.ringArmor||b.isElite||b.bossSupport)?Build.effects(build).arcArmorBonus:0;
-      const damage=(b===origin?(branch==="arc-b"?CFG.focusDamage+(build.ranks["arc-b"]>1?3:0):CFG.bossArcDamage)+missing*arcLevel:CFG.arcDamage[arcLevel])+armorBonus;
-      const before=b.hp;hitBrick(b,"lightning",null,damage);const taken=before-b.hp;lightningDamage+=taken;
-      if(b===origin){counters.arcSingleDamage+=taken;focusDamage+=taken;}
-      if(!reducedMotion){const first=single?{x:next.x-18,y:next.y-20}:from;lightningArcs.push({points:[first,next],age:0,duration:.20});if(lightningArcs.length>30)lightningArcs.shift();}
-      from=next;
-      if(branch!=="arc-b"&&before>0&&!b.alive&&chosen.length<maxTargets){
-        const follow=bricks.filter(t=>t.alive&&!used.has(t.id)&&Math.hypot(t.x+t.w/2-next.x,t.y+t.h/2-next.y)<=CFG.arcRange[arcLevel]);
-        follow.sort((a,b)=>Math.hypot(a.x+a.w/2-next.x,a.y+a.h/2-next.y)-Math.hypot(b.x+b.w/2-next.x,b.y+b.h/2-next.y));
-        if(follow.length){const hit=follow[0];used.add(hit.id);chosen.push(hit);extraHops++;}
-      }
-    }
-    counters.arcReleases++;lightningTriggers++;
-    record("arc",{targets:chosen.map(b=>b.id),single,extraHops,cap:maxTargets});
-    playSfx("arc");
-    setState(single?"电荷聚能 · 单体放电":extraHops?"电弧连锁 · 追加"+extraHops+"次跳电":"电弧传播 · "+chosen.length+"个目标");
+    const maxTargets=branch==="arc-b"?1:Math.min(6,limit+Math.min(2,arcLevel)+(branch==="arc-a"?1:0));
+    if(lightningChains.length>=ARC_CHAIN_CAP)lightningChains.shift();
+    lightningChains.push({
+      originId:origin.id,branch,used:new Set(chosen.map(b=>b.id).concat(origin.id)),
+      targets:chosen.map(b=>b.id),index:0,maxTargets,from:start,single,missing,
+      nextAt:elapsed+.025,hops:0,extraHops:0
+    });
+    arcCharge=0;lastArcRelease=elapsed;counters.arcReleases++;lightningTriggers++;
+    record("arc",{targets:chosen.map(b=>b.id),single,queued:true,cap:maxTargets});
+    setState(branch==="arc-b"?"雷霆聚能 · 单体蓄电":"电弧已锁定 · 即将逐个跳电");
     return true;
+  }
+  function updateLightningChains(){
+    if(bossVictory||phase!=="playing"){lightningChains=[];return;}
+    if(!lightningChains.length)return;
+    const active=[];
+    // Process no more than two steps per chain per simulation tick, to avoid
+    // a large dt making all targets disappear in one visual frame.
+    for(const chain of lightningChains.slice()){
+      let processed=0;
+      while(chain.index<chain.targets.length&&chain.hops<chain.maxTargets&&
+            elapsed>=chain.nextAt&&processed++<2){
+        const id=chain.targets[chain.index++],brick=bricks.find(b=>b.alive&&b.id===id);
+        chain.nextAt+=ARC_HOP_INTERVAL;
+        if(!brick)continue;
+        const next={x:brick.x+brick.w/2,y:brick.y+brick.h/2};
+        const effect=Build.effects(build);
+        const armorBonus=(brick.isBoss||brick.ringArmor||brick.isElite||brick.bossSupport)?effect.arcArmorBonus:0;
+        const isOrigin=id===chain.originId;
+        const damage=(isOrigin?(chain.branch==="arc-b"?
+          CFG.focusDamage+(build.ranks["arc-b"]>1?3:0):
+          CFG.bossArcDamage+chain.missing*arcLevel):CFG.arcDamage[arcLevel])+armorBonus;
+        const before=brick.hp;
+        if(!reducedMotion){
+          lightningArcs.push({points:[{...chain.from},next],age:0,duration:.28});
+          if(lightningArcs.length>42)lightningArcs.shift();
+        }
+        hitBrick(brick,"lightning",null,damage);
+        const taken=Math.max(0,before-brick.hp);
+        lightningDamage+=taken;
+        if(isOrigin){counters.arcSingleDamage+=taken;focusDamage+=taken;}
+        chain.from=next;chain.hops++;
+        record("arc_hop",{target:id,order:chain.hops,damage:taken,killed:!brick.alive});
+        playSfx("arc");
+        if(bossVictory)return; // Boss kill locks victory immediately
+        if(chain.branch!=="arc-b"&&!brick.alive&&chain.targets.length<chain.maxTargets){
+          const candidates=bricks.filter(b=>b.alive&&!chain.used.has(b.id)&&
+            Math.hypot(b.x+b.w/2-next.x,b.y+b.h/2-next.y)<=CFG.arcRange[arcLevel]);
+          candidates.sort((a,b)=>Math.hypot(a.x+a.w/2-next.x,a.y+a.h/2-next.y)-
+            Math.hypot(b.x+b.w/2-next.x,b.y+b.h/2-next.y));
+          if(candidates.length){
+            const extra=candidates[0];chain.used.add(extra.id);chain.targets.push(extra.id);
+            chain.extraHops++;
+          }
+        }
+      }
+      if(chain.index<chain.targets.length&&chain.hops<chain.maxTargets)active.push(chain);
+      else record("arc_chain_end",{hops:chain.hops,extraHops:chain.extraHops});
+    }
+    lightningChains=active;
   }
   function directContact(block,ball,incoming=null){
     if(!block.alive)return false;
@@ -1343,6 +1384,7 @@
       if(shootClock>=fireInterval){shootClock-=fireInterval;fire();}
       const currentBalls=balls.slice(),kept=currentBalls.filter(b=>updateBall(b,dt));
       const newborn=balls.filter(b=>!currentBalls.includes(b));balls=kept.concat(newborn).slice(0,MAX_BALLS);
+      updateLightningChains();
       lightningArcs.forEach(e=>e.age+=dt);lightningArcs=lightningArcs.filter(e=>e.age<e.duration);
       updateGiant(dt);
     }
@@ -1372,17 +1414,6 @@
   function draw() {
     ctx.clearRect(0,0,W,H);
     ctx.save();
-    // Boss shockwave expands with the real victory timer. No combat collision.
-    if(bossVictory){
-      const v=bossVictory,t=clamp(v.t/BOSS_FINISH_DURATION,0,1);
-      ctx.save();
-      ctx.globalAlpha=reducedMotion?.28:.70*(1-t);
-      ctx.strokeStyle="#ffd9a5";ctx.lineWidth=5*(1-t)+1;ctx.shadowColor="#ffd7a4";ctx.shadowBlur=24;
-      ctx.beginPath();ctx.arc(v.x,v.y,10+t*(v.farthest+30),0,Math.PI*2);ctx.stroke();
-      ctx.shadowBlur=0;ctx.globalAlpha=Math.min(1,.9*(1-t)+.25);
-      ctx.font="900 19px system-ui";ctx.textAlign="center";ctx.fillStyle="#fff3dc";
-      ctx.fillText("BOSS 击破！",W/2,Math.min(H-150,220));ctx.restore();
-    }
     // Existing v0.5 giant-only shake remains when additional effects are off.
     if(juice.mode==="off"&&shake>0&&!reducedMotion){
       const amp=2.1*Math.min(1,shake/.09);
@@ -1554,6 +1585,17 @@
     for(const p of particles){ctx.globalAlpha=clamp(p.life/.42,0,1);ctx.fillStyle=p.color;ctx.fillRect(p.x-2,p.y-2,4,4);}
     ctx.globalAlpha=1;
     juice.draw(ctx);
+    // Boss shockwave expands with the real victory timer. No combat collision.
+    if(bossVictory){
+      const v=bossVictory,t=clamp(v.t/BOSS_FINISH_DURATION,0,1);
+      ctx.save();
+      ctx.globalAlpha=reducedMotion?.28:.70*(1-t);
+      ctx.strokeStyle="#ffd9a5";ctx.lineWidth=5*(1-t)+1;ctx.shadowColor="#ffd7a4";ctx.shadowBlur=24;
+      ctx.beginPath();ctx.arc(v.x,v.y,10+t*(v.farthest+30),0,Math.PI*2);ctx.stroke();
+      ctx.shadowBlur=0;ctx.globalAlpha=Math.min(1,.9*(1-t)+.25);
+      ctx.font="900 19px system-ui";ctx.textAlign="center";ctx.fillStyle="#fff3dc";
+      ctx.fillText("BOSS 击破！",W/2,Math.min(H-150,220));ctx.restore();
+    }
     if(!reducedMotion){
       for(const e of impactRings){
         const duration=e.hard?.24:.15, t=clamp(e.age/duration,0,1);
