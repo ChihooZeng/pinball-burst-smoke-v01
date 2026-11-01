@@ -509,7 +509,7 @@
       split:["split","split","power","split-a","rate"],
       arc:["arc","arc","power","arc-a","rate"],
       gun:["gun","gun","power","gun-a","rate"],
-      laser:["laser","laser","power","laser","rate"]
+      laser:["laser","laser","power","rate","life"]
     };
     if(!Object.hasOwn(kits,route))return false;
     reset();
