@@ -467,7 +467,7 @@
     armorHits=0;armorBreaks=0;armorCracks=0;finalWaveDurations=[];
     heavyHits=0;giantPiercings=0;giantHeavyBounces=0;powerShots=0;tailSoftens=0;
     selectedCannon=CANNON_CLASSES.free;selectedActive=ACTIVE_SKILLS.giant;
-    juice.setMode("off");juice.setMode(impactMode.value);
+    juice.setMode("off");juice.setMode(impactMode.value);juice.setQuality("full");
     ui.choice.classList.add("hidden");ui.win.classList.add("hidden");$("startOverlay").classList.remove("hidden");
     $("finalRushLabel").classList.remove("active");
     generateWave();updateUI();
@@ -1726,6 +1726,7 @@
       if(metricsClock>=1){
         fpsNow=Math.round(frameSamples/metricsClock);
         renderQuality=fpsNow<48?"lite":"full";
+        juice.setQuality(renderQuality);
         $("fpsStat").textContent="FPS "+fpsNow;
         metricsClock=0;frameSamples=0;
       }
