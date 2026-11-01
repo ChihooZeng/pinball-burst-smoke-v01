@@ -5,12 +5,13 @@
  */
 (function(root){
   function create({W=360,H=560,reducedMotion=false}={}){
-    let mode="balanced",shards=[],sparks=[],flashes=[],waveBursts=[],ghosts=[],pulses=[];
+    let mode="balanced",quality="full",shards=[],sparks=[],flashes=[],waveBursts=[],ghosts=[],pulses=[];
     let hitPulseAt=-100,screenFlash=0;
     let shakeAge=1,shakeDuration=.1,shakeStrength=0;
     let lastShakeAt=-100,lastGiantAt=-100,clock=0,shakeEvents=0,breakEvents=0;
     const clamp=(n,lo,hi)=>Math.max(lo,Math.min(hi,n));
     function intensity(){return mode==="bold"?2.35:mode==="balanced"?1.5:0;}
+    function setQuality(next){quality=next==="lite"?"lite":"full";}
     function setMode(next){
       mode=reducedMotion?"off":(["off","balanced","bold"].includes(next)?next:"balanced");
       if(mode==="off"){shards=[];sparks=[];flashes=[];waveBursts=[];ghosts=[];pulses=[];screenFlash=0;shakeStrength=0;shakeAge=1;}
@@ -28,7 +29,7 @@
     }
     function addSpark(x,y,angle,color,count){
       if(!intensity())return;
-      const n=Math.ceil(count*intensity());
+      const n=Math.ceil(count*intensity()*(quality==="lite"?.42:1));
       for(let i=0;i<n;i++){
         const a=angle+random(-.9,.9);
         const v=random(50,165);
@@ -89,7 +90,7 @@
         if(ghosts.length>32)ghosts.splice(0,ghosts.length-32);
       }
       const important=source==="giant"||combo>=3&&combo%3===0;
-      const count=Math.ceil((important?9:5)*Math.min(1.55,intensity()));
+      const count=Math.ceil((important?9:5)*Math.min(1.55,intensity())*(quality==="lite"?.6:1));
       for(let i=0;i<count;i++){
         const angle=Math.PI*2*i/count+random(-.22,.22),speed=random(55,155)*(important?1.22:1);
         shards.push({x,y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,
@@ -156,7 +157,7 @@
     function draw(ctx){
       if(!intensity())return;
       ctx.save();
-      for(const g of ghosts){
+      for(const g of ghosts){if(quality==="lite")continue;
         const t=clamp(g.age/g.duration,0,1),decay=1-t;
         ctx.save();ctx.translate(g.x+g.w/2,g.y+g.h/2);
         ctx.translate(g.vx*t*2.2,g.vy*t*2.2);
@@ -177,7 +178,7 @@
       for(const e of pulses){
         const t=clamp(e.age/e.duration,0,1),fade=Math.pow(1-t,1.5);
         ctx.save();ctx.globalAlpha=fade*(e.heavy?.9:.7);
-        ctx.strokeStyle=e.color;ctx.shadowColor=e.color;ctx.shadowBlur=7*fade;
+        ctx.strokeStyle=e.color;ctx.shadowColor=e.color;ctx.shadowBlur=quality==="lite"?0:7*fade;
         ctx.lineWidth=(e.heavy?3.8:2.4)*fade+.5;
         ctx.beginPath();ctx.arc(e.x,e.y,(e.heavy?10:5)+t*(e.heavy?33:18),0,Math.PI*2);ctx.stroke();
         ctx.globalAlpha=fade*.75;ctx.fillStyle="#ffffff";
@@ -209,9 +210,9 @@
       ctx.restore();
     }
     function snapshot(){return {mode,shards:shards.length,sparks:sparks.length,flashes:flashes.length,
-      waves:waveBursts.length,ghosts:ghosts.length,pulses:pulses.length,shakeEvents,breakEvents,shakeStrength,
+      waves:waveBursts.length,ghosts:ghosts.length,pulses:pulses.length,quality,shakeEvents,breakEvents,shakeStrength,
       max:{shards:120,sparks:90,flashes:24,waves:5,ghosts:32,pulses:40}};}
-    return {setMode,get mode(){return mode;},onArmor,applyBrickMotion,onBreak,onSplash,onGiant,update,applyCamera,draw,snapshot};
+    return {setMode,setQuality,get mode(){return mode;},onArmor,applyBrickMotion,onBreak,onSplash,onGiant,update,applyCamera,draw,snapshot};
   }
   root.PinballJuice={create};
   if(typeof module!=="undefined"&&module.exports)module.exports={create};
