@@ -7,6 +7,7 @@
   let gunTarget=null,gunStreak=0,gunLast=-99;
   let precisionTurns=0,focusDamage=0,gunBonusDamage=0,weakpointDamage=0,weakpointCharge=0,damageDealt=0,shotsWithContact=0;
   let waveFallMultiplier=1;
+  let waveStartGap=Infinity,closestDangerGap=Infinity,nearDangerSeconds=0,pressureWarningStage=0,currentStatus="";
   const FIRST_SKILL_KEY='pinball-overload-first-skill-v1',SIDE_KEY='pinball-overload-skill-side-v1',AUTO_KEY='pinball-overload-auto-skill-v1';
   let firstSkillUsed=false,skillSide='right',autoSkill=true;
   try{firstSkillUsed=localStorage.getItem(FIRST_SKILL_KEY)==='done';skillSide=localStorage.getItem(SIDE_KEY)==='left'?'left':'right';autoSkill=localStorage.getItem(AUTO_KEY)!=='no';}catch(e){}
@@ -183,11 +184,11 @@
     hapticInput.addEventListener("change",()=>{impactHaptics=!!hapticInput.checked;});
   }
   function tapHaptic(kind="hit"){
-    if(reducedMotion||!impactHaptics||!navigator.vibrate)return false;
+    if(kind==="hit"||reducedMotion||!impactHaptics||!navigator.vibrate)return false;
     const t=performance.now();
-    if(t-lastHapticAt<(kind==="hit"?125:90))return false;
+    if(t-lastHapticAt<180)return false;
     lastHapticAt=t;
-    try{return !!navigator.vibrate(kind==="heavy"?24:kind==="break"?16:8);}catch(_){return false;}
+    try{return !!navigator.vibrate(kind==="heavy"?20:12);}catch(_){return false;}
   }
   // Web Audio mix: audible at ordinary device volume, but capped for dense chains.
   // First gesture resumes the audio context; setting volume never auto-plays sound.
@@ -231,10 +232,11 @@
   function playSfx(kind){
     if(!soundContext||soundVolume<=0)return;
     const now=soundContext.currentTime;
-    if(now-(sfxLast[kind]??-999)<(kind==="armor"?.065:kind==="break"?.042:.12))return;
+    if(now-(sfxLast[kind]??-999)<(kind==="armor"?.095:kind==="break"?.075:.12))return;
+    if(kind==="armor"&&now-(sfxLast.break??-999)<.075)return;
     sfxLast[kind]=now;
-    if(kind==="armor"){beep(235,.08,.046,"sawtooth");beep(680,.035,.022,"triangle");}
-    else if(kind==="break"){beep(225,.11,.066,"sawtooth");beep(440+Math.min(combo,10)*32,.11,.046,"triangle");beep(980,.045,.026,"square");}
+    if(kind==="armor"){beep(820,.038,.021,"sine");}
+    else if(kind==="break"){beep(580+Math.min(combo,10)*22,.065,.031,"triangle");beep(1160,.028,.018,"sine");if(combo>=5&&combo%5===0)beep(370,.085,.025,"triangle");}
     else if(kind==="shock"){beep(145,.21,.065,"sawtooth");beep(360,.11,.038);}
     else if(kind==="drill"){beep(480,.105,.043,"sawtooth");}
     else if(kind==="split"){beep(820,.12,.037);beep(1140,.07,.022);}
@@ -252,7 +254,12 @@
   });
   $("soundTest").addEventListener("click",()=>{unlockSound();playSfx("giant");});
 
-  function setState(label) { ui.state.textContent = label; }
+  function setState(label) { currentStatus=label; ui.state.textContent=label; }
+  function dangerGap(){
+    let gap=Infinity;
+    for(const brick of bricks||[])if(brick.alive)gap=Math.min(gap,DANGER_Y-brick.y-brick.h);
+    return gap;
+  }
   function updateUI(){
     const clock=Math.floor(elapsed),mm=String(Math.floor(clock/60)).padStart(2,"0"),ss=String(clock%60).padStart(2,"0");
     ui.wave.textContent=mm+":"+ss;$("waveLabel").textContent="第"+wave+" / "+MAX_WAVES+"波";ui.score.textContent=String(score);
@@ -275,6 +282,10 @@
     ui.build.textContent=parts.length?parts.join(" · ")+(build.ranks.gun?" · 供弹R"+build.ranks.gun:""):build.ranks.gun?"高速供弹 R"+build.ranks.gun:"清屏成长 · 20波候选";
     $("bossHud").classList.toggle("hidden",!boss||!boss.alive);
     if(boss&&boss.alive){const guarded=boss.isFinalBoss&&boss.hp<=finaleHpFloor();$("bossText").textContent=(isFinaleWave(wave)?"终局 "+finaleStage+"/3"+(guarded?" · 阶段护盾":"")+" · ":"")+boss.hp+" / "+boss.initialHp;$("bossFill").style.width=Math.max(0,boss.hp/boss.initialHp*100)+"%";}
+    // Functional survival warning only: no extra particles, camera shake, or damage changes.
+    const gap=dangerGap();
+    const dangerVisible=phase==="playing"&&!emptyLatch&&!bossVictory&&gap<=60;
+    ui.state.textContent=dangerVisible?(gap<=24?"警戒线危险 · 砖块即将触线":"注意！砖块正在逼近警戒线"):currentStatus;
   }
   function brickAt(x,y,hp,extra={}){
     const special=!!extra.special;
@@ -431,6 +442,8 @@
     waveFallMultiplier=n===1?1:oldHeightFactor*Math.max(.58,gap/Math.max(1,virtualOldGap));
     record("wave_pressure",{wave:n,fallMultiplier:+waveFallMultiplier.toFixed(3),gap:+gap.toFixed(1)});
     waveStartingTargets=livingCount();
+    waveStartGap=dangerGap();closestDangerGap=waveStartGap;
+    nearDangerSeconds=0;pressureWarningStage=0;
     clearPreview=[];clearPreviewShown=false;clearWindowActive=false;
     waveSpawnCount++;clearBurstCount=Math.max(0,n-1);clearBurstTiles=tiles.length;
     setState(isFinaleWave(wave)?"最终关 · 888HP三阶段Boss · 击败即可胜利":"第 "+wave+" 波 · "+(boss?"击败BOSS即胜":"整波破坏")+" · 清屏后进入下一波");
@@ -620,8 +633,8 @@
       if(b.hp>0){
         if(!b.isFinalBoss)b.color=brickColor(b.hp,b.special);
         if(b.hp<=2&&!b.cracked){b.cracked=true;armorCracks++;}
-        burst(b.x+b.w/2,b.y+b.h/2,"#ffd29d",4);
-        juice.onArmor(b,impact);tapHaptic("hit");playSfx("armor");
+        burst(b.x+b.w/2,b.y+b.h/2,"#cdefff",2);
+        juice.onArmor(b,impact);playSfx("armor");
         return false;
       }
       if(!b.cracked){armorCracks++;b.cracked=true;}
@@ -637,10 +650,12 @@
     combo=elapsed-lastBreak<=1.25?combo+1:1;
     lastBreak=elapsed;maxCombo=Math.max(combo,maxCombo);comboVisibility=1;
     impactVisual(cx,cy,true);
-    if(combo>=3&&combo%3===0)numberPop(cx,cy-12,combo+" 连碎!","#a5f8df");
+    if(combo>=5&&combo%5===0)numberPop(cx,cy-12,combo+" 连碎!","#a5f8df");
     if(source==="giant")shake=Math.max(shake,.11);
-    juice.onBreak(b,{combo,source,impact});tapHaptic(source==="giant"?"heavy":"break");
-    burst(cx,cy,b.color,source==="giant"?19:12);
+    juice.onBreak(b,{combo,source,impact});
+    if(source==="giant"||source==="giantHeavy")tapHaptic("heavy");
+    else if(combo>=5&&combo%5===0)tapHaptic("break");
+    burst(cx,cy,b.color,source==="giant"||source==="giantHeavy"?17:7);
     // Secondary explosions and lightning cannot snowball the active-skill meter.
     if(source==="normal"||source==="drill")addCharge(b.special?34:8);
     if(b.special&&(source==="normal"||source==="drill"))setState("能量砖！超载冲锋充能");
@@ -1240,7 +1255,7 @@
     balls=[];giant=null;shootClock=0;lightningChains=[];lightningArcs=[];activePointer=null;
     bossVictory={x,y,t:0,wave:finishedWave,pending,index:0,farthest};
     alertUntil=elapsed+BOSS_FINISH_DURATION;shake=.18;
-    burst(x,y,"#ffe7ae",reducedMotion?9:38);juice.onSplash({x,y});
+    burst(x,y,"#ffe7ae",reducedMotion?9:38);juice.onSplash({x,y});tapHaptic("heavy");
     record("boss_finisher_start",{wave:finishedWave,targets:pending.length});
     playSfx("shock");setState("BOSS击破！核心向外连环爆炸");
     updateUI();
@@ -1329,10 +1344,18 @@
       const bossPressure=wave===10?Math.min(1.49,1.22+Math.max(0,waveElapsed-8)*.014):isFinaleWave(wave)?.9:1;
       const speed=Math.min(8.4,FALL_BASE+Math.max(0,wave-1)*.09)*bossPressure*CFG.fallScale*waveFallMultiplier*latePressure*finalePressure;
       for(const brick of bricks)if(brick.alive)brick.y+=speed*dt;
+      const gapNow=dangerGap();
+      closestDangerGap=Math.min(closestDangerGap,gapNow);
+      if(gapNow<=60)nearDangerSeconds+=dt;
+      const dangerStage=gapNow<=24?2:gapNow<=60?1:0;
+      if(dangerStage>pressureWarningStage){
+        pressureWarningStage=dangerStage;
+        record("danger_warning",{stage:dangerStage,gap:+gapNow.toFixed(1),waveSeconds:+waveElapsed.toFixed(2)});
+      }
       const danger=bricks.find(b=>b.alive&&b.y+b.h>=DANGER_Y);
       if(danger){
         const dangerSource=danger.isBoss?"BOSS":danger.summonSource==="boss"?"Boss召唤砖":danger.summonSource==="finale"?"终局增援砖":"初始砖";
-        record("touchline",{wave,source:dangerSource,brickId:danger.id,hp:danger.hp,elapsed:+waveElapsed.toFixed(2),bossHp:boss?.hp??null,bossSupportBorn:bossSummonTotal});
+        record("touchline",{wave,source:dangerSource,brickId:danger.id,hp:danger.hp,elapsed:+waveElapsed.toFixed(2),bossHp:boss?.hp??null,bossSupportBorn:bossSummonTotal,startGap:+waveStartGap.toFixed(1),nearDangerSeconds:+nearDangerSeconds.toFixed(2)});
         phase="lost";balls=[];giant=null;ui.win.classList.remove("hidden");
         const seconds=Math.floor(elapsed);
         ui.final.textContent="生存 "+Math.floor(seconds/60)+"分"+seconds%60+
@@ -1359,7 +1382,7 @@
         lightningArcs=[];combo=0;comboVisibility=0;
         emptyLatch=true;clearWindowActive=true;
         screenClears++;clearFlash=1;record("wave_clear",{duration:+waveElapsed.toFixed(3),build:build.coreBranch||build.seedAbility});
-        waveReports.push({wave,duration:+waveElapsed.toFixed(3),breaks:waveMetrics.breaks,breaksPerSecond:waveMetrics.breaks/Math.max(.01,waveElapsed),longestNoBreak:waveMetrics.longestNoBreak,tailSeconds:waveMetrics.tailSeconds,bossSoloSeconds:waveMetrics.bossSoloSeconds,shots:shotsFired-waveMetrics.shots,children:counters.splitChildren-waveMetrics.children,reclaims:counters.budgetReclaims-waveMetrics.reclaims,suppressedShots:counters.suppressedShots-waveMetrics.suppressed,suppressedChildren:counters.suppressedChildren-waveMetrics.suppressedChildren});
+        waveReports.push({wave,duration:+waveElapsed.toFixed(3),breaks:waveMetrics.breaks,breaksPerSecond:waveMetrics.breaks/Math.max(.01,waveElapsed),longestNoBreak:waveMetrics.longestNoBreak,tailSeconds:waveMetrics.tailSeconds,bossSoloSeconds:waveMetrics.bossSoloSeconds,shots:shotsFired-waveMetrics.shots,children:counters.splitChildren-waveMetrics.children,reclaims:counters.budgetReclaims-waveMetrics.reclaims,suppressedShots:counters.suppressedShots-waveMetrics.suppressed,suppressedChildren:counters.suppressedChildren-waveMetrics.suppressedChildren,startGap:+waveStartGap.toFixed(1),closestGap:+closestDangerGap.toFixed(1),nearDangerSeconds:+nearDangerSeconds.toFixed(2)});
         if(screenClears>=MAX_WAVES){finishPrototype();return;}
         build.recovery={power:0,speed:0,life:0};arcCharge=0;lastArcRelease=-99;
         level++;waveUpgrades++;choiceQueue++;choiceReason="wave";
@@ -1405,7 +1428,7 @@
     particles.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=.97;p.vy*=.97;p.life-=dt;});
     particles=particles.filter(p=>p.life>0);
     for(const b of bricks)if(b.alive&&b.bonk>0)b.bonk=Math.max(0,b.bonk-dt);
-    impactRings.forEach(e=>e.age+=dt);impactRings=impactRings.filter(e=>e.age<(e.hard?.24:.15));
+    impactRings.forEach(e=>e.age+=dt);impactRings=impactRings.filter(e=>e.age<(e.hard?.19:.10));
     floatTexts.forEach(e=>e.age+=dt);floatTexts=floatTexts.filter(e=>e.age<.56);
     comboVisibility=Math.max(0,comboVisibility-dt);shake=Math.max(0,shake-dt);
     juice.update(dt,bricks);
@@ -1611,10 +1634,10 @@
     }
     if(!reducedMotion){
       for(const e of impactRings){
-        const duration=e.hard?.24:.15, t=clamp(e.age/duration,0,1);
+        const duration=e.hard?.19:.10, t=clamp(e.age/duration,0,1);
         ctx.strokeStyle=e.hard?"rgba(182,241,255,"+(.65*(1-t))+")":"rgba(255,217,154,"+(.4*(1-t))+")";
-        ctx.lineWidth=e.hard?2.4:1.5;
-        ctx.beginPath();ctx.arc(e.x,e.y,5+(e.hard?27:15)*t,0,Math.PI*2);ctx.stroke();
+        ctx.lineWidth=e.hard?2.0:1.1;
+        ctx.beginPath();ctx.arc(e.x,e.y,4+(e.hard?20:9)*t,0,Math.PI*2);ctx.stroke();
       }
       for(const e of floatTexts){
         const t=clamp(e.age/.56,0,1);
@@ -1734,7 +1757,7 @@
     draw();requestAnimationFrame(frame);
   }
   function snapshot() {
-    return {damageDealt,shotsWithContact,currentWaveMetrics:waveMetrics?{...waveMetrics,longestNoBreak:Math.max(waveMetrics.longestNoBreak,waveElapsed-waveMetrics.lastBreak)}:null,precisionTurns,focusDamage,gunBonusDamage,weakpointDamage,weakpointCharge,waveFallMultiplier,worldWidth:W,worldHeight:H,dangerY:DANGER_Y,shooterY:shooter.y,growthFocus:build.growthFocus,pausedFrom,battleTime,bankDamage,temporaryBuffs:build.temporaryBuffs.map(b=>({...b})),buildSummary:Build.summary(build),waveReports:waveReports.map(r=>({...r})),seed:build.seed,seedAbility:build.seedAbility,coreFocus:build.coreFocus,coreBranch:build.coreBranch,ranks:{...build.ranks},routeWeights:{...build.routeWeights},
+    return {damageDealt,shotsWithContact,currentWaveMetrics:waveMetrics?{...waveMetrics,longestNoBreak:Math.max(waveMetrics.longestNoBreak,waveElapsed-waveMetrics.lastBreak)}:null,precisionTurns,focusDamage,gunBonusDamage,weakpointDamage,weakpointCharge,waveFallMultiplier,dangerGap:Number.isFinite(dangerGap())?+dangerGap().toFixed(1):null,waveStartGap:Number.isFinite(waveStartGap)?+waveStartGap.toFixed(1):null,nearDangerSeconds:+nearDangerSeconds.toFixed(2),pressureWarningStage,worldWidth:W,worldHeight:H,dangerY:DANGER_Y,shooterY:shooter.y,growthFocus:build.growthFocus,pausedFrom,battleTime,bankDamage,temporaryBuffs:build.temporaryBuffs.map(b=>({...b})),buildSummary:Build.summary(build),waveReports:waveReports.map(r=>({...r})),seed:build.seed,seedAbility:build.seedAbility,coreFocus:build.coreFocus,coreBranch:build.coreBranch,ranks:{...build.ranks},routeWeights:{...build.routeWeights},
       choiceHistory:build.choiceHistory.map(c=>({...c})),...counters,shotsByBuild:{...counters.shotsByBuild},collisionChecks,physicsMeanMs:physicsSteps?physicsCostMs/physicsSteps:0,maxPhysicsMs,
       phase,wave,score,aim,interval:Build.tuning(build).interval,fpsNow,renderQuality,physicsHz:120,level,xp,xpGoal,choiceQueue,choiceSet:choiceSet.join(","),powerLevel,volleyLevel,rateLevel,speedLevel,lifeLevel,rowIndex,screenClears,waveElapsed,waveSpawnCount,waveStartingTargets,waveUpgrades,bossSummonTotal,finaleStage,finaleWaveSpawns:[...finaleWaveSpawns],finaleDamageCheckpoints:[...finaleDamageCheckpoints],clearWindowActive,nearClearClock,replenishClock,cleanupWindow,cleanupStarted,cleanupActivations,bridgeTimer,bridgeBursts,bridgeTiles,upperOnlyBridgeCount,zoneCounts:zoneCounts(),clearPreviewCount:clearPreview.length,clearPreviewShown,summonWarningCount:summonSignals.length,ambientSummonClock,ambientSummonBursts,ambientSummonTiles,ambientSummonWarningCount:ambientSignals.length,overlapSummonCount,clearBurstCount,clearBurstTiles,bossActive:!!(boss&&boss.alive),bossHp:boss?.hp||0,bossDefeats,brickCount:livingCount(),surgeActive:elapsed<surgeUntil,hunterLevel,ricochetLevel,
       charge,activeBalls:balls.length,giantActive:!!giant,skillsUsed,ricochetTriggers,elapsed,
