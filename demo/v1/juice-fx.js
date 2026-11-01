@@ -1,6 +1,6 @@
 "use strict";
 /**
- * Standalone impact-feedback experiment. No gameplay clock manipulation.
+ * Demo V1 mainline impact feedback. No gameplay clock manipulation.
  * Designed for Safari Canvas 2D and a deterministic, bounded particle budget.
  */
 (function(root){

@@ -90,7 +90,7 @@
  const p=preview(s,id);if(!p)return {title:d.name,description:'已满级'};const a=p.before,z=p.after,delta=k=>z[k]-a[k],num=n=>fmt(n);
  if(d.role==='branch'&&s.ranks[id])return {title:d.name,description:{'split-a':'每次裂变额外 +1颗小球','split-b':'裂变小球撞墙追猎 +1次','arc-a':'电弧额外跳向 +1个目标','arc-b':'集中放电伤害 +3','gun-a':'直线射速 +13.3%','gun-b':'扇面射速 +12.5%'}[id]};
  if(d.role==='branch')return {title:d.name,description:{
-  'split-a':'一次分裂3颗小球，散射更广（替换原效果）',
+  'split-a':'分裂数量增加、散射范围变大（与另一专精二选一）',
   'split-b':'小球撞墙后可额外追踪目标2次（替换原效果）',
   'arc-a':'闪电改为连续跳向附近目标（与另一分支二选一）',
   'arc-b':'闪电改为集中攻击命中目标（替换群攻）',

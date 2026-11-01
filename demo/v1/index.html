@@ -5,30 +5,29 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no"/>
   <meta name="theme-color" content="#08182b"/>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%2212%22 fill=%22%2308192a%22 stroke=%22%2366ebf2%22 stroke-width=%223%22/%3E%3C/svg%3E"/>
-  <title>弹珠超载 · M2.5 打击感实验室（独立测试）</title>
-  <link rel="stylesheet" href="./style.css?v=impact1"/>
+  <title>弹珠超载 · Demo V1.0 开发候选</title>
+  <link rel="stylesheet" href="./style.css?v=demo1"/>
 </head>
 <body>
   <main class="shell">
     <header class="topbar"><div class="combat-summary"><span id="waveLabel">第1 / 20波</span><span id="xpLabel">准备开始</span></div><button id="pause" class="icon-btn" aria-label="设置与暂停" type="button">⚙</button></header>
     <section class="arena">
-      <canvas id="game" width="360" height="560" aria-label="弹珠超载独立打击感实验：砖块正常下降，弹球适量增加，增强撞击反馈，拖动控制炮台方向"></canvas>
+      <canvas id="game" width="360" height="560" aria-label="弹珠超载：拖动控制炮台方向，普通砖清屏升级，Boss关击败核心即可获胜"></canvas>
       <div id="finalRushLabel" class="floating-label" role="status"></div>
       <div class="boss-hud hidden" id="bossHud"><div><span>核心 BOSS</span><strong id="bossText">60 / 60</strong></div><div class="boss-track"><div id="bossFill"></div></div></div>
       <div class="ult-wrap"><div id="skillGuide" class="skill-guide hidden" role="status">首次技能提示：松开瞄准后点这里，方向会保留</div><button id="giant" type="button" disabled>超载冲锋 0%</button></div>
       <div class="overlay" id="startOverlay" role="dialog" aria-modal="true" aria-labelledby="startTitle">
-        <div class="start-icon">◉</div><small class="label">SPLIT / ARC / GUN · FINAL BOSS LAB</small>
-        <h2 id="startTitle">弹珠超载 · 重击反馈实验</h2>
-        <p>从M2.5复制的独立实验：最多48球、裂变略增强；每次撞击更强闪光、冲击圈、画面震动与低频打击声。玩法、20关结构、Boss胜利条件均不变。</p>
+        <div class="start-icon">◉</div><small class="label">DEMO V1.0 · 20 WAVE CHALLENGE</small>
+        <h2 id="startTitle">弹珠超载</h2>
+        <p>拖动控制炮台方向，弹球自动连续发射。清屏获得升级，选择裂变、电弧或机枪流派；击破第10关和第20关Boss即可获胜。</p>
         <button class="cta" id="start" type="button">开始20关挑战</button>
-        <div class="boss-preview"><label for="bossRoute">直达第10关Boss · 测试流派</label>
+        <div class="boss-preview" id="qaBossPreview" hidden><label for="bossRoute">直达第10关Boss · 测试流派</label>
           <select id="bossRoute" aria-label="测试Boss的成熟流派"><option value="split">裂变Build</option><option value="arc">电弧Build</option><option value="gun">机枪Build</option></select>
           <button id="jumpBoss" type="button">直达第10关 Boss</button>
           <button id="jumpFinalBoss" class="final-boss-jump" type="button">直达第20关 最终Boss</button>
           <small>调试专用 · 自动配置9或19次升级，跳关不计入正常通关成绩</small>
         </div>
-        <a class="comparison-link" href="../hybrid-v1-m2-5/">M2.5 原版对照</a> · <a class="comparison-link" href="../hybrid-v1-m2-4/">M2.4 对照</a> · <a class="comparison-link" href="../hybrid-v1-m2-3/">M2.3 对照</a> · <a class="comparison-link" href="../hybrid-v1-m2-2/">M2.2 对照</a> · <a class="comparison-link" href="../hybrid-v1-m2-1-ricochet/">M2.1 对照</a> · <a class="comparison-link" href="../hybrid-v1-20wave-finale/">原高压基准对照</a> · <a class="comparison-link" href="../hybrid-v1-m2-20wave/">旧20关对照</a> · <a class="comparison-link" href="../hybrid-v1-m1-3/">原M1.3对照</a> · <a class="comparison-link" href="../hybrid-v1-m1-2/">M1.2对照</a> · <a class="comparison-link" href="../hybrid-v1-m1-1/">M1.1对照</a> · <a class="comparison-link" href="../hybrid-v1-m1-soft-balance/">调弱基准对照</a> · <a class="comparison-link" href="../hybrid-v27-feel-lab/?feel=tempo">Feel Lab B 对照</a> · <a class="comparison-link" href="../hybrid-v17-sustain/">v0.17 对照</a>
-        <small class="overlay-tip">移动端需要首次点击才能启用音效</small>
+        <small class="overlay-tip">首次点击开始游戏以开启音效 · 请拖动屏幕调整方向</small>
       </div>
       <div class="overlay hidden" id="choiceOverlay" role="dialog" aria-modal="true" aria-labelledby="choiceTitle">
         <small id="choiceWave" class="label">LEVEL UP!</small>
@@ -44,8 +43,8 @@
         <div class="pause-heading"><div><small class="label">SETTINGS / BUILD</small><h2 id="pauseTitle">设置 · 我的构筑</h2><p id="pauseSubtitle"></p></div><button id="resume" class="cta" type="button">继续</button></div>
         <div class="pause-scroll" tabindex="0">
           <h3>单手操作</h3><label>技能按钮位置 <select id="skillSide" aria-label="技能按钮位置"><option value="right">右下角 · 右手</option><option value="left">左下角 · 左手</option></select></label><label class="auto-skill-label"><input type="checkbox" id="autoSkill"/> 能量满时自动释放超载（默认开启）</label><p class="one-hand-tip">只需滑动控制方向，炮台连续射击，超载蓄满自动发射；关闭自动后可以手动点击技能。</p><h3>声音与画面</h3><div class="sound-controls"><span id="soundValue">78%</span><input id="soundVolume" type="range" min="0" max="100" value="78" aria-label="音量"><button id="soundTest" class="icon-btn" aria-label="试听声音" type="button">♪</button></div>
-          <label>特效强度 <select id="impactMode" aria-label="特效强度"><option value="bold">重击实验 · 强反馈</option><option value="balanced">常规反馈</option><option value="off">关闭</option></select></label><label class="auto-skill-label"><input type="checkbox" id="impactHaptic" checked/> 手机振动反馈（支持的安卓浏览器）</label>
-          <p class="one-hand-tip">iPhone Safari 通常不支持网页直接控制振动马达；画面震动不受影响。</p><p id="fpsStat">FPS --</p><button id="reset" class="export-btn" type="button">重新开始</button>
+          <label>特效强度 <select id="impactMode" aria-label="特效强度"><option value="bold">强烈打击反馈</option><option value="balanced">常规反馈</option><option value="off">关闭</option></select></label><label class="auto-skill-label"><input type="checkbox" id="impactHaptic" checked/> 手机振动反馈（支持的安卓浏览器）</label>
+          <p class="one-hand-tip">安卓支持振动的浏览器可触发短振动；iPhone网页端主要依靠画面与音效反馈。</p><p id="fpsStat">FPS --</p><button id="reset" class="export-btn" type="button">重新开始</button>
           <h3>炮台总属性</h3><p id="buildStats"></p>
           <h3>当前能力</h3><p id="buildSkills"></p>
           <h3>临时增幅</h3><p id="buildBuffs"></p>
@@ -69,6 +68,7 @@
       <div id="hunterDetails"></div><div id="bounceDetails"></div><div id="splitDetails"></div><div id="chainDetails"></div><div id="pierceDetails"></div><div id="arcDetails"></div>
     </div>
   </main>
-  <script src="./juice-fx.js?v=impact2" defer></script><script src="./builds.js?v=impact1" defer></script><script src="./game.js?v=impact2" defer></script>
+  <script src="./juice-fx.js?v=demo1" defer></script><script src="./builds.js?v=demo1" defer></script><script src="./game.js?v=demo1" defer></script>
+<script>if(new URLSearchParams(location.search).get("qa")==="1"){document.getElementById("qaBossPreview")?.removeAttribute("hidden");}</script>
 </body>
 </html>

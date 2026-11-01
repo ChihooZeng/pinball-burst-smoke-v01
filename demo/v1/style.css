@@ -79,3 +79,6 @@ canvas{width:100%;height:100%;object-fit:contain}
 .boss-preview .final-boss-jump{border-color:#e3a3c4;background:linear-gradient(125deg,#6e335e,#8e433f);color:#ffeff6;box-shadow:0 0 12px #ca508a60}
 .boss-preview .final-boss-jump:focus-visible{outline:3px solid #ffe5aa;outline-offset:2px}
 @media(max-height:700px){.boss-preview{gap:3px;padding:5px}.boss-preview button{min-height:35px}.boss-preview small{font-size:8px}}
+
+/* Keep all developer-only Boss jump controls completely hidden by default. */
+#qaBossPreview[hidden]{display:none!important}
