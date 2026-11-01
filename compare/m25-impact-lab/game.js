@@ -168,6 +168,7 @@
   // Visual feedback has its own capped state; core physics never stops for animation.
   const reducedMotion = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   let impactRings=[], floatTexts=[], combo=0, maxCombo=0, lastBreak=-99, comboVisibility=0, shake=0, hitCount=0;
+  let impactHaptics=true,lastHapticAt=-10000;
   const juice=window.PinballJuice.create({W,H,reducedMotion});
   const impactMode=$("impactMode");
   impactMode.value=reducedMotion?"off":"bold";
@@ -176,6 +177,18 @@
   impactMode.addEventListener("change",()=>{
     impactMode.value=juice.setMode(impactMode.value);
   });
+  const hapticInput=$("impactHaptic");
+  if(hapticInput){
+    hapticInput.checked=impactHaptics;
+    hapticInput.addEventListener("change",()=>{impactHaptics=!!hapticInput.checked;});
+  }
+  function tapHaptic(kind="hit"){
+    if(reducedMotion||!impactHaptics||!navigator.vibrate)return false;
+    const t=performance.now();
+    if(t-lastHapticAt<(kind==="hit"?125:90))return false;
+    lastHapticAt=t;
+    try{return !!navigator.vibrate(kind==="heavy"?24:kind==="break"?16:8);}catch(_){return false;}
+  }
   // Web Audio mix: audible at ordinary device volume, but capped for dense chains.
   // First gesture resumes the audio context; setting volume never auto-plays sound.
   function unlockSound() {
@@ -220,8 +233,8 @@
     const now=soundContext.currentTime;
     if(now-(sfxLast[kind]??-999)<(kind==="armor"?.065:kind==="break"?.042:.12))return;
     sfxLast[kind]=now;
-    if(kind==="armor"){beep(300,.075,.035,"sawtooth");beep(530,.045,.022);}
-    else if(kind==="break"){beep(370+Math.min(combo,10)*25,.14,.055,"triangle");beep(870,.055,.028,"square");}
+    if(kind==="armor"){beep(235,.08,.046,"sawtooth");beep(680,.035,.022,"triangle");}
+    else if(kind==="break"){beep(225,.11,.066,"sawtooth");beep(440+Math.min(combo,10)*32,.11,.046,"triangle");beep(980,.045,.026,"square");}
     else if(kind==="shock"){beep(145,.21,.065,"sawtooth");beep(360,.11,.038);}
     else if(kind==="drill"){beep(480,.105,.043,"sawtooth");}
     else if(kind==="split"){beep(820,.12,.037);beep(1140,.07,.022);}
@@ -608,7 +621,7 @@
         if(!b.isFinalBoss)b.color=brickColor(b.hp,b.special);
         if(b.hp<=2&&!b.cracked){b.cracked=true;armorCracks++;}
         burst(b.x+b.w/2,b.y+b.h/2,"#ffd29d",4);
-        juice.onArmor(b,impact);playSfx("armor");
+        juice.onArmor(b,impact);tapHaptic("hit");playSfx("armor");
         return false;
       }
       if(!b.cracked){armorCracks++;b.cracked=true;}
@@ -626,7 +639,7 @@
     impactVisual(cx,cy,true);
     if(combo>=3&&combo%3===0)numberPop(cx,cy-12,combo+" 连碎!","#a5f8df");
     if(source==="giant")shake=Math.max(shake,.11);
-    juice.onBreak(b,{combo,source,impact});
+    juice.onBreak(b,{combo,source,impact});tapHaptic(source==="giant"?"heavy":"break");
     burst(cx,cy,b.color,source==="giant"?19:12);
     // Secondary explosions and lightning cannot snowball the active-skill meter.
     if(source==="normal"||source==="drill")addCharge(b.special?34:8);
@@ -713,7 +726,7 @@
       r:14,life:0,collisions:0,bounces:0,pierceLeft:GIANT_PIERCE_LIMIT,lastBounceFx:-100,trail:[],lastHitId:null,lastHitLife:-99};
     burst(shooter.x,shooter.y-27,"#ffd482",24);
     playSfx("giant");setState("超载冲锋：限时冲破 10 块，结束后散出追击球！");updateUI();
-    juice.onGiant(shooter.x,shooter.y-27);
+    juice.onGiant(shooter.x,shooter.y-27);tapHaptic("heavy");
     return true;
   }
   function activateEquippedSkill(){
@@ -1736,7 +1749,7 @@
       armorHits,armorCracks,armorBreaks,heavyHits,giantPiercings,giantHeavyBounces,tailSoftens,
       giantRemaining:giant?Math.max(0,GIANT_LIFETIME-giant.life):0,giantLifetime:GIANT_LIFETIME,
       giantPiercesLeft:giant?.pierceLeft??0,stormBuild:!!(splitLevel&&arcLevel),blastBuild:!!(shockLevel&&drillLevel),
-      bonusVolleyBalls,homingTurns,shockWaves,directBreaks,soundVolume,
+      bonusVolleyBalls,homingTurns,shockWaves,directBreaks,soundVolume,impactHaptics,
       electricTargetsWithUpgrade:Math.min(5,ELECTRIC_TARGETS[electricStage]+arcLevel),
       remainingHp:bricks.filter(b=>b.alive).reduce((n,b)=>n+b.hp,0),
       visibleNumbers:bricks.filter(b=>b.alive&&!b.cracked).length,

@@ -1,9 +1,9 @@
 /* M1: permanent build state and effective player-facing changes. No DOM dependency. */
 (function(root,factory){const api=factory();if(typeof module==='object')module.exports=api;else root.PinballBuilds=api;})(typeof window==='object'?window:globalThis,()=>{
  'use strict';
- const CONFIG={maxBalls:32,maxWaves:20,productWaves:50,baseDamage:1,firstShot:.12,
+ const CONFIG={maxBalls:48,maxWaves:20,productWaves:50,baseDamage:1,firstShot:.12,
   arcCooldown:.30,arcEvery:[0,2,1,1],arcTargets:[0,2,3,4],arcRange:[0,145,165,180],arcDamage:[0,2,4,6],focusDamage:6,bossArcDamage:4,
-  splitEvery:[0,2,2,1],splitCount:[0,1,2,2],splitSpread:.45,stormSpread:.8,huntTurns:2,childTTL:4.1,
+  splitEvery:[0,2,2,1],splitCount:[0,2,3,3],splitSpread:.45,stormSpread:.8,huntTurns:2,childTTL:4.1,
   gunInterval:[0,.35,.27,.20],gunTTL:4.1,lineInterval:.17,fanInterval:.18,fanAngle:.28,fanPeriod:1.8,gunMinInterval:.12,gunRateStep:.012,auxGunInterval:.70,auxGunMinInterval:.55,
   normalInterval:.86,normalMinInterval:.55,normalRateStep:.075,normalTTL:8.4,speed:330,speedStep:15,lifeStep:.7,gunLifeStep:.2,fallScale:.84,
   flags:{earlyBonus:false,bossBonus:false,rareEffects:false,ultimate:false,temporaryBuffs:true},rarityWeights:{common:1,rare:0,epic:0,legendary:0}};
@@ -28,7 +28,7 @@
  }
  function effects(s){const t=tuning(s),r=s.ranks,b=s.coreBranch,split=t.splitRank,arc=t.arcRank;
   return {interval:t.interval,damage:t.damage,speed:t.speed,ttl:t.ttl,
-   splitCount:split?(b==='split-a'?(s.ranks['split-a']>1?4:3):b==='split-b'?2:CONFIG.splitCount[split]):0,splitEvery:CONFIG.splitEvery[split],splitSpread:split?(b==='split-a'?CONFIG.stormSpread:CONFIG.splitSpread):0,childTurns:b==='split-b'?CONFIG.huntTurns+(s.ranks['split-b']>1?1:0):0,splitPursuit:Math.max(0,split-1),gunPressure:preferred(s)==='gun'?Math.max(0,(r.gun||0)-1):0,
+   splitCount:split?(b==='split-a'?(s.ranks['split-a']>1?5:4):b==='split-b'?3:CONFIG.splitCount[split]):0,splitEvery:CONFIG.splitEvery[split],splitSpread:split?(b==='split-a'?CONFIG.stormSpread:CONFIG.splitSpread):0,childTurns:b==='split-b'?CONFIG.huntTurns+(s.ranks['split-b']>1?1:0):0,splitPursuit:Math.max(0,split-1),gunPressure:preferred(s)==='gun'?Math.max(0,(r.gun||0)-1):0,
    arcEvery:CONFIG.arcEvery[arc],arcTargets:arc?(b==='arc-b'?0:b==='arc-a'?(s.ranks['arc-a']>1?5:4):CONFIG.arcTargets[arc]):0,arcRange:arc&&b!=='arc-b'?CONFIG.arcRange[arc]:0,arcDamage:arc&&b!=='arc-b'?CONFIG.arcDamage[arc]:0,arcArmorBonus:arc&&b!=='arc-b'?arc+1:0,arcSolo:arc?(b==='arc-b'?CONFIG.focusDamage:CONFIG.bossArcDamage)+(b==='arc-a'?(s.ranks['arc-a']>1?5:4):CONFIG.arcTargets[arc])*arc+(b==='arc-b'&&s.ranks['arc-b']>1?3:0):0,arcNet:b==='arc-a',arcFocus:b==='arc-b',
    hunter:r.hunter||0,drillEvery:r.drill?(r.drill===1?4:3):0,drillPierces:r.drill?(r.drill===1?3:5):0,drillDamage:r.drill?r.drill+1:0,
    shockEvery:r.shock?(r.shock===1?4:3):0,shockTargets:r.shock?(r.shock===1?2:4):0,shockDamage:r.shock||0,shockRadius:r.shock?(r.shock===1?75:95):0,
