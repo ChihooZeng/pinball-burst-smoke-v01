@@ -33,7 +33,7 @@
     for(let i=0;i<3;i++){const card=Build.card(build,choiceSet[i]);$("choiceTitle"+i).textContent=card.title;$("choiceDesc"+i).textContent=card.description;}
     ui.choice.classList.remove("hidden");
   }
-  function finishPrototype(){phase="complete";balls=[];giant=null;ui.win.classList.remove("hidden");$("winTitle").textContent="20波试玩 · 挑战完成";ui.final.textContent="构筑："+Build.DEFS[build.coreBranch||build.seedAbility].name+" · 用时 "+Math.round(elapsed)+" 秒 · 击碎 "+score+" 块。请反馈手感，后续内容等待验收。";record("complete");setState("M1候选 · 等待真人手感验收");updateUI();}
+  function finishPrototype(){phase="complete";balls=[];giant=null;ui.win.classList.remove("hidden");$("winTitle").textContent="20波试玩 · 挑战完成";ui.final.textContent="构筑："+Build.DEFS[build.coreBranch||build.seedAbility].name+" · 用时 "+Math.round(elapsed)+" 秒 · 击碎 "+score+" 块。请反馈手感，后续内容等待验收。";record("complete");setState("Demo V1.0 · 20关挑战完成");updateUI();}
 
   const BOSS_INTERVAL=110, SURGE_INTERVAL=75, FALL_BASE=6.8, MAX_BRICKS=168;
   const START_ROWS=6, SPAWN_INTERVAL=3.5, PHYSICS_DT=1/120, MAX_FRAME_STEPS=6;
@@ -1662,8 +1662,8 @@
   $("pause").addEventListener("click",()=>phase==="paused"?resume():pause());
   $("resume").addEventListener("click",resume);
   $("exportRun").addEventListener("click",()=>{
-    const data=JSON.stringify({version:"M1.3",state:snapshot(),events,config:CFG},null,2);
-    const url=URL.createObjectURL(new Blob([data],{type:"application/json"}));const link=document.createElement("a");link.href=url;link.download="pinball-m1-"+build.seed+".json";link.click();URL.revokeObjectURL(url);
+    const data=JSON.stringify({version:"DemoV1-20261101",state:snapshot(),events,config:CFG},null,2);
+    const url=URL.createObjectURL(new Blob([data],{type:"application/json"}));const link=document.createElement("a");link.href=url;link.download="pinball-demo-v1-"+build.seed+".json";link.click();URL.revokeObjectURL(url);
   });
   function setAim(e) {
     const box = canvas.getBoundingClientRect();
