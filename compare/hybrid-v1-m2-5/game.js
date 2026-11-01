@@ -8,8 +8,8 @@
   let precisionTurns=0,focusDamage=0,gunBonusDamage=0,weakpointDamage=0,weakpointCharge=0,damageDealt=0,shotsWithContact=0;
   let waveFallMultiplier=1;
   const FIRST_SKILL_KEY='pinball-overload-first-skill-v1',SIDE_KEY='pinball-overload-skill-side-v1',AUTO_KEY='pinball-overload-auto-skill-v1';
-  let firstSkillUsed=false,skillSide='right',autoSkill=false;
-  try{firstSkillUsed=localStorage.getItem(FIRST_SKILL_KEY)==='done';skillSide=localStorage.getItem(SIDE_KEY)==='left'?'left':'right';autoSkill=localStorage.getItem(AUTO_KEY)==='yes';}catch(e){}
+  let firstSkillUsed=false,skillSide='right',autoSkill=true;
+  try{firstSkillUsed=localStorage.getItem(FIRST_SKILL_KEY)==='done';skillSide=localStorage.getItem(SIDE_KEY)==='left'?'left':'right';autoSkill=localStorage.getItem(AUTO_KEY)!=='no';}catch(e){}
   function store(key,value){try{localStorage.setItem(key,value);}catch(e){}}
   function applySkillSide(){document.querySelector('.shell').classList.toggle('skill-left',skillSide==='left');}
   function markSkillUsed(){if(firstSkillUsed)return;firstSkillUsed=true;store(FIRST_SKILL_KEY,'done');document.getElementById('skillGuide').classList.add('hidden');}
@@ -155,7 +155,11 @@
   let sfxLast=Object.create(null), bonusVolleyBalls=0, homingTurns=0, shockWaves=0, directBreaks=0;
   let shotsFired, brickContacts, shotMaxContacts, splitBursts, chainBursts, giantRebounds, giantBrickRebounds, giantWallRebounds, giantTotalHits;
   let endgameActive=false,endgameStartedAt=null,endgameElapsed=0,endgameWaveStats=[];
-  let lightningArcs=[],lightningTriggers=0,lightningDamage=0,lightningOriginCount=0;
+  let lightningArcs=[],lightningChains=[],lightningTriggers=0,lightningDamage=0,lightningOriginCount=0;
+  // Boss victory is locked immediately when HP reaches zero; radial cleanup
+  // runs as a visual-only sequence, never as extra combat damage or score.
+  let bossVictory=null;
+  const BOSS_FINISH_DURATION=1.70,ARC_HOP_INTERVAL=.082,ARC_CHAIN_CAP=7;
   let electricStage=0,electricStageStarts=[null,null,null,null],electricHitsByStage=[0,0,0,0];
   let waveTotal=0,electricStats=[],electricContactCounter=0;
   let selectedCannon=CANNON_CLASSES.free,selectedActive=ACTIVE_SKILLS.giant;
@@ -242,14 +246,14 @@
     ui.rate.textContent="LV."+level;ui.balls.textContent=String(livingCount());
     ui.charge.textContent=Math.floor(charge)+"%";ui.fill.style.width=charge+"%";
     const cleared=Math.max(0,waveStartingTargets-livingCount());
-    $("xpLabel").textContent="第"+wave+"波 · 已清理 "+cleared+"/"+waveStartingTargets+" · 清屏升级";
+    $("xpLabel").textContent=bossVictory?"第"+wave+"波 · BOSS击破 · 连环终结":boss&&boss.alive?"第"+wave+"波 · 击败Boss即可胜利":("第"+wave+"波 · 已清理 "+cleared+"/"+waveStartingTargets+" · 清屏升级");
     $("xpFill").style.width=(waveStartingTargets?Math.min(100,cleared/waveStartingTargets*100):0)+"%";
     $("pause").disabled=false;
     $("buffStatus").textContent=build.temporaryBuffs.map(b=>Build.BUFFS[b.id].name+" "+Math.ceil(b.remaining)+"s").join(" · ");
     const ready=phase==="playing"&&!emptyLatch&&!!build.seedAbility&&charge>=MAX_CHARGE&&!giant;
     ui.giant.parentElement.classList.toggle("hidden",!build.seedAbility);
-    ui.giant.disabled=!ready;ui.giant.textContent=giant?"超载中 "+Math.ceil(GIANT_LIFETIME-giant.life)+"s":ready?"超载冲锋 READY":"超载冲锋 "+Math.floor(charge)+"%";
-    const showGuide=ready&&!firstSkillUsed;$("skillGuide").classList.toggle("hidden",!showGuide);ui.giant.classList.toggle("guide-pulse",showGuide);
+    ui.giant.disabled=!ready||autoSkill;ui.giant.textContent=giant?"超载中 "+Math.ceil(GIANT_LIFETIME-giant.life)+"s":autoSkill?"超载·自动 "+Math.floor(charge)+"%":ready?"超载冲锋 READY":"超载冲锋 "+Math.floor(charge)+"%";
+    const showGuide=ready&&!firstSkillUsed&&!autoSkill;$("skillGuide").classList.toggle("hidden",!showGuide);ui.giant.classList.toggle("guide-pulse",showGuide);
     $("giantLife").classList.toggle("hidden",!giant);
     $("giantTimeText").textContent=giant?Math.max(0,GIANT_LIFETIME-giant.life).toFixed(1)+"s":"0.0s";
     $("giantTimeFill").style.width=giant?Math.max(0,(GIANT_LIFETIME-giant.life)/GIANT_LIFETIME*100)+"%":"0%";
@@ -395,7 +399,7 @@
     return result;
   }
   function spawnWave(n,plan=null){
-    wave=n;waveElapsed=0;waveTailSoftened=false;boss=null;
+    wave=n;waveElapsed=0;waveTailSoftened=false;boss=null;bossVictory=null;lightningChains=[];lightningArcs=[];
     waveMetrics={breaks:0,lastBreak:0,longestNoBreak:0,tailSeconds:0,bossSoloSeconds:0,shots:shotsFired||0,children:counters.splitChildren,reclaims:counters.budgetReclaims,suppressed:counters.suppressedShots,suppressedChildren:counters.suppressedChildren};
     summonSignals=[];ambientSignals=[];bossSummonClock=0;bossSummonTotal=0;bossSupportXP=0;
     finaleStage=isFinaleWave(n)?1:0;finaleWaveSpawns=[0,0,0,0];finaleDamageCheckpoints=[];
@@ -416,7 +420,7 @@
     waveStartingTargets=livingCount();
     clearPreview=[];clearPreviewShown=false;clearWindowActive=false;
     waveSpawnCount++;clearBurstCount=Math.max(0,n-1);clearBurstTiles=tiles.length;
-    setState(isFinaleWave(wave)?"最终关 · 三阶段Boss试炼 · 破坏护甲并击退全部砖阵":"第 "+wave+" 波 · "+(boss?"BOSS 核心":"整波破坏")+" · 清屏后进入下一波");
+    setState(isFinaleWave(wave)?"最终关 · 888HP三阶段Boss · 击败即可胜利":"第 "+wave+" 波 · "+(boss?"击败BOSS即胜":"整波破坏")+" · 清屏后进入下一波");
     updateUI();
     return tiles.length;
   }
@@ -441,7 +445,7 @@
     bridgeTimer=0;lastBridgeTime=-100;bridgeBursts=0;bridgeTiles=0;upperOnlyBridgeCount=0;cleanupWindow=0;cleanupStarted=false;cleanupActivations=0;clearPreview=[];clearPreviewShown=false;
     ambientSignals=[];ambientSummonClock=0;ambientSummonBursts=0;ambientSummonTiles=0;overlapSummonCount=0;clearBurstCount=0;clearBurstTiles=0;
     accumulator=0;uiClock=0;metricsClock=0;frameSamples=0;fpsNow=0;slowFrames=0;renderQuality="full";drawMs=0;
-    boss=null;bossDefeats=0;bossSupportXP=0;bossSummonClock=0;summonSignals=[];ambientSignals=[];surgeUntil=0;alertUntil=0;
+    boss=null;bossVictory=null;lightningChains=[];bossDefeats=0;bossSupportXP=0;bossSummonClock=0;summonSignals=[];ambientSignals=[];surgeUntil=0;alertUntil=0;
     finaleStage=0;finaleWaveSpawns=[0,0,0,0];finaleDamageCheckpoints=[];
     shotsFired=0;brickContacts=0;shotMaxContacts=0;splitBursts=0;chainBursts=0;bonusVolleyBalls=0;homingTurns=0;shockWaves=0;directBreaks=0;giantRebounds=0;giantBrickRebounds=0;giantWallRebounds=0;giantTotalHits=0;
     shootClock=.8;skillsUsed=0;ricochetTriggers=0;aim=0;activePointer=null;balls=[];particles=[];giant=null;
@@ -1164,20 +1168,49 @@
       burst(tile.x+tile.w/2,tile.y+tile.h/2,"#70e7d2",5);
     }
   }
+  // Boss 10 and final Boss 20 share one victory contract: defeat the
+  // core, then play a radial chain-reaction *without* further danger checks.
   function defeatBoss(){
-    if(!boss)return;
+    if(!boss||bossVictory)return;
+    const x=boss.x+boss.w/2,y=boss.y+boss.h/2,finishedWave=wave;
+    const remaining=bricks.filter(b=>b.alive&&!b.isBoss);
+    const farthest=Math.max(1,...remaining.map(b=>Math.hypot(b.x+b.w/2-x,b.y+b.h/2-y)));
+    const pending=remaining.map(b=>({
+      id:b.id,distance:Math.hypot(b.x+b.w/2-x,b.y+b.h/2-y),
+      at:.20+Math.hypot(b.x+b.w/2-x,b.y+b.h/2-y)/farthest*1.12
+    })).sort((a,b)=>a.at-b.at);
     bossDefeats++;
-    const x=boss.x+boss.w/2,y=boss.y+boss.h/2;
-    // Persist all NEW physical support bricks after either Boss dies.
-    // Previously Boss10 silently deleted its summoned bricks on death.
-    let survivors=0;
-    for(const b of bricks)if(b.alive&&b.bossSupport&&b.bossId===boss.id){
-      b.bossSupport=false;b.bossId=null;survivors++;
+    record("boss_defeated",{wave:finishedWave,remainingPhysicalBricks:remaining.length,
+      avoidedAutoClear:true,rule:"boss_hp_zero"});
+    boss=null;bossSummonClock=0;summonSignals=[];ambientSignals=[];
+    balls=[];giant=null;shootClock=0;lightningChains=[];lightningArcs=[];activePointer=null;
+    bossVictory={x,y,t:0,wave:finishedWave,pending,index:0,farthest};
+    alertUntil=elapsed+BOSS_FINISH_DURATION;shake=.18;
+    burst(x,y,"#ffe7ae",reducedMotion?9:38);juice.onSplash({x,y});
+    record("boss_finisher_start",{wave:finishedWave,targets:pending.length});
+    playSfx("shock");setState("BOSS击破！核心向外连环爆炸");
+    updateUI();
+  }
+  function updateBossFinisher(dt){
+    if(!bossVictory)return false;
+    const v=bossVictory;v.t+=dt;
+    while(v.index<v.pending.length&&v.pending[v.index].at<=v.t){
+      const target=v.pending[v.index++],brick=bricks.find(b=>b.id===target.id&&b.alive);
+      if(!brick)continue;
+      brick.alive=false; // victory FX is NOT a physical hit and does not add score/XP
+      const x=brick.x+brick.w/2,y=brick.y+brick.h/2;
+      burst(x,y,v.index%2?"#ffd99c":"#88e9ff",reducedMotion?3:8);
+      if(!reducedMotion)impactVisual(x,y,true);
+      if(v.index%8===0)playSfx("shock");
     }
-    burst(x,y,"#d3a2ff",50);juice.onSplash({x,y});shake=.18;
-    record("boss_defeated",{wave,physicalSummonSurvivors:survivors,otherBricks:bricks.filter(b=>b.alive&&!b.isBoss).length-survivors});
-    boss=null;summonSignals=[];alertUntil=elapsed+3;
-    setState("Boss已击破 · "+bricks.filter(b=>b.alive).length+"块实体砖仍需清除（测试规则）");playSfx("shock");
+    if(v.t<BOSS_FINISH_DURATION)return true;
+    const exploded=v.index;
+    for(const brick of bricks)if(brick.alive&&!brick.isBoss)brick.alive=false;
+    record("boss_finisher_complete",{wave:v.wave,visualExplosions:exploded,
+      awardedNormalBreaks:0,seconds:+v.t.toFixed(2)});
+    bossVictory=null;
+    setState("BOSS胜利！终结爆炸完成");
+    return false; // let ordinary wave-clear reward/ending execute THIS frame
   }
   function zoneCounts(){
     let upper=0,middle=0,lower=0;
@@ -1229,6 +1262,7 @@
     return count;
   }
   function generateSurvival(dt){
+    if(updateBossFinisher(dt))return;
     // Whole-wave contract: no ordinary rows, ambient summons, bridge spawns or
     // reinforcements. Only an alive Boss may summon a finite support set.
     if(!emptyLatch){
@@ -1302,7 +1336,7 @@
     elapsed+=dt;if(!emptyLatch){shootClock+=dt;battleTime+=dt;Build.tickBuffs(build,dt);}
     generateSurvival(dt);
     if(phase!=="playing")return;
-    if(!emptyLatch){
+    if(!emptyLatch&&!bossVictory){
       fanClock+=dt;gunFlash=Math.max(0,gunFlash-dt);
       if(autoSkill&&build.seedAbility&&charge>=MAX_CHARGE&&!giant)activateEquippedSkill();
       const fireInterval=Build.tuning(build).interval/Build.buffModifiers(build).rate;
@@ -1312,6 +1346,7 @@
       lightningArcs.forEach(e=>e.age+=dt);lightningArcs=lightningArcs.filter(e=>e.age<e.duration);
       updateGiant(dt);
     }
+    if(bossVictory){lightningArcs=[];lightningChains=[];}
     particles.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=.97;p.vy*=.97;p.life-=dt;});
     particles=particles.filter(p=>p.life>0);
     for(const b of bricks)if(b.alive&&b.bonk>0)b.bonk=Math.max(0,b.bonk-dt);
@@ -1337,6 +1372,17 @@
   function draw() {
     ctx.clearRect(0,0,W,H);
     ctx.save();
+    // Boss shockwave expands with the real victory timer. No combat collision.
+    if(bossVictory){
+      const v=bossVictory,t=clamp(v.t/BOSS_FINISH_DURATION,0,1);
+      ctx.save();
+      ctx.globalAlpha=reducedMotion?.28:.70*(1-t);
+      ctx.strokeStyle="#ffd9a5";ctx.lineWidth=5*(1-t)+1;ctx.shadowColor="#ffd7a4";ctx.shadowBlur=24;
+      ctx.beginPath();ctx.arc(v.x,v.y,10+t*(v.farthest+30),0,Math.PI*2);ctx.stroke();
+      ctx.shadowBlur=0;ctx.globalAlpha=Math.min(1,.9*(1-t)+.25);
+      ctx.font="900 19px system-ui";ctx.textAlign="center";ctx.fillStyle="#fff3dc";
+      ctx.fillText("BOSS 击破！",W/2,Math.min(H-150,220));ctx.restore();
+    }
     // Existing v0.5 giant-only shake remains when additional effects are off.
     if(juice.mode==="off"&&shake>0&&!reducedMotion){
       const amp=2.1*Math.min(1,shake/.09);
