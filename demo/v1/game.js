@@ -7,6 +7,7 @@
   let gunTarget=null,gunStreak=0,gunLast=-99;
   let precisionTurns=0,focusDamage=0,gunBonusDamage=0,weakpointDamage=0,weakpointCharge=0,damageDealt=0,shotsWithContact=0;
   let waveFallMultiplier=1;
+  let laserClock=0,laserSegments=[],laserHits=0,laserDamage=0,laserWaveHits=0;
   let waveStartGap=Infinity,closestDangerGap=Infinity,nearDangerSeconds=0,pressureWarningStage=0,currentStatus="";
   const FIRST_SKILL_KEY='pinball-overload-first-skill-v1',SIDE_KEY='pinball-overload-skill-side-v1',AUTO_KEY='pinball-overload-auto-skill-v1';
   let firstSkillUsed=false,skillSide='right',autoSkill=true;
@@ -31,7 +32,13 @@
   function showCards(seed=false){
     $("choiceTitle").textContent=!build.seedAbility?"选一个新技能":"选择一次强化";
     $("choiceWave").textContent=!build.seedAbility?"第1波完成 · 第一次升级":"WAVE "+wave+" CLEAR · LV."+level;
-    for(let i=0;i<3;i++){const card=Build.card(build,choiceSet[i]);$("choiceTitle"+i).textContent=card.title;$("choiceDesc"+i).textContent=card.description;}
+    for(let i=0;i<4;i++){
+      const visible=i<choiceSet.length;const button=$("choice"+i);
+      button.classList.toggle("hidden",!visible);
+      if(!visible)continue;
+      const card=Build.card(build,choiceSet[i]);
+      $("choiceTitle"+i).textContent=card.title;$("choiceDesc"+i).textContent=card.description;
+    }
     ui.choice.classList.remove("hidden");
   }
   function finishPrototype(){phase="complete";balls=[];giant=null;ui.win.classList.remove("hidden");$("winTitle").textContent="20波试玩 · 挑战完成";ui.final.textContent="构筑："+Build.DEFS[build.coreBranch||build.seedAbility].name+" · 用时 "+Math.round(elapsed)+" 秒 · 击碎 "+score+" 块。请反馈手感，后续内容等待验收。";record("complete");setState("Demo V1.0 · 20关挑战完成");updateUI();}
@@ -441,7 +448,7 @@
     const oldHeightFactor=Math.max(1,Math.min(3.2,1+Math.max(0,virtualOldGap/oldReferenceGap-1)*.70));
     waveFallMultiplier=n===1?1:oldHeightFactor*Math.max(.58,gap/Math.max(1,virtualOldGap));
     record("wave_pressure",{wave:n,fallMultiplier:+waveFallMultiplier.toFixed(3),gap:+gap.toFixed(1)});
-    waveStartingTargets=livingCount();
+    waveStartingTargets=livingCount();laserWaveHits=0;laserClock=0;laserSegments=[];
     waveStartGap=dangerGap();closestDangerGap=waveStartGap;
     nearDangerSeconds=0;pressureWarningStage=0;
     clearPreview=[];clearPreviewShown=false;clearWindowActive=false;
@@ -459,8 +466,8 @@
     DANGER_Y=H-105;SUMMON_SAFE_BOTTOM=DANGER_Y-88;canvas.height=H;shooter.y=H-37;
     WAVE_START_Y=window.innerWidth?Math.max(84,Math.ceil((document.querySelector(".topbar").getBoundingClientRect().height+28)*W/window.innerWidth)):84;
     pausedFrom=null;battleTime=0;waveReports=[];bankDamage=0;lockBackground(false);$("pauseOverlay").classList.add("hidden");
-    gunTarget=null;gunStreak=0;gunLast=-99;precisionTurns=focusDamage=gunBonusDamage=weakpointDamage=weakpointCharge=damageDealt=shotsWithContact=0;build=Build.createState(initialSeed===null?Math.floor(Math.random()*4294967296):initialSeed);events=[];arcCharge=0;lastArcRelease=-99;fanClock=0;gunFlash=0;
-    counters={splitChildren:0,arcReleases:0,arcSingleDamage:0,budgetReclaims:0,suppressedShots:0,suppressedChildren:0,maxBallsAlive:0,wallBounces:0,shotsByBuild:{base:0,split:0,arc:0,gun:0}};
+    gunTarget=null;gunStreak=0;gunLast=-99;laserClock=0;laserSegments=[];laserHits=0;laserDamage=0;laserWaveHits=0;precisionTurns=focusDamage=gunBonusDamage=weakpointDamage=weakpointCharge=damageDealt=shotsWithContact=0;build=Build.createState(initialSeed===null?Math.floor(Math.random()*4294967296):initialSeed);events=[];arcCharge=0;lastArcRelease=-99;fanClock=0;gunFlash=0;
+    counters={splitChildren:0,arcReleases:0,arcSingleDamage:0,budgetReclaims:0,suppressedShots:0,suppressedChildren:0,maxBallsAlive:0,wallBounces:0,shotsByBuild:{base:0,split:0,arc:0,gun:0,laser:0}};
     collisionChecks=0;physicsCostMs=0;physicsSteps=0;maxPhysicsMs=0;
     wave=1;score=0;phase="ready";charge=0;elapsed=0;level=1;xp=0;xpGoal=34;
     $("winTitle").textContent="砖阵触及警戒线";
@@ -500,7 +507,8 @@
     const loadouts={
       split:["split","split","power","split-a","split","rate","speed","power","life"],
       arc:["arc","arc","power","arc-a","arc","rate","speed","power","life"],
-      gun:["gun","gun","power","gun-a","gun","rate","speed","power","life"]
+      gun:["gun","gun","power","gun-a","gun","rate","speed","power","life"],
+      laser:["laser","laser","power","rate","speed","power","life","shock","drill"]
     };
     const picks=loadouts[route]||loadouts.split;
     for(let i=0;i<picks.length;i++){
@@ -1014,7 +1022,8 @@
   function eligibleSkills(){return Build.eligible(build,screenClears);}
   function offerChoice(){
     if(phase!=="playing"||choiceQueue<=0)return false;
-    choiceSet=Build.offer(build,screenClears);if(choiceSet.length!==3)throw Error("Upgrade pool must provide three distinct effective cards");
+    choiceSet=Build.offer(build,screenClears);const expected=build.seedAbility?3:4;
+    if(choiceSet.length!==expected)throw Error("Upgrade pool must provide "+expected+" distinct effective cards");
     phase="choosing";choiceQueue--;showCards();record("offer",{cards:choiceSet.slice()});setState("清屏升级 · 选择期间暂停");updateUI();return true;
   }
   function chooseUpgrade(id){
@@ -1713,7 +1722,7 @@
   $("start").addEventListener("click",begin);
   $("jumpBoss").addEventListener("click",jumpToBoss10);
   $("jumpFinalBoss").addEventListener("click",jumpToFinalBoss);
-  for(let i=0;i<3;i++)$("choice"+i).addEventListener("click",()=>{unlockSound();chooseUpgrade(choiceSet[i]);});
+  for(let i=0;i<4;i++)$("choice"+i).addEventListener("click",()=>{unlockSound();chooseUpgrade(choiceSet[i]);});
   $("again").addEventListener("click",()=>{unlockSound();reset();begin();});
   $("reset").addEventListener("click",()=>{unlockSound();reset();begin();});
   document.addEventListener?.("visibilitychange",()=>{if(document.hidden)pause();accumulator=0;lastFrame=performance.now();});
