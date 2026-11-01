@@ -183,11 +183,11 @@
     hapticInput.addEventListener("change",()=>{impactHaptics=!!hapticInput.checked;});
   }
   function tapHaptic(kind="hit"){
-    if(reducedMotion||!impactHaptics||!navigator.vibrate)return false;
+    if(kind==="hit"||reducedMotion||!impactHaptics||!navigator.vibrate)return false;
     const t=performance.now();
-    if(t-lastHapticAt<(kind==="hit"?125:90))return false;
+    if(t-lastHapticAt<180)return false;
     lastHapticAt=t;
-    try{return !!navigator.vibrate(kind==="heavy"?24:kind==="break"?16:8);}catch(_){return false;}
+    try{return !!navigator.vibrate(kind==="heavy"?20:12);}catch(_){return false;}
   }
   // Web Audio mix: audible at ordinary device volume, but capped for dense chains.
   // First gesture resumes the audio context; setting volume never auto-plays sound.
@@ -231,10 +231,11 @@
   function playSfx(kind){
     if(!soundContext||soundVolume<=0)return;
     const now=soundContext.currentTime;
-    if(now-(sfxLast[kind]??-999)<(kind==="armor"?.065:kind==="break"?.042:.12))return;
+    if(now-(sfxLast[kind]??-999)<(kind==="armor"?.095:kind==="break"?.075:.12))return;
+    if(kind==="armor"&&now-(sfxLast.break??-999)<.075)return;
     sfxLast[kind]=now;
-    if(kind==="armor"){beep(235,.08,.046,"sawtooth");beep(680,.035,.022,"triangle");}
-    else if(kind==="break"){beep(225,.11,.066,"sawtooth");beep(440+Math.min(combo,10)*32,.11,.046,"triangle");beep(980,.045,.026,"square");}
+    if(kind==="armor"){beep(820,.038,.021,"sine");}
+    else if(kind==="break"){beep(580+Math.min(combo,10)*22,.065,.031,"triangle");beep(1160,.028,.018,"sine");if(combo>=5&&combo%5===0)beep(370,.085,.025,"triangle");}
     else if(kind==="shock"){beep(145,.21,.065,"sawtooth");beep(360,.11,.038);}
     else if(kind==="drill"){beep(480,.105,.043,"sawtooth");}
     else if(kind==="split"){beep(820,.12,.037);beep(1140,.07,.022);}
@@ -620,8 +621,8 @@
       if(b.hp>0){
         if(!b.isFinalBoss)b.color=brickColor(b.hp,b.special);
         if(b.hp<=2&&!b.cracked){b.cracked=true;armorCracks++;}
-        burst(b.x+b.w/2,b.y+b.h/2,"#ffd29d",4);
-        juice.onArmor(b,impact);tapHaptic("hit");playSfx("armor");
+        burst(b.x+b.w/2,b.y+b.h/2,"#cdefff",2);
+        juice.onArmor(b,impact);playSfx("armor");
         return false;
       }
       if(!b.cracked){armorCracks++;b.cracked=true;}
@@ -637,10 +638,12 @@
     combo=elapsed-lastBreak<=1.25?combo+1:1;
     lastBreak=elapsed;maxCombo=Math.max(combo,maxCombo);comboVisibility=1;
     impactVisual(cx,cy,true);
-    if(combo>=3&&combo%3===0)numberPop(cx,cy-12,combo+" 连碎!","#a5f8df");
+    if(combo>=5&&combo%5===0)numberPop(cx,cy-12,combo+" 连碎!","#a5f8df");
     if(source==="giant")shake=Math.max(shake,.11);
-    juice.onBreak(b,{combo,source,impact});tapHaptic(source==="giant"?"heavy":"break");
-    burst(cx,cy,b.color,source==="giant"?19:12);
+    juice.onBreak(b,{combo,source,impact});
+    if(source==="giant"||source==="giantHeavy")tapHaptic("heavy");
+    else if(combo>=5&&combo%5===0)tapHaptic("break");
+    burst(cx,cy,b.color,source==="giant"||source==="giantHeavy"?17:7);
     // Secondary explosions and lightning cannot snowball the active-skill meter.
     if(source==="normal"||source==="drill")addCharge(b.special?34:8);
     if(b.special&&(source==="normal"||source==="drill"))setState("能量砖！超载冲锋充能");
@@ -1240,7 +1243,7 @@
     balls=[];giant=null;shootClock=0;lightningChains=[];lightningArcs=[];activePointer=null;
     bossVictory={x,y,t:0,wave:finishedWave,pending,index:0,farthest};
     alertUntil=elapsed+BOSS_FINISH_DURATION;shake=.18;
-    burst(x,y,"#ffe7ae",reducedMotion?9:38);juice.onSplash({x,y});
+    burst(x,y,"#ffe7ae",reducedMotion?9:38);juice.onSplash({x,y});tapHaptic("heavy");
     record("boss_finisher_start",{wave:finishedWave,targets:pending.length});
     playSfx("shock");setState("BOSS击破！核心向外连环爆炸");
     updateUI();
@@ -1405,7 +1408,7 @@
     particles.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=.97;p.vy*=.97;p.life-=dt;});
     particles=particles.filter(p=>p.life>0);
     for(const b of bricks)if(b.alive&&b.bonk>0)b.bonk=Math.max(0,b.bonk-dt);
-    impactRings.forEach(e=>e.age+=dt);impactRings=impactRings.filter(e=>e.age<(e.hard?.24:.15));
+    impactRings.forEach(e=>e.age+=dt);impactRings=impactRings.filter(e=>e.age<(e.hard?.19:.10));
     floatTexts.forEach(e=>e.age+=dt);floatTexts=floatTexts.filter(e=>e.age<.56);
     comboVisibility=Math.max(0,comboVisibility-dt);shake=Math.max(0,shake-dt);
     juice.update(dt,bricks);
@@ -1611,10 +1614,10 @@
     }
     if(!reducedMotion){
       for(const e of impactRings){
-        const duration=e.hard?.24:.15, t=clamp(e.age/duration,0,1);
+        const duration=e.hard?.19:.10, t=clamp(e.age/duration,0,1);
         ctx.strokeStyle=e.hard?"rgba(182,241,255,"+(.65*(1-t))+")":"rgba(255,217,154,"+(.4*(1-t))+")";
-        ctx.lineWidth=e.hard?2.4:1.5;
-        ctx.beginPath();ctx.arc(e.x,e.y,5+(e.hard?27:15)*t,0,Math.PI*2);ctx.stroke();
+        ctx.lineWidth=e.hard?2.0:1.1;
+        ctx.beginPath();ctx.arc(e.x,e.y,4+(e.hard?20:9)*t,0,Math.PI*2);ctx.stroke();
       }
       for(const e of floatTexts){
         const t=clamp(e.age/.56,0,1);

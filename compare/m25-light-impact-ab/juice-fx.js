@@ -1,6 +1,6 @@
 "use strict";
 /**
- * Demo V1 mainline impact feedback. No gameplay clock manipulation.
+ * A/B B-variant: light, crisp contact vs selective strong milestones; visuals only.
  * Designed for Safari Canvas 2D and a deterministic, bounded particle budget.
  */
 (function(root){
@@ -10,7 +10,7 @@
     let shakeAge=1,shakeDuration=.1,shakeStrength=0;
     let lastShakeAt=-100,lastGiantAt=-100,clock=0,shakeEvents=0,breakEvents=0;
     const clamp=(n,lo,hi)=>Math.max(lo,Math.min(hi,n));
-    function intensity(){return mode==="bold"?2.35:mode==="balanced"?1.5:0;}
+    function intensity(){return mode==="bold"?1.65:mode==="balanced"?1.2:0;}
     function setQuality(next){quality=next==="lite"?"lite":"full";}
     function setMode(next){
       mode=reducedMotion?"off":(["off","balanced","bold"].includes(next)?next:"balanced");
@@ -20,11 +20,11 @@
     if(reducedMotion)mode="off";
     function random(min,max){return min+Math.random()*(max-min);}
     function addShake(level){
-      if(!intensity()||clock-lastShakeAt<.085)return;
+      if(!intensity()||clock-lastShakeAt<.115)return;
       lastShakeAt=clock;shakeAge=0;
-      shakeDuration=level>=3?.17:level===2?.13:.105;
+      shakeDuration=level>=3?.14:level===2?.075:.065;
       // Preserve hierarchy: light break < combo < giant. Maximum canvas displacement < 5px.
-      shakeStrength=clamp((level>=3?2.85:level===2?1.95:1.15)*intensity(),0,7.5);
+      shakeStrength=clamp((level>=3?1.9:level===2?.75:.32)*intensity(),0,3.5);
       shakeEvents++;
     }
     function addSpark(x,y,angle,color,count){
@@ -40,16 +40,16 @@
     }
     function flash(x,y,color,kind){
       if(!intensity())return;
-      const duration=kind==="giant"?.24:kind==="combo"?.17:.14;
+      const duration=kind==="giant"?.19:kind==="combo"?.135:kind==="armor"?.055:.085;
       flashes.push({x,y,color,age:0,duration,kind});
       if(flashes.length>24)flashes.splice(0,flashes.length-24);
     }
     function pulse(x,y,color,heavy=false){
       if(!intensity()||clock-hitPulseAt<.028)return;
       hitPulseAt=clock;
-      pulses.push({x,y,color,age:0,duration:heavy?.23:.14,heavy});
+      pulses.push({x,y,color,age:0,duration:heavy?.18:.095,heavy});
       if(pulses.length>40)pulses.splice(0,pulses.length-40);
-      if(heavy)screenFlash=Math.max(screenFlash,.06);
+      if(heavy)screenFlash=Math.max(screenFlash,.035);
     }
     function onArmor(brick,impact=null){
       if(!intensity())return;
@@ -57,22 +57,22 @@
       const v=impact||{vx:0,vy:-1};
       const norm=Math.max(1,Math.hypot(v.vx,v.vy));
       // Visual-only response: impulse and damped return. Never move the collider.
-      brick.hitVisual={age:0,duration:.18,dirX:v.vx/norm,dirY:v.vy/norm};
-      addSpark(x,y,-Math.PI/2,"#ffdfa7",6);
-      flash(x,y,"#fff1c7","armor");
-      pulse(x,y,"#e7fbff");
-      addShake(1);
+      brick.hitVisual={age:0,duration:.105,dirX:v.vx/norm,dirY:v.vy/norm};
+      addSpark(x,y,-Math.PI/2,"#d5f8ff",2);
+      flash(x,y,"#d3f8ff","armor");
+      pulse(x,y,"#bceeff");
+      // Ordinary HP loss intentionally NEVER shakes the whole canvas.
     }
     function applyBrickMotion(ctx,brick){
       if(!intensity()||!brick.hitVisual)return;
       const m=brick.hitVisual,t=clamp(m.age/m.duration,0,1);
       const damp=Math.pow(1-t,1.8);
       const wave=Math.sin(t*Math.PI*3.3);
-      const strength=Math.min(1.85*intensity(),4.1);
+      const strength=Math.min(.95*intensity(),1.55);
       const dx=(m.dirX*.68+wave*.55)*damp*strength;
       const dy=(Math.max(-.45,Math.min(.45,m.dirY))*.45+wave*.18)*damp*strength;
-      const tilt=Math.sin(t*Math.PI*3)*damp*.027*intensity();
-      const squash=Math.sin(t*Math.PI)*damp*.063*intensity();
+      const tilt=Math.sin(t*Math.PI*3)*damp*.012*intensity();
+      const squash=Math.sin(t*Math.PI)*damp*.035*intensity();
       const x=brick.x+brick.w/2,y=brick.y+brick.h/2;
       ctx.translate(x+dx,y+dy);ctx.rotate(tilt);
       ctx.scale(1+squash,1-squash*.65);ctx.translate(-x,-y);
@@ -89,23 +89,23 @@
           vx:v.vx/norm,vy:v.vy/norm,age:0,duration:.105});
         if(ghosts.length>32)ghosts.splice(0,ghosts.length-32);
       }
-      const important=source==="giant"||combo>=3&&combo%3===0;
-      const count=Math.ceil((important?9:5)*Math.min(1.55,intensity())*(quality==="lite"?.6:1));
+      const important=source==="giant"||source==="giantHeavy"||combo>=5&&combo%5===0;
+      const count=Math.ceil((important?8:4)*Math.min(1.2,intensity())*(quality==="lite"?.6:1));
       for(let i=0;i<count;i++){
         const angle=Math.PI*2*i/count+random(-.22,.22),speed=random(55,155)*(important?1.22:1);
         shards.push({x,y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,
-          rot:random(-1,1),vr:random(-12,12),age:0,duration:random(.23,.39),
+          rot:random(-1,1),vr:random(-12,12),age:0,duration:random(.16,.27),
           w:random(3,6),h:random(3,7),color:brick.color});
       }
       if(shards.length>120)shards.splice(0,shards.length-120);
-      flash(x,y,source==="giant"?"#ffe5a2":important?"#adf5e4":"#e1fbff",important?(source==="giant"?"giant":"combo"):"break");
+      flash(x,y,source==="giant"||source==="giantHeavy"?"#ffe5a2":important?"#adf5e4":"#cfeaff",important?(source==="giant"||source==="giantHeavy"?"giant":"combo"):"break");
       pulse(x,y,important?"#ffdda5":"#aafaff",important);
-      addSpark(x,y,-Math.PI/2,important?"#ffe5af":"#c9f7ff",important?5:2);
-      if(source==="giant"){
-        if(clock-lastGiantAt>.095){lastGiantAt=clock;addShake(3);}
+      addSpark(x,y,-Math.PI/2,important?"#ffe5af":"#c9f7ff",important?4:1);
+      if(source==="giant"||source==="giantHeavy"){
+        if(clock-lastGiantAt>.16){lastGiantAt=clock;addShake(3);}
       }else if(source==="normal"||source==="splash"){
         // Normal bricks get a tiny camera nudge; combo breaks are more pronounced.
-        addShake(important?3:2);
+        addShake(important?2:1);
       }
     }
     function onSplash(center){
@@ -169,20 +169,20 @@
         ctx.restore();
       }
       for(const e of flashes){
-        const t=clamp(e.age/e.duration,0,1),radius=(e.kind==="giant"?33:e.kind==="combo"?25:17)*(1+t*.9);
-        ctx.globalAlpha=(e.kind==="armor"?.09:.15)*(1-t)*intensity();
+        const t=clamp(e.age/e.duration,0,1),radius=(e.kind==="giant"?30:e.kind==="combo"?22:10)*(1+t*.75);
+        ctx.globalAlpha=(e.kind==="armor"?.055:.12)*(1-t)*intensity();
         ctx.fillStyle=e.color;
         ctx.beginPath();ctx.arc(e.x,e.y,radius,0,Math.PI*2);ctx.fill();
       }
       // Bright local contact rings communicate each hit even on HP-heavy armor.
       for(const e of pulses){
         const t=clamp(e.age/e.duration,0,1),fade=Math.pow(1-t,1.5);
-        ctx.save();ctx.globalAlpha=fade*(e.heavy?.9:.7);
+        ctx.save();ctx.globalAlpha=fade*(e.heavy?.85:.52);
         ctx.strokeStyle=e.color;ctx.shadowColor=e.color;ctx.shadowBlur=quality==="lite"?0:7*fade;
-        ctx.lineWidth=(e.heavy?3.8:2.4)*fade+.5;
-        ctx.beginPath();ctx.arc(e.x,e.y,(e.heavy?10:5)+t*(e.heavy?33:18),0,Math.PI*2);ctx.stroke();
+        ctx.lineWidth=(e.heavy?3.0:1.5)*fade+.4;
+        ctx.beginPath();ctx.arc(e.x,e.y,(e.heavy?9:3)+t*(e.heavy?28:11),0,Math.PI*2);ctx.stroke();
         ctx.globalAlpha=fade*.75;ctx.fillStyle="#ffffff";
-        ctx.beginPath();ctx.arc(e.x,e.y,(e.heavy?5:3)*(1-t*.75),0,Math.PI*2);ctx.fill();
+        ctx.beginPath();ctx.arc(e.x,e.y,(e.heavy?4:2)*(1-t*.75),0,Math.PI*2);ctx.fill();
         ctx.restore();
       }
       if(screenFlash>0){
