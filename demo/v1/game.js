@@ -13,9 +13,9 @@
   // legitimate five-choice build; do not save a result as a normal full run.
   let quickLabActive=false,quickLabRoute=null;
   let waveStartGap=Infinity,closestDangerGap=Infinity,nearDangerSeconds=0,pressureWarningStage=0,currentStatus="";
-  const FIRST_SKILL_KEY='pinball-overload-first-skill-v1',SIDE_KEY='pinball-overload-skill-side-v1',AUTO_KEY='pinball-overload-auto-skill-v1';
+  const FIRST_SKILL_KEY='pinball-overload-first-skill-v1',SIDE_KEY='pinball-overload-skill-side-v1';
   let firstSkillUsed=false,skillSide='right',autoSkill=true;
-  try{firstSkillUsed=localStorage.getItem(FIRST_SKILL_KEY)==='done';skillSide=localStorage.getItem(SIDE_KEY)==='left'?'left':'right';autoSkill=localStorage.getItem(AUTO_KEY)!=='no';}catch(e){}
+  try{firstSkillUsed=localStorage.getItem(FIRST_SKILL_KEY)==='done';skillSide=localStorage.getItem(SIDE_KEY)==='left'?'left':'right';}catch(e){}
   function store(key,value){try{localStorage.setItem(key,value);}catch(e){}}
   function applySkillSide(){document.querySelector('.shell').classList.toggle('skill-left',skillSide==='left');}
   function markSkillUsed(){if(firstSkillUsed)return;firstSkillUsed=true;store(FIRST_SKILL_KEY,'done');document.getElementById('skillGuide').classList.add('hidden');}
@@ -307,8 +307,8 @@
     $("buffStatus").textContent=build.temporaryBuffs.map(b=>Build.BUFFS[b.id].name+" "+Math.ceil(b.remaining)+"s").join(" · ");
     const ready=phase==="playing"&&!emptyLatch&&!!build.seedAbility&&charge>=MAX_CHARGE&&!giant;
     ui.giant.parentElement.classList.toggle("hidden",!build.seedAbility);
-    ui.giant.disabled=!ready||(autoSkill&&!quickLabActive);ui.giant.textContent=giant?"超载中 "+Math.ceil(GIANT_LIFETIME-giant.life)+"s":(autoSkill&&!quickLabActive)?"超载·自动 "+Math.floor(charge)+"%":ready?"超载冲锋 READY":"超载冲锋 "+Math.floor(charge)+"%";
-    const showGuide=ready&&!firstSkillUsed&&!autoSkill&&!quickLabActive;$("skillGuide").classList.toggle("hidden",!showGuide);ui.giant.classList.toggle("guide-pulse",showGuide);
+    ui.giant.disabled=true;ui.giant.textContent=giant?"巨型球 · "+Math.ceil(GIANT_LIFETIME-giant.life)+"s":ready?"巨型球 · 自动释放": "巨型球 · 自动 "+Math.floor(charge)+"%";
+    const showGuide=false;$("skillGuide").classList.toggle("hidden",!showGuide);ui.giant.classList.toggle("guide-pulse",showGuide);
     $("giantLife").classList.toggle("hidden",!giant);
     $("giantTimeText").textContent=giant?Math.max(0,GIANT_LIFETIME-giant.life).toFixed(1)+"s":"0.0s";
     $("giantTimeFill").style.width=giant?Math.max(0,(GIANT_LIFETIME-giant.life)/GIANT_LIFETIME*100)+"%":"0%";
@@ -529,7 +529,7 @@
   }
 
   // One-click SIX-branch comparison: wave 6 crowd vs wave 10 boss board.
-  // Upgrade counts are equal within each scenario and no ultimate is used.
+  // Upgrade counts are equal within each scenario; giant auto-casts at full charge.
   function quickStart(route){
     const families=["split","arc","gun"];
     const family=route.split("-")[0];
@@ -557,7 +557,7 @@
     $("startOverlay").classList.add("hidden");ui.choice.classList.add("hidden");ui.win.classList.add("hidden");
     unlockSound();spawnWave(targetWave);shootClock=Build.tuning(build).interval-CFG.firstShot;
     record("quick_lab_start",{route,targetWave,simulatedUpgrades:picks,excludedFromNormalRecords:true});
-    setState("第"+targetWave+"波 · "+Build.DEFS[route].name+"速测 · 巨型球已充能，可手动释放");
+    setState("第"+targetWave+"波 · "+Build.DEFS[route].name+"速测 · 巨型球满能自动释放");
     updateUI();return true;
   }
   function returnToQuickMenu(){reset();return true;}
@@ -786,34 +786,54 @@
   }
   function fire(){
     if(phase!=="playing"||emptyLatch)return false;
-    const t=Build.tuning(build);
-    if(balls.length>=MAX_BALLS){
+    const t=Build.tuning(build),branch=build.coreBranch;
+    const makeRoom=()=>{
+      if(balls.length<MAX_BALLS)return true;
       if(!t.isGun){counters.suppressedShots++;return false;}
-      let candidates=balls.filter(b=>b.mini);if(!candidates.length)candidates=balls;
-      const oldest=candidates.reduce((a,b)=>b.life>a.life?b:a);balls.splice(balls.indexOf(oldest),1);
-      counters.budgetReclaims++;record("budget_reclaim",{mini:oldest.mini});setState("供弹优先 · 回收旧球继续射击");
+      let candidates=balls.filter(b=>b.mini);
+      if(!candidates.length)candidates=balls;
+      const oldest=candidates.reduce((a,b)=>b.life>a.life?b:a);
+      balls.splice(balls.indexOf(oldest),1);
+      counters.budgetReclaims++;
+      record("budget_reclaim",{mini:oldest.mini});
+      return true;
+    };
+    if(!makeRoom())return false;
+    const shotNumber=++shotsFired;
+    // Gun B is a real three-ball fan VOLLEY. All three follow exactly the
+    // normal ball physics, including independent wall and brick rebounds.
+    // No mini children, ray effects or virtual damage.
+    const shot=makeBall(aim);
+    if(branch==="gun-a"){
+      const angle=aim+(shotNumber%2?1:-1)*.012;
+      const speed=Math.hypot(shot.vx,shot.vy);
+      shot.vx=Math.sin(angle)*speed;shot.vy=-Math.cos(angle)*speed;
+      if(shotNumber%(build.ranks["gun-a"]>1?5:6)===0){
+        shot.needle=true;shot.needleLeft=3;needleShots++;
+      }
     }
-    const shotNumber=++shotsFired;let offset=0;
-    if(build.coreBranch==="gun-a")offset=(shotNumber%2?1:-1)*.012;
-    if(build.coreBranch==="gun-b"){
-      const lane=shotNumber%6;offset=((lane%3)-1)*CFG.fanAngle*1.25;
+    if(drillLevel>0&&shotNumber%(drillLevel===1?4:3)===0){
+      shot.drill=true;shot.drillLeft=drillLevel===1?3:5;
+      shot.r=SHOT_HIT_RADIUS*1.35;shot.visualR=SHOT_RADIUS*1.35;
+      powerShots++;playSfx("drill");
     }
-    lastShotAngle=aim+offset;const shot=makeBall(lastShotAngle);
-    const branch=build.coreBranch;
-    if(branch==="gun-a"&&shotNumber%(build.ranks["gun-a"]>1?5:6)===0){
-      shot.needle=true;shot.needleLeft=3;needleShots++;
+    balls.push(shot);lastShotAngle=aim;
+    if(branch==="gun-b"){
+      const spread=CFG.fanAngle;
+      for(const offset of [-spread,spread]){
+        if(!makeRoom())break;
+        const side=makeBall(aim+offset);
+        side.fanProjectile=true;
+        balls.push(side);
+        fanExtraShots++;
+      }
+      record("fan_volley",{shots:3,angles:[+(aim-spread).toFixed(3),+aim.toFixed(3),+(aim+spread).toFixed(3)]});
     }
-    if(drillLevel>0&&shotNumber%(drillLevel===1?4:3)===0){shot.drill=true;shot.drillLeft=drillLevel===1?3:5;shot.r=SHOT_HIT_RADIUS*1.35;shot.visualR=SHOT_RADIUS*1.35;powerShots++;playSfx("drill");}
-    balls.push(shot);
-    if(branch==="gun-b"&&shotNumber%(build.ranks["gun-b"]>1?5:6)===0&&balls.length<MAX_BALLS){
-      const flank=makeBall(aim-offset,true);
-      flank.maxLife=Math.min(flank.maxLife,CFG.gunTTL);flank.mini=false;flank.r=shot.r;flank.visualR=shot.visualR;
-      balls.push(flank);fanExtraShots++;
-      record("fan_volley",{shot:shotNumber});
-    }
-    gunFlash=.07;counters.shotsByBuild[Build.preferred(build)||'base']++;
+    gunFlash=.07;counters.shotsByBuild[Build.preferred(build)||"base"]++;
     counters.maxBallsAlive=Math.max(counters.maxBallsAlive,balls.length);
-    record("shot",{angle:+(aim+offset).toFixed(5),ttl:shot.maxLife,interval:t.interval});beep(245,.045,.011);return true;
+    record("shot",{angle:+aim.toFixed(5),ttl:shot.maxLife,interval:t.interval,projectiles:branch==="gun-b"?3:1});
+    beep(245,.045,.011);
+    return true;
   }
   function fireGiant() {
     if (phase !== "playing" || !build.seedAbility || emptyLatch || charge < selectedActive.maxCharge || giant || selectedActive.kind!=="giant") return false;
@@ -1545,7 +1565,7 @@
     if(phase!=="playing")return;
     if(!emptyLatch&&!bossVictory){
       fanClock+=dt;gunFlash=Math.max(0,gunFlash-dt);
-      if(autoSkill&&!quickLabActive&&build.seedAbility&&charge>=MAX_CHARGE&&!giant)activateEquippedSkill();
+      if(build.seedAbility&&charge>=MAX_CHARGE&&!giant)activateEquippedSkill();
       const fireInterval=Build.tuning(build).interval/Build.buffModifiers(build).rate;
       if(shootClock>=fireInterval){shootClock-=fireInterval;fire();}
       const currentBalls=balls.slice(),kept=currentBalls.filter(b=>updateBall(b,dt));
@@ -1839,10 +1859,10 @@
   function stopAim(e){if(e.pointerId===activePointer) activePointer=null;}
   canvas.addEventListener("pointerup",stopAim);
   canvas.addEventListener("pointercancel",stopAim);
-  ui.giant.addEventListener("click",e=>{e.stopPropagation();activateEquippedSkill();});
-  $("skillSide").value=skillSide;$("autoSkill").checked=autoSkill;applySkillSide();
+  // Giant is passive: the indicator shows energy but does not require a tap.
+  $("skillSide").value=skillSide;applySkillSide();
   $("skillSide").addEventListener("change",e=>{skillSide=e.target.value==="left"?"left":"right";store(SIDE_KEY,skillSide);applySkillSide();});
-  $("autoSkill").addEventListener("change",e=>{autoSkill=!!e.target.checked;store(AUTO_KEY,autoSkill?"yes":"no");});
+  // No manual/automatic toggle: the accepted Demo rule is always auto-cast.
   $("start").addEventListener("click",begin);
   for(const route of ["split-a","split-b","arc-a","arc-b","gun-a","gun-b"]){
     $("quick-"+route)?.addEventListener("click",()=>quickStart(route));
