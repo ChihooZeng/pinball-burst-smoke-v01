@@ -183,7 +183,7 @@
   let impactHaptics=true,lastHapticAt=-10000;
   const juice=window.PinballJuice.create({W,H,reducedMotion});
   const impactMode=$("impactMode");
-  impactMode.value=reducedMotion?"off":"punchy";
+  impactMode.value=reducedMotion?"off":"snap";
   if(reducedMotion)impactMode.disabled=true;
   juice.setMode(impactMode.value);
   impactMode.addEventListener("change",()=>{
@@ -240,14 +240,38 @@
       o.connect(g);g.connect(masterGain);o.start(t);o.stop(t+duration+.008);
     }catch(_){}
   }
+  // Short attack transient: a crisp tick plus a mid-low body. Reuse one
+  // 22ms noise buffer instead of allocating fresh samples for every hit.
+  let impactNoiseBuffer=null;
+  function impactTransient(){
+    if(!soundContext||impactMode.value!=="snap"||!soundContext.createBuffer)return;
+    try{
+      if(!impactNoiseBuffer){
+        const count=Math.max(96,Math.round(soundContext.sampleRate*.022));
+        impactNoiseBuffer=soundContext.createBuffer(1,count,soundContext.sampleRate);
+        const data=impactNoiseBuffer.getChannelData(0);
+        let seed=18691;
+        for(let i=0;i<count;i++){
+          seed=(Math.imul(seed,1664525)+1013904223)>>>0;
+          data[i]=(seed/2147483648-1)*Math.pow(1-i/count,2);
+        }
+      }
+      const t=soundContext.currentTime,src=soundContext.createBufferSource(),gain=soundContext.createGain();
+      src.buffer=impactNoiseBuffer;
+      gain.gain.setValueAtTime(.0001,t);
+      gain.gain.linearRampToValueAtTime(.055,t+.002);
+      gain.gain.exponentialRampToValueAtTime(.0001,t+.024);
+      src.connect(gain);gain.connect(masterGain);src.start(t);src.stop(t+.025);
+    }catch(_){}
+  }
   function playSfx(kind){
     if(!soundContext||soundVolume<=0)return;
     const now=soundContext.currentTime;
     if(now-(sfxLast[kind]??-999)<(kind==="armor"?.095:kind==="break"?.075:.12))return;
     if(kind==="armor"&&now-(sfxLast.break??-999)<.075)return;
     sfxLast[kind]=now;
-    if(kind==="armor"){beep(740,.048,.027,"triangle");if(impactMode.value==="punchy")beep(260,.036,.014,"sine");}
-    else if(kind==="break"){beep(580+Math.min(combo,10)*22,.065,.031,"triangle");beep(1160,.028,.018,"sine");if(impactMode.value==="punchy")beep(240,.045,.018,"triangle");if(combo>=5&&combo%5===0)beep(370,.085,.025,"triangle");}
+    if(kind==="armor"){if(impactMode.value==="snap"){impactTransient();beep(390,.04,.027,"triangle");beep(190,.053,.019,"sine");}else{beep(740,.048,.027,"triangle");if(impactMode.value==="punchy")beep(260,.036,.014,"sine");}}
+    else if(kind==="break"){beep(580+Math.min(combo,10)*22,.065,.031,"triangle");beep(1160,.028,.018,"sine");if(impactMode.value==="snap"){impactTransient();beep(260,.052,.026,"triangle");}else if(impactMode.value==="punchy")beep(240,.045,.018,"triangle");if(combo>=5&&combo%5===0)beep(370,.085,.025,"triangle");}
     else if(kind==="shock"){beep(145,.21,.065,"sawtooth");beep(360,.11,.038);}
     else if(kind==="drill"){beep(480,.105,.043,"sawtooth");}
     else if(kind==="split"){beep(820,.12,.037);beep(1140,.07,.022);}
@@ -1614,11 +1638,13 @@
     for(const brick of bricks){
       if(!brick.alive) continue;
       ctx.save();
+      // Boss/elite drawing used to bypass normal brick recoil altogether.
+      if((brick.isElite||brick.isBoss)&&juice.mode!=="off")juice.applyBrickMotion(ctx,brick);
       if(brick.isElite){
         ctx.shadowColor="#ffb34d";ctx.shadowBlur=20;ctx.fillStyle="#694126";
         rounded(brick.x,brick.y,brick.w,brick.h,10);ctx.fill();ctx.lineWidth=3;ctx.strokeStyle="#ffd18d";ctx.stroke();ctx.shadowBlur=0;
         ctx.fillStyle="#fff2d7";ctx.textAlign="center";ctx.font="900 19px system-ui";
-        ctx.fillText(String(brick.hp),brick.x+brick.w/2,brick.y+brick.h/2+6);ctx.restore();continue;
+        ctx.fillText(String(brick.hp),brick.x+brick.w/2,brick.y+brick.h/2+6);juice.drawBrickImpact(ctx,brick);ctx.restore();continue;
       }
       if(brick.isBoss){
         ctx.shadowColor=brick.isFinalBoss?"#ff9c73":"#bd76ff";ctx.shadowBlur=brick.isFinalBoss?31:25;ctx.fillStyle=brick.isFinalBoss?"#7c335a":"#613d92";
@@ -1627,7 +1653,7 @@
         ctx.fillStyle="#fff3df";ctx.font=brick.isFinalBoss?"900 23px system-ui":"900 17px system-ui";ctx.textAlign="center";
         ctx.fillText(String(brick.hp),brick.x+brick.w/2,brick.y+brick.h/2+6);
         if(brick.isFinalBoss){ctx.font="bold 9px system-ui";ctx.fillStyle="#ffe5c5";ctx.fillText("FINAL BOSS · "+finaleStage+"/3",brick.x+brick.w/2,brick.y+17);}
-        ctx.restore();continue;
+        juice.drawBrickImpact(ctx,brick);ctx.restore();continue;
       }
       if(brick.summonAge!==undefined&&brick.summonAge<.38&&!reducedMotion){
         const t=Math.max(0,brick.summonAge/.38),scale=.5+.5*(1-Math.pow(1-t,3));
@@ -1686,6 +1712,7 @@
           rounded(brick.x-8*t,brick.y-8*t,brick.w+16*t,brick.h+16*t,5+6*t);ctx.stroke();
         }
       }
+      juice.drawBrickImpact(ctx,brick);
       ctx.restore();
     }
     ctx.fillStyle="#93b6d23d";ctx.fillRect(0,H-78,W,1);
