@@ -950,6 +950,10 @@
     ball.chargeStacks=0;splitAt(ball,ball.x,ball.y);triggerLightning(block,ball);return destroyed;
   }
   function updateBall(ball,dt){
+    // Hunter children steer soon after creation rather than needing a wall hit.
+    if(ball.huntChild&&ball.huntsLeft>0&&elapsed>=(ball.guideAt??0)&&livingCount()>5){
+      retargetBall(ball);ball.guideAt=elapsed+.70;
+    }
     const sparse=livingCount()>0&&livingCount()<=5;
     const pursuing=ball.mini&&ball.pursuitLeft>0;
     if(sparse&&(pursuing||waveElapsed>12)&&elapsed>=(ball.guideAt??0)){
@@ -984,12 +988,34 @@
         const normal=contactNormal(ball,block,prevX,prevY);
         const incoming={vx:ball.vx,vy:ball.vy};
         const destroyed=directContact(block,ball,incoming);
+        // Storm sweeps to the next brick across a row, no additional children.
+        if(ball.stormSweep&&!ball.stormUsed){
+          ball.stormUsed=true;
+          const nearby=bricks.filter(b=>b.alive&&b.id!==block.id&&
+            Math.abs(b.x-block.x)>BRICK_W*.5&&
+            Math.abs(b.y-block.y)<BRICK_STEP_Y*2&&
+            Math.hypot(b.x-ball.x,b.y-ball.y)<180);
+          nearby.sort((a,b)=>Math.abs(a.y-block.y)-Math.abs(b.y-block.y));
+          if(nearby.length){
+            const next=nearby[0],vx=next.x+next.w/2-ball.x,vy=next.y+next.h/2-ball.y;
+            const mag=Math.hypot(vx,vy)||1,vel=Math.hypot(ball.vx,ball.vy);
+            ball.stormNext={vx:vel*vx/mag,vy:vel*vy/mag};stormSweeps++;
+            record("storm_sweep",{from:block.id,to:next.id});
+          }
+        }
         markFinalRush();
-        if(ball.drill&&ball.drillLeft>0){
+        if(ball.needle&&ball.needleLeft>0){
+          ball.needleLeft--;needlePasses++;
+          if(ball.needleLeft===0)ball.needle=false;
+          if(!ball.needle&&!destroyed)reflect(ball,normal);
+        }else if(ball.drill&&ball.drillLeft>0){
           ball.drillLeft--;if(ball.drillLeft===0)ball.drill=false;
-          // Drill passage is geometrically real, not an instant board-wide clear.
           if(!ball.drill&&!destroyed)reflect(ball,normal);
         }else if(!destroyed)reflect(ball,normal);
+        if(ball.stormNext){
+          ball.vx=ball.stormNext.vx;ball.vy=ball.stormNext.vy;
+          ball.stormNext=null;
+        }
         break;
       }
     }
@@ -1645,8 +1671,8 @@
     for(const b of balls){
       b.trail.forEach((p,i)=>{const t=1-i/b.trail.length;ctx.fillStyle="rgba(139,224,250,"+(.18*t)+")";
         ctx.beginPath();ctx.arc(p.x,p.y,Math.max(1,(b.visualR||b.r)*t*.7),0,Math.PI*2);ctx.fill();});
-      ctx.shadowColor=b.drill?"#ffb05d":b.chargeStacks?"#fced83":b.mini?"#c39fff":"#b9f2ff";
-      ctx.shadowBlur=b.drill?18:11;ctx.fillStyle=b.drill?"#ffcc67":b.chargeStacks?"#fff5b0":b.mini?"#dbbaff":"#edfaff";
+      ctx.shadowColor=b.needle?"#c8f2aa":b.drill?"#ffb05d":b.chargeStacks?"#fced83":b.mini?"#c39fff":"#b9f2ff";
+      ctx.shadowBlur=b.drill?18:11;ctx.fillStyle=b.needle?"#d2ffa4":b.drill?"#ffcc67":b.chargeStacks?"#fff5b0":b.mini?"#dbbaff":"#edfaff";
       ctx.beginPath();ctx.arc(b.x,b.y,b.visualR||b.r,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
     }
     if(giant){
