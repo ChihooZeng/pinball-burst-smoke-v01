@@ -12,7 +12,7 @@
  def('split','碎星裂变','split','core',3);def('arc','电弧印记','arc','core',3);def('gun','高速供弹','gun','core',3);
  for(const [id,name,cap] of [['rate','射速训练',5],['power','火力强化',3],['speed','弹速训练',3],['life','弹跳续航',3]])def(id,name,'base','base',cap);
  for(const [id,name] of [['hunter','追猎弯弹'],['drill','钻头穿阵'],['shock','震荡核心'],['bank','撞墙蓄势']])def(id,name,'auxiliary','auxiliary',2);
- for(const [f,names] of [['split',['星海风暴','猎星裂变']],['arc',['雷网蔓延','雷霆聚能']],['gun',['直线压制','扇形扫射']]])
+ for(const [f,names] of [['split',['回旋星雨','猎星裂变']],['arc',['分叉雷网','蓄能雷击']],['gun',['穿阵机枪','扇面齐射']]])
   ['a','b'].forEach((side,i)=>def(f+'-'+side,names[i],f,'branch',2,{minClearedWave:4,prerequisites:[{id:f,rank:2}],excludedWith:[f+'-'+(side==='a'?'b':'a')]}));
  const BUFFS={power:{name:'急速',duration:15,description:'炮台射速 +10%'},speed:{name:'疾行',duration:30,description:'弹球速度 +15%'}};
  const copy=s=>JSON.parse(JSON.stringify(s));
@@ -80,7 +80,7 @@
   if(id==='hunter')return `每球${e.hunter}次侧墙后追猎`;
   if(id==='drill')return `每${e.drillEvery}发一颗穿透球，${e.drillPierces}次穿透、额外${e.drillDamage}伤害`;
   if(id==='shock')return `直接击碎${e.shockEvery}块（穿透球${n===1?3:2}块）震荡${e.shockTargets}目标×${e.shockDamage}伤害`;
-  if(DEFS[id].role==='branch')return {'split-a':'扩大裂变散角；孤立Boss收窄','split-b':'子球撞墙额外2次有限转向','arc-a':'在不同目标间跳传','arc-b':'改为集中单体放电','gun-a':'集中直线逐发','gun-b':'扇面连续逐发'}[id];
+  if(DEFS[id].role==='branch')return {'split-a':'裂变子球首次撞砖后横向回旋追击另一块砖','split-b':'子球生成后主动追猎护甲目标，撞墙继续校正','arc-a':'击碎目标后闪电向两侧分叉，逐块传导','arc-b':'同一目标累计3次直接命中后集中爆发放电','gun-a':'每6发获得一颗可穿越2块砖的贯穿弹','gun-b':'扇面轮换扫射，每6发补一颗对侧齐射弹'}[id];
   return {rate:`总射速${fmt(1/e.interval)}发/秒`,power:`总撞击伤害${e.damage}`,speed:`球速${e.speed}`,life:`留场${fmt(e.ttl)}秒`}[id]||'';
  }
  function card(s,id){
@@ -88,14 +88,14 @@
  if((s.ranks[id]||0)>=d.maxRank)return {title:d.name,description:'已满级'};
  if(!s.seedAbility){const t=copy(s);seed(t,id);return {title:d.name,description:'新能力：'+abilityText(t,id)};}
  const p=preview(s,id);if(!p)return {title:d.name,description:'已满级'};const a=p.before,z=p.after,delta=k=>z[k]-a[k],num=n=>fmt(n);
- if(d.role==='branch'&&s.ranks[id])return {title:d.name,description:{'split-a':'每次裂变额外 +1颗小球','split-b':'裂变小球撞墙追猎 +1次','arc-a':'电弧额外跳向 +1个目标','arc-b':'集中放电伤害 +3','gun-a':'直线射速 +13.3%','gun-b':'扇面射速 +12.5%'}[id]};
+ if(d.role==='branch'&&s.ranks[id])return {title:d.name,description:{'split-a':'回旋星雨覆盖更广区域','split-b':'子球追猎次数 +1','arc-a':'分叉传导继续延伸','arc-b':'蓄能雷击爆发伤害增加','gun-a':'贯穿弹间隔 6发→5发','gun-b':'齐射间隔 6发→5发'}[id]};
  if(d.role==='branch')return {title:d.name,description:{
-  'split-a':'分裂数量增加、散射范围变大（与另一专精二选一）',
-  'split-b':'小球撞墙后可额外追踪目标2次（替换原效果）',
-  'arc-a':'闪电改为连续跳向附近目标（与另一分支二选一）',
-  'arc-b':'闪电改为集中攻击命中目标（替换群攻）',
-  'gun-a':'炮台改为高速直线连续射击（与另一分支二选一）',
-  'gun-b':'炮台改为高速扇形连续扫射（与另一分支二选一）'
+  'split-a':'裂变子球首次撞砖后横向回旋追击另一块砖（互斥）',
+  'split-b':'裂变子球生成后主动寻找护甲目标，撞墙继续追猎（互斥）',
+  'arc-a':'击碎砖块后电弧分叉，沿不同目标逐个传播（互斥）',
+  'arc-b':'同目标连续命中3次积蓄电荷，集中爆发（互斥）',
+  'gun-a':'高速直射每6发穿阵弹，可穿越2块砖（互斥）',
+  'gun-b':'高速扇面扫射，每6发增加对侧齐射（互斥）'
  }[id]};
  if(id==='power')return {title:d.name,description:'普通球每次撞砖伤害 +'+num(delta('damage'))};
  if(id==='rate')return {title:d.name,description:'炮台射速 +'+num((a.interval/z.interval-1)*100)+'%'};
