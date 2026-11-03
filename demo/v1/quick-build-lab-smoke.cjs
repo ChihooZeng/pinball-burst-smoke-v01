@@ -50,13 +50,18 @@ for(const scene of ["crowd","boss"]){
   assert.equal(start.level,wave);assert.equal(start.quickLabRoute,route);
   assert.equal(start.coreBranch,route);assert.equal(start.choiceHistory.length,upgrades);
   assert.equal(start.quickLabActive,true);
+  assert.equal(start.charge,100,"giant must start ready in the lab");
+  assert.equal(el("giant").disabled,false,"manual giant button must be enabled");
   if(hpBaseline!==null)assert.equal(hp,hpBaseline,"same field "+scene);
   hpBaseline=hp;
   step(scene==="crowd"?360:210);
   const after=s();
-  assert.equal(after.giantActive,false);
-  assert.equal(el("giant").disabled,true);
+  assert.equal(after.giantActive,false,"do not auto-fire giant in quick lab");
+  assert.equal(el("giant").disabled,false);
   assert.ok(after.shotsFired>0);
+  assert.equal(t.fireGiant(),true,"manual giant must fire");
+  assert.equal(s().giantActive,true,"giant should exist in the physical arena");
+  assert.equal(s().charge,0,"giant must consume charge");
   if(scene==="crowd"){
    const expected={"split-a":"stormSweeps","split-b":"childLocks","arc-a":"relayForks",
     "arc-b":"focusBursts","gun-a":"needleShots","gun-b":"fanExtraShots"}[route];
@@ -75,4 +80,9 @@ assert.ok(!html.includes("quick-laser"));
 assert.ok(!Object.hasOwn(window.PinballBuilds.DEFS,"laser"));
 assert.equal(t.begin(),true);t.clearWave();step(12);
 assert.equal(s().choiceSet,"split,arc,gun","normal first upgrade unaffected");
-console.log("PASS six distinct branch mechanics, two same-field test scenes, return menu, regular game; "+records.length+" branches/scenes");
+const juice=window.PinballJuice.create({reducedMotion:false});
+assert.equal(juice.setMode("punchy"),"punchy");
+assert.equal(juice.setMode("bold"),"bold");
+assert.equal(juice.setMode("off"),"off");
+assert.ok(html.includes('<option value="punchy">'),"punchy option visible in Settings");
+console.log("PASS 12 six-branch scenes, giant ready+manual activation, A/B impact modes, reset and normal game");
