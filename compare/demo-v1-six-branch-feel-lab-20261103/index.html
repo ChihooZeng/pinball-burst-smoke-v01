@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#08182b"/>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%2212%22 fill=%22%2308192a%22 stroke=%22%2366ebf2%22 stroke-width=%223%22/%3E%3C/svg%3E"/>
   <title>弹珠超载 · 六专精分支一键对照</title>
-  <link rel="stylesheet" href="./style.css?v=impactrework3"/>
+  <link rel="stylesheet" href="./style.css?v=auto-giant-fan3-1"/>
 </head>
 <body class="quick-lab-page">
   <main class="shell">
@@ -15,7 +15,7 @@
       <canvas id="game" width="360" height="560" aria-label="弹珠超载：拖动控制炮台方向，普通砖清屏升级，Boss关击败核心即可获胜"></canvas>
       <div id="finalRushLabel" class="floating-label" role="status"></div>
       <div class="boss-hud hidden" id="bossHud"><div><span>核心 BOSS</span><strong id="bossText">60 / 60</strong></div><div class="boss-track"><div id="bossFill"></div></div></div>
-      <div class="ult-wrap"><div id="skillGuide" class="skill-guide hidden" role="status">首次技能提示：松开瞄准后点这里，方向会保留</div><button id="giant" type="button" disabled>超载冲锋 0%</button></div>
+      <div class="ult-wrap"><div id="skillGuide" class="skill-guide hidden" role="status">巨型球充能完成后自动释放</div><button id="giant" class="auto-status" type="button" disabled aria-label="巨型球自动充能状态">巨型球 · 自动 0%</button></div>
       <div class="overlay" id="startOverlay" role="dialog" aria-modal="true" aria-labelledby="startTitle">
         <div class="start-icon">◉</div><small class="label">BUILD LAB · SIX BRANCHES</small>
         <h2 id="startTitle">弹珠超载</h2>
@@ -31,10 +31,10 @@
             <button type="button" id="quick-split-b"><b>裂变 B · 追猎</b><span>子球主动锁敌</span></button>
             <button type="button" id="quick-arc-a"><b>电弧 A · 分叉</b><span>击碎后跨目标传导</span></button>
             <button type="button" id="quick-arc-b"><b>电弧 B · 蓄能</b><span>三次命中集中放电</span></button>
-            <button type="button" id="quick-gun-a"><b>机枪 A · 贯穿</b><span>高频直线穿阵</span></button>
-            <button type="button" id="quick-gun-b"><b>机枪 B · 齐射</b><span>扇面左右交替扫射</span></button>
+            <button type="button" id="quick-gun-a"><b>机枪 A · 贯穿</b><span>高速直线连续射击</span></button>
+            <button type="button" id="quick-gun-b"><b>机枪 B · 散射</b><span>每轮三球扇形反弹</span></button>
           </div>
-          <small>同场景、同砖阵、同升级次数 · 巨型球开局满能量，点击右下角手动发射</small>
+          <small>同场景、同砖阵、同升级次数 · 自动连续发射，巨型球蓄满自动释放</small>
         </section>
         <button class="cta" id="start" type="button">从第 1 波正常挑战</button>
         <div class="boss-preview" id="qaBossPreview" hidden><label for="bossRoute">直达第10关Boss · 测试流派</label>
@@ -58,7 +58,7 @@
       <div class="overlay hidden" id="pauseOverlay" role="dialog" aria-modal="true" aria-labelledby="pauseTitle">
         <div class="pause-heading"><div><small class="label">SETTINGS / BUILD</small><h2 id="pauseTitle">设置 · 我的构筑</h2><p id="pauseSubtitle"></p></div><button id="resume" class="cta" type="button">继续</button></div>
         <div class="pause-scroll" tabindex="0">
-          <h3>单手操作</h3><label>技能按钮位置 <select id="skillSide" aria-label="技能按钮位置"><option value="right">右下角 · 右手</option><option value="left">左下角 · 左手</option></select></label><label class="auto-skill-label"><input type="checkbox" id="autoSkill"/> 能量满时自动释放超载（默认开启）</label><p class="one-hand-tip">只需滑动控制方向，炮台连续射击，超载蓄满自动发射；关闭自动后可以手动点击技能。</p><h3>声音与画面</h3><div class="sound-controls"><span id="soundValue">78%</span><input id="soundVolume" type="range" min="0" max="100" value="78" aria-label="音量"><button id="soundTest" class="icon-btn" aria-label="试听声音" type="button">♪</button></div>
+          <h3>单手操作</h3><label>技能按钮位置 <select id="skillSide" aria-label="技能按钮位置"><option value="right">右下角 · 右手</option><option value="left">左下角 · 左手</option></select></label><p class="one-hand-tip">只控制瞄准方向：普通炮台持续自动射击，巨型球满能量自动释放。机枪B每轮同时发射三颗扇形弹球，各自独立反弹。</p><h3>声音与画面</h3><div class="sound-controls"><span id="soundValue">78%</span><input id="soundVolume" type="range" min="0" max="100" value="78" aria-label="音量"><button id="soundTest" class="icon-btn" aria-label="试听声音" type="button">♪</button></div>
           <label>特效强度 <select id="impactMode" aria-label="特效强度"><option value="snap">脆击重做 · 默认（压缩反弹）</option><option value="punchy">上一版 · 强化击中</option><option value="bold">B版 · 轻快（对照）</option><option value="balanced">B版 · 更轻</option><option value="off">关闭</option></select></label><label class="auto-skill-label"><input type="checkbox" id="impactHaptic" checked/> 手机振动反馈（支持的安卓浏览器）</label>
           <p class="one-hand-tip">普通碰撞不振动，重要连击、超载和 Boss 才触发短振动（需安卓浏览器支持）；iPhone网页端主要依靠画面与音效反馈。</p><p id="fpsStat">FPS --</p><button id="reset" class="export-btn" type="button">重新开始</button><button id="quickMenuPause" class="export-btn lab-menu-button" type="button">返回六分支速测菜单</button>
           <h3>炮台总属性</h3><p id="buildStats"></p>
@@ -84,7 +84,7 @@
       <div id="hunterDetails"></div><div id="bounceDetails"></div><div id="splitDetails"></div><div id="chainDetails"></div><div id="pierceDetails"></div><div id="arcDetails"></div>
     </div>
   </main>
-  <script src="./juice-fx.js?v=impactrework3" defer></script><script src="./builds.js?v=impactrework3" defer></script><script src="./game.js?v=impactrework3" defer></script>
+  <script src="./juice-fx.js?v=auto-giant-fan3-1" defer></script><script src="./builds.js?v=auto-giant-fan3-1" defer></script><script src="./game.js?v=auto-giant-fan3-1" defer></script>
 <script>if(new URLSearchParams(location.search).get("qa")==="1"){document.getElementById("qaBossPreview")?.removeAttribute("hidden");}</script>
 </body>
 </html>
