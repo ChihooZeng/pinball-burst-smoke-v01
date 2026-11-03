@@ -848,13 +848,15 @@
     if(!arcLevel||!origin||!ball||ball.mini||ball.contacts===undefined||bossVictory)return false;
     const branch=build.coreBranch,effect=Build.effects(build);
     if(branch==="arc-b"){
-      // Three direct hits on the same target trigger one concentrated discharge.
-      if(focusTargetId!==origin.id||elapsed-focusLastAt>2.5){
-        focusTargetId=origin.id;focusStacks=0;
+      // Capacitor: three DIRECT parent-ball hits charge one bolt. The bolt
+      // prioritizes a nearby high-HP brick/Boss, not a chain of weak targets.
+      focusTargetId=origin.id;focusLastAt=elapsed;
+      focusStacks=Math.min(3,focusStacks+1);
+      if(focusStacks<3||elapsed-lastArcRelease<CFG.arcCooldown){
+        setState("蓄能雷击 · 电荷 "+focusStacks+"/3");
+        return false;
       }
-      focusLastAt=elapsed;focusStacks=Math.min(3,focusStacks+1);
-      if(focusStacks<3||elapsed-lastArcRelease<CFG.arcCooldown)return false;
-      focusStacks=0;focusBursts++;record("focus_discharge",{target:origin.id});
+      focusStacks=0;focusBursts++;
     }else{
       arcCharge++;
       if(arcCharge<CFG.arcEvery[arcLevel]||elapsed-lastArcRelease<CFG.arcCooldown)return false;
@@ -875,12 +877,17 @@
       from={x:target.x+target.w/2,y:target.y+target.h/2};
     }
     let single=false;
+    if(branch==="arc-b"){
+      const nearby=bricks.filter(b=>b.alive&&Math.hypot(b.x+b.w/2-start.x,b.y+b.h/2-start.y)<=210);
+      nearby.sort((a,b)=>(Number(b.isBoss)-Number(a.isBoss))||(b.hp-a.hp));
+      if(nearby.length){chosen.push(nearby[0]);single=true;}
+    }
     if(!chosen.length){
       if(!origin.alive)return false;
       chosen.push(origin);single=true;
     }
     const missing=branch==="arc-b"?CFG.arcTargets[arcLevel]:Math.max(0,limit-chosen.filter(b=>b!==origin).length);
-    if(origin.alive&&missing>0&&!chosen.includes(origin))chosen.push(origin);
+    if(branch!=="arc-b"&&origin.alive&&missing>0&&!chosen.includes(origin))chosen.push(origin);
     // Never leave the actual hit Boss / armored anchor out of the electrical network.
     if(branch!=="arc-b"&&origin.alive&&(origin.isBoss||origin.ringArmor||origin.isElite||origin.bossSupport)){
       if(!chosen.includes(origin)){chosen.unshift(origin);if(chosen.length>limit)chosen.pop();}
@@ -894,7 +901,8 @@
     });
     arcCharge=0;lastArcRelease=elapsed;counters.arcReleases++;lightningTriggers++;
     record("arc",{targets:chosen.map(b=>b.id),single,queued:true,cap:maxTargets});
-    setState(branch==="arc-b"?"蓄能雷击 · 三连命中集中爆发":"分叉雷网 · 逐个跳电");
+    if(branch==="arc-b")record("focus_discharge",{target:chosen[0].id});
+    setState(branch==="arc-b"?"蓄能雷击 · 三次命中锁定强敌":"分叉雷网 · 逐个跳电");
     return true;
   }
   function updateLightningChains(){
