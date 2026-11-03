@@ -14,7 +14,7 @@
   let quickLabActive=false,quickLabRoute=null;
   let waveStartGap=Infinity,closestDangerGap=Infinity,nearDangerSeconds=0,pressureWarningStage=0,currentStatus="";
   const FIRST_SKILL_KEY='pinball-overload-first-skill-v1',SIDE_KEY='pinball-overload-skill-side-v1';
-  let firstSkillUsed=false,skillSide='right',autoSkill=true;
+  let firstSkillUsed=false,skillSide='right';
   try{firstSkillUsed=localStorage.getItem(FIRST_SKILL_KEY)==='done';skillSide=localStorage.getItem(SIDE_KEY)==='left'?'left':'right';}catch(e){}
   function store(key,value){try{localStorage.setItem(key,value);}catch(e){}}
   function applySkillSide(){document.querySelector('.shell').classList.toggle('skill-left',skillSide==='left');}
