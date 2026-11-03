@@ -878,7 +878,7 @@
     }
     let single=false;
     if(branch==="arc-b"){
-      const nearby=bricks.filter(b=>b.alive&&Math.hypot(b.x+b.w/2-start.x,b.y+b.h/2-start.y)<=210);
+      const nearby=bricks.filter(b=>b.alive&&Math.hypot(b.x+b.w/2-start.x,b.y+b.h/2-start.y)<=360);
       nearby.sort((a,b)=>(Number(b.isBoss)-Number(a.isBoss))||(b.hp-a.hp));
       if(nearby.length){chosen.push(nearby[0]);single=true;}
     }
