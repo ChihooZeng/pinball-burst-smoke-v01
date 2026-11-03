@@ -37,7 +37,7 @@ const t=window.__pinballTest,s=window.__pinballState;
 const html=fs.readFileSync(path.join(__dirname,"index.html"),"utf8");
 const advance=(n)=>{for(let i=0;i<n;i++){now+=1000/60;assert.equal(typeof frame,"function");frame(now);}};
 let baselineHp=null;
-for(const route of ["split","arc","gun","laser"]){
+for(const route of ["split","arc","gun"]){
  const id="quick-"+route;
  assert.ok(html.includes('id="'+id+'"'));
  const launch=listeners.get(id+":click");
@@ -60,7 +60,6 @@ for(const route of ["split","arc","gun","laser"]){
  assert.equal(s().giantActive,false,"no ultimate in isolated route comparison");
  assert.equal(element("giant").disabled,true);
  assert.ok(s().shotsFired>0,"physical balls still fire");
- if(route==="laser")assert.ok(s().laserHits>0&&s().laserActive,"laser fires in comparison mode");
  assert.equal(t.returnToQuickMenu(),true);
  assert.equal(s().phase,"ready");
  assert.equal(s().quickLabActive,false);
@@ -70,4 +69,7 @@ assert.equal(t.begin(),true,"normal full run still available");
 assert.equal(s().wave,1);
 assert.equal(s().quickLabActive,false);
 advance(12);
-console.log("PASS four one-tap midgame Builds; identical wave6; 5 legal upgrades; ultimate isolated; menu reset; normal game");
+assert.deepEqual(Array.from(window.PinballBuilds.offer(window.PinballBuilds.createState(),1)),["split","arc","gun"]);
+assert.ok(!html.includes("quick-laser"),"laser button must be removed");
+assert.ok(!Object.hasOwn(window.PinballBuilds.DEFS,"laser"),"laser skill must be removed");
+console.log("PASS three one-tap midgame Builds; identical wave6; 5 legal upgrades; ultimate isolated; menu reset; normal game");
