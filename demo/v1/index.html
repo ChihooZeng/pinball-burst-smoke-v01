@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#08182b"/>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%2212%22 fill=%22%2308192a%22 stroke=%22%2366ebf2%22 stroke-width=%223%22/%3E%3C/svg%3E"/>
   <title>弹珠超载 · 六专精分支一键对照</title>
-  <link rel="stylesheet" href="./style.css?v=siximpact2"/>
+  <link rel="stylesheet" href="./style.css?v=impactrework3"/>
 </head>
 <body class="quick-lab-page">
   <main class="shell">
@@ -59,7 +59,7 @@
         <div class="pause-heading"><div><small class="label">SETTINGS / BUILD</small><h2 id="pauseTitle">设置 · 我的构筑</h2><p id="pauseSubtitle"></p></div><button id="resume" class="cta" type="button">继续</button></div>
         <div class="pause-scroll" tabindex="0">
           <h3>单手操作</h3><label>技能按钮位置 <select id="skillSide" aria-label="技能按钮位置"><option value="right">右下角 · 右手</option><option value="left">左下角 · 左手</option></select></label><label class="auto-skill-label"><input type="checkbox" id="autoSkill"/> 能量满时自动释放超载（默认开启）</label><p class="one-hand-tip">只需滑动控制方向，炮台连续射击，超载蓄满自动发射；关闭自动后可以手动点击技能。</p><h3>声音与画面</h3><div class="sound-controls"><span id="soundValue">78%</span><input id="soundVolume" type="range" min="0" max="100" value="78" aria-label="音量"><button id="soundTest" class="icon-btn" aria-label="试听声音" type="button">♪</button></div>
-          <label>特效强度 <select id="impactMode" aria-label="特效强度"><option value="punchy">强化击中 · 默认</option><option value="bold">B版 · 轻快（对照）</option><option value="balanced">B版 · 更轻</option><option value="off">关闭</option></select></label><label class="auto-skill-label"><input type="checkbox" id="impactHaptic" checked/> 手机振动反馈（支持的安卓浏览器）</label>
+          <label>特效强度 <select id="impactMode" aria-label="特效强度"><option value="snap">脆击重做 · 默认（压缩反弹）</option><option value="punchy">上一版 · 强化击中</option><option value="bold">B版 · 轻快（对照）</option><option value="balanced">B版 · 更轻</option><option value="off">关闭</option></select></label><label class="auto-skill-label"><input type="checkbox" id="impactHaptic" checked/> 手机振动反馈（支持的安卓浏览器）</label>
           <p class="one-hand-tip">普通碰撞不振动，重要连击、超载和 Boss 才触发短振动（需安卓浏览器支持）；iPhone网页端主要依靠画面与音效反馈。</p><p id="fpsStat">FPS --</p><button id="reset" class="export-btn" type="button">重新开始</button><button id="quickMenuPause" class="export-btn lab-menu-button" type="button">返回六分支速测菜单</button>
           <h3>炮台总属性</h3><p id="buildStats"></p>
           <h3>当前能力</h3><p id="buildSkills"></p>
@@ -84,7 +84,7 @@
       <div id="hunterDetails"></div><div id="bounceDetails"></div><div id="splitDetails"></div><div id="chainDetails"></div><div id="pierceDetails"></div><div id="arcDetails"></div>
     </div>
   </main>
-  <script src="./juice-fx.js?v=siximpact2" defer></script><script src="./builds.js?v=siximpact2" defer></script><script src="./game.js?v=siximpact2" defer></script>
+  <script src="./juice-fx.js?v=impactrework3" defer></script><script src="./builds.js?v=impactrework3" defer></script><script src="./game.js?v=impactrework3" defer></script>
 <script>if(new URLSearchParams(location.search).get("qa")==="1"){document.getElementById("qaBossPreview")?.removeAttribute("hidden");}</script>
 </body>
 </html>
