@@ -88,7 +88,7 @@
  if((s.ranks[id]||0)>=d.maxRank)return {title:d.name,description:'已满级'};
  if(!s.seedAbility){const t=copy(s);seed(t,id);return {title:d.name,description:'新能力：'+abilityText(t,id)};}
  const p=preview(s,id);if(!p)return {title:d.name,description:'已满级'};const a=p.before,z=p.after,delta=k=>z[k]-a[k],num=n=>fmt(n);
- if(d.role==='branch'&&s.ranks[id])return {title:d.name,description:{'split-a':'回旋星雨覆盖更广区域','split-b':'子球追猎次数 +1','arc-a':'分叉传导继续延伸','arc-b':'蓄能雷击爆发伤害增加','gun-a':'贯穿弹间隔 6发→5发','gun-b':'每轮三球独立反弹，增加弹球留场时间'}[id]};
+ if(d.role==='branch'&&s.ranks[id])return {title:d.name,description:{'split-a':'回旋星雨覆盖更广区域','split-b':'子球追猎次数 +1','arc-a':'分叉传导继续延伸','arc-b':'蓄能雷击爆发伤害增加','gun-a':'贯穿弹间隔 6发→5发','gun-b':'三球扇形散射间隔进一步缩短'}[id]};
  if(d.role==='branch')return {title:d.name,description:{
   'split-a':'裂变子球首次撞砖后横向回旋追击另一块砖（互斥）',
   'split-b':'裂变子球生成后主动寻找护甲目标，撞墙继续追猎（互斥）',
