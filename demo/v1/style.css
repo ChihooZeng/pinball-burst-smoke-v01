@@ -87,7 +87,7 @@ canvas{width:100%;height:100%;object-fit:contain}
 /* Temporary four-route quick comparison panel; never used in the official mainline. */
 .quick-lab{width:min(320px,100%);display:flex;flex-direction:column;gap:6px;border:1px solid #3b778b;background:#0e293b;border-radius:12px;padding:10px}
 .quick-lab>strong{color:#cefcf5;font-size:12px;text-align:center;line-height:1.35}
-.quick-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.quick-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
 .quick-grid button{display:flex;flex-direction:column;justify-content:center;gap:3px;align-items:flex-start;text-align:left;min-height:54px;padding:9px 11px;border:1px solid #42959f;border-radius:9px;color:#f3ffff;background:linear-gradient(125deg,#194b60,#16334d);cursor:pointer}
 .quick-grid button b{font-size:14px}
 .quick-grid button span{font-size:10px;color:#acd5e5}
@@ -110,3 +110,10 @@ canvas{width:100%;height:100%;object-fit:contain}
   .quick-lab-page #startOverlay{gap:5px}
   .quick-lab-page #startOverlay>p{font-size:10px}
 }
+
+/* Six-branch quick-test mobile comparison. */
+.quick-lab{max-width:350px}
+.quick-grid button{min-height:48px;padding:7px 10px}
+.quick-grid button b{font-size:12px;white-space:nowrap}
+.quick-grid button span{font-size:10px}
+@media(max-height:680px){.quick-grid button{min-height:40px;padding:5px 8px}.quick-grid button b{font-size:11px}.quick-lab>small{font-size:8px}}
