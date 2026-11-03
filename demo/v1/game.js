@@ -504,15 +504,20 @@
     record("intro_start");setState("第1波 · 滑动瞄准，普通炮台开始破坏");updateUI();return true;
   }
 
-  // One-click three-core comparison: same wave 6, same brick map, same
-  // number of legal upgrades. No active ultimate so core damage is isolated.
+  // One-click SIX-branch comparison on a shared wave 6 board.
+  // Every branch has the same five legal investment opportunities.
   function quickStart(route){
+    const families=["split","arc","gun"];
+    const family=route.split("-")[0];
+    if(!families.includes(family)||!["a","b"].includes(route.split("-")[1])||!Build.DEFS[route])return false;
     const kits={
-      split:["split","split","power","split-a","rate"],
-      arc:["arc","arc","power","arc-a","rate"],
-      gun:["gun","gun","power","gun-a","rate"]
+      "split-a":["split","split","power","split-a","rate"],
+      "split-b":["split","split","power","split-b","rate"],
+      "arc-a":["arc","arc","power","arc-a","rate"],
+      "arc-b":["arc","arc","power","arc-b","rate"],
+      "gun-a":["gun","gun","power","gun-a","rate"],
+      "gun-b":["gun","gun","power","gun-b","rate"]
     };
-    if(!Object.hasOwn(kits,route))return false;
     reset();
     // Deterministic upgrade offers; waves and HP use the existing generator.
     build=Build.createState(20261101);
@@ -526,7 +531,7 @@
     $("startOverlay").classList.add("hidden");ui.choice.classList.add("hidden");ui.win.classList.add("hidden");
     unlockSound();spawnWave(6);shootClock=Build.tuning(build).interval-CFG.firstShot;
     record("quick_lab_start",{route,targetWave:6,simulatedUpgrades:picks,excludedFromNormalRecords:true});
-    setState("第6波 · "+Build.DEFS[route].name+"速测 · 已配置5次成长，不使用超载");
+    setState("第6波 · "+Build.DEFS[route].name+"专精速测 · 已配置5次成长，不使用超载");
     updateUI();return true;
   }
   function returnToQuickMenu(){reset();return true;}
@@ -856,7 +861,8 @@
     const limit=branch==="arc-a"?effect.arcTargets:CFG.arcTargets[arcLevel];
     const chosen=[],used=new Set([origin.id]);
     let from=start;
-    if(branch!=="arc-b")for(let i=0;i<limit;i++){
+    const initialHops=branch==="arc-a"?Math.max(1,limit-2):limit;
+    if(branch!=="arc-b")for(let i=0;i<initialHops;i++){
       const anchor=branch==="arc-a"?from:start;
       const candidates=bricks.filter(b=>b.alive&&!used.has(b.id)&&
         Math.hypot(b.x+b.w/2-anchor.x,b.y+b.h/2-anchor.y)<=CFG.arcRange[arcLevel]);
@@ -1801,7 +1807,7 @@
   $("skillSide").addEventListener("change",e=>{skillSide=e.target.value==="left"?"left":"right";store(SIDE_KEY,skillSide);applySkillSide();});
   $("autoSkill").addEventListener("change",e=>{autoSkill=!!e.target.checked;store(AUTO_KEY,autoSkill?"yes":"no");});
   $("start").addEventListener("click",begin);
-  for(const route of ["split","arc","gun"]){
+  for(const route of ["split-a","split-b","arc-a","arc-b","gun-a","gun-b"]){
     $("quick-"+route)?.addEventListener("click",()=>quickStart(route));
   }
   $("quickMenuPause")?.addEventListener("click",returnToQuickMenu);
