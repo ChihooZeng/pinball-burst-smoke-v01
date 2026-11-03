@@ -775,7 +775,7 @@
     lastShotAngle=aim+offset;const shot=makeBall(lastShotAngle);
     const branch=build.coreBranch;
     if(branch==="gun-a"&&shotNumber%(build.ranks["gun-a"]>1?5:6)===0){
-      shot.needle=true;shot.needleLeft=2;needleShots++;
+      shot.needle=true;shot.needleLeft=3;needleShots++;
     }
     if(drillLevel>0&&shotNumber%(drillLevel===1?4:3)===0){shot.drill=true;shot.drillLeft=drillLevel===1?3:5;shot.r=SHOT_HIT_RADIUS*1.35;shot.visualR=SHOT_RADIUS*1.35;powerShots++;playSfx("drill");}
     balls.push(shot);
@@ -1022,9 +1022,9 @@
         }
         markFinalRush();
         if(ball.needle&&ball.needleLeft>0){
-          ball.needleLeft--;needlePasses++;
-          if(ball.needleLeft===0)ball.needle=false;
-          if(!ball.needle&&!destroyed)reflect(ball,normal);
+          ball.needleLeft--;
+          if(ball.needleLeft>0)needlePasses++;
+          else{ball.needle=false;if(!destroyed)reflect(ball,normal);}
         }else if(ball.drill&&ball.drillLeft>0){
           ball.drillLeft--;if(ball.drillLeft===0)ball.drill=false;
           if(!ball.drill&&!destroyed)reflect(ball,normal);
