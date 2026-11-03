@@ -504,8 +504,8 @@
     record("intro_start");setState("第1波 · 滑动瞄准，普通炮台开始破坏");updateUI();return true;
   }
 
-  // One-click SIX-branch comparison on a shared wave 6 board.
-  // Every branch has the same five legal investment opportunities.
+  // One-click SIX-branch comparison: wave 6 crowd vs wave 10 boss board.
+  // Upgrade counts are equal within each scenario and no ultimate is used.
   function quickStart(route){
     const families=["split","arc","gun"];
     const family=route.split("-")[0];
@@ -518,20 +518,22 @@
       "gun-a":["gun","gun","power","gun-a","rate"],
       "gun-b":["gun","gun","power","gun-b","rate"]
     };
+    const bossScene=$("labScene").value==="boss";
+    const targetWave=bossScene?10:6;
     reset();
-    // Deterministic upgrade offers; waves and HP use the existing generator.
+    // Deterministic upgrade selection. Every branch uses the same wave layout.
     build=Build.createState(20261101);
-    const picks=kits[route];
+    const picks=kits[route].concat(bossScene?[family,"speed","power","life"]:[]);
     for(let i=0;i<picks.length;i++){
       if(!Build.choose(build,picks[i],i+1))throw Error("Quick lab illegal upgrade at wave "+(i+1)+": "+picks[i]);
     }
-    syncBuild();screenClears=5;level=6;waveUpgrades=5;
+    syncBuild();screenClears=targetWave-1;level=targetWave;waveUpgrades=targetWave-1;
     choiceQueue=0;choiceSet=[];balls=[];giant=null;charge=0;
     quickLabActive=true;quickLabRoute=route;phase="playing";
     $("startOverlay").classList.add("hidden");ui.choice.classList.add("hidden");ui.win.classList.add("hidden");
-    unlockSound();spawnWave(6);shootClock=Build.tuning(build).interval-CFG.firstShot;
-    record("quick_lab_start",{route,targetWave:6,simulatedUpgrades:picks,excludedFromNormalRecords:true});
-    setState("第6波 · "+Build.DEFS[route].name+"专精速测 · 已配置5次成长，不使用超载");
+    unlockSound();spawnWave(targetWave);shootClock=Build.tuning(build).interval-CFG.firstShot;
+    record("quick_lab_start",{route,targetWave,simulatedUpgrades:picks,excludedFromNormalRecords:true});
+    setState("第"+targetWave+"波 · "+Build.DEFS[route].name+"专精速测 · 已配置"+picks.length+"次成长，不使用超载");
     updateUI();return true;
   }
   function returnToQuickMenu(){reset();return true;}
