@@ -839,10 +839,20 @@
   // steps cannot recursively spawn lightning or freeze the simulation.
   function triggerLightning(origin,ball){
     if(!arcLevel||!origin||!ball||ball.mini||ball.contacts===undefined||bossVictory)return false;
-    arcCharge++;
-    if(arcCharge<CFG.arcEvery[arcLevel]||elapsed-lastArcRelease<CFG.arcCooldown)return false;
-    const start={x:origin.x+origin.w/2,y:origin.y+origin.h/2};
     const branch=build.coreBranch,effect=Build.effects(build);
+    if(branch==="arc-b"){
+      // Three direct hits on the same target trigger one concentrated discharge.
+      if(focusTargetId!==origin.id||elapsed-focusLastAt>2.5){
+        focusTargetId=origin.id;focusStacks=0;
+      }
+      focusLastAt=elapsed;focusStacks=Math.min(3,focusStacks+1);
+      if(focusStacks<3||elapsed-lastArcRelease<CFG.arcCooldown)return false;
+      focusStacks=0;focusBursts++;record("focus_discharge",{target:origin.id});
+    }else{
+      arcCharge++;
+      if(arcCharge<CFG.arcEvery[arcLevel]||elapsed-lastArcRelease<CFG.arcCooldown)return false;
+    }
+    const start={x:origin.x+origin.w/2,y:origin.y+origin.h/2};
     const limit=branch==="arc-a"?effect.arcTargets:CFG.arcTargets[arcLevel];
     const chosen=[],used=new Set([origin.id]);
     let from=start;
@@ -876,7 +886,7 @@
     });
     arcCharge=0;lastArcRelease=elapsed;counters.arcReleases++;lightningTriggers++;
     record("arc",{targets:chosen.map(b=>b.id),single,queued:true,cap:maxTargets});
-    setState(branch==="arc-b"?"雷霆聚能 · 单体蓄电":"电弧已锁定 · 即将逐个跳电");
+    setState(branch==="arc-b"?"蓄能雷击 · 三连命中集中爆发":"分叉雷网 · 逐个跳电");
     return true;
   }
   function updateLightningChains(){
@@ -897,7 +907,7 @@
         const armorBonus=(brick.isBoss||brick.ringArmor||brick.isElite||brick.bossSupport)?effect.arcArmorBonus:0;
         const isOrigin=id===chain.originId;
         const damage=(isOrigin?(chain.branch==="arc-b"?
-          CFG.focusDamage+(build.ranks["arc-b"]>1?3:0):
+          CFG.focusDamage*3+(build.ranks["arc-b"]>1?5:0):
           CFG.bossArcDamage+chain.missing*arcLevel):CFG.arcDamage[arcLevel])+armorBonus;
         const before=brick.hp;
         if(!reducedMotion){
@@ -917,9 +927,10 @@
             Math.hypot(b.x+b.w/2-next.x,b.y+b.h/2-next.y)<=CFG.arcRange[arcLevel]);
           candidates.sort((a,b)=>Math.hypot(a.x+a.w/2-next.x,a.y+a.h/2-next.y)-
             Math.hypot(b.x+b.w/2-next.x,b.y+b.h/2-next.y));
-          if(candidates.length){
-            const extra=candidates[0];chain.used.add(extra.id);chain.targets.push(extra.id);
-            chain.extraHops++;
+          const forks=chain.branch==="arc-a"?(build.ranks["arc-a"]>1?2:1):1;
+          for(const extra of candidates.slice(0,Math.min(forks,chain.maxTargets-chain.targets.length))){
+            chain.used.add(extra.id);chain.targets.push(extra.id);
+            chain.extraHops++;if(chain.branch==="arc-a")relayForks++;
           }
         }
       }
@@ -1841,7 +1852,7 @@
     draw();requestAnimationFrame(frame);
   }
   function snapshot() {
-    return {quickLabActive,quickLabRoute,damageDealt,shotsWithContact,currentWaveMetrics:waveMetrics?{...waveMetrics,longestNoBreak:Math.max(waveMetrics.longestNoBreak,waveElapsed-waveMetrics.lastBreak)}:null,precisionTurns,focusDamage,gunBonusDamage,weakpointDamage,weakpointCharge,waveFallMultiplier,dangerGap:Number.isFinite(dangerGap())?+dangerGap().toFixed(1):null,waveStartGap:Number.isFinite(waveStartGap)?+waveStartGap.toFixed(1):null,nearDangerSeconds:+nearDangerSeconds.toFixed(2),pressureWarningStage,worldWidth:W,worldHeight:H,dangerY:DANGER_Y,shooterY:shooter.y,growthFocus:build.growthFocus,pausedFrom,battleTime,bankDamage,temporaryBuffs:build.temporaryBuffs.map(b=>({...b})),buildSummary:Build.summary(build),waveReports:waveReports.map(r=>({...r})),seed:build.seed,seedAbility:build.seedAbility,coreFocus:build.coreFocus,coreBranch:build.coreBranch,ranks:{...build.ranks},routeWeights:{...build.routeWeights},
+    return {quickLabActive,quickLabRoute,stormSweeps,childLocks,relayForks,focusBursts,focusStacks,needleShots,needlePasses,fanExtraShots,damageDealt,shotsWithContact,currentWaveMetrics:waveMetrics?{...waveMetrics,longestNoBreak:Math.max(waveMetrics.longestNoBreak,waveElapsed-waveMetrics.lastBreak)}:null,precisionTurns,focusDamage,gunBonusDamage,weakpointDamage,weakpointCharge,waveFallMultiplier,dangerGap:Number.isFinite(dangerGap())?+dangerGap().toFixed(1):null,waveStartGap:Number.isFinite(waveStartGap)?+waveStartGap.toFixed(1):null,nearDangerSeconds:+nearDangerSeconds.toFixed(2),pressureWarningStage,worldWidth:W,worldHeight:H,dangerY:DANGER_Y,shooterY:shooter.y,growthFocus:build.growthFocus,pausedFrom,battleTime,bankDamage,temporaryBuffs:build.temporaryBuffs.map(b=>({...b})),buildSummary:Build.summary(build),waveReports:waveReports.map(r=>({...r})),seed:build.seed,seedAbility:build.seedAbility,coreFocus:build.coreFocus,coreBranch:build.coreBranch,ranks:{...build.ranks},routeWeights:{...build.routeWeights},
       choiceHistory:build.choiceHistory.map(c=>({...c})),...counters,shotsByBuild:{...counters.shotsByBuild},collisionChecks,physicsMeanMs:physicsSteps?physicsCostMs/physicsSteps:0,maxPhysicsMs,
       phase,wave,score,aim,interval:Build.tuning(build).interval,fpsNow,renderQuality,physicsHz:120,level,xp,xpGoal,choiceQueue,choiceSet:choiceSet.join(","),powerLevel,volleyLevel,rateLevel,speedLevel,lifeLevel,rowIndex,screenClears,waveElapsed,waveSpawnCount,waveStartingTargets,waveUpgrades,bossSummonTotal,finaleStage,finaleWaveSpawns:[...finaleWaveSpawns],finaleDamageCheckpoints:[...finaleDamageCheckpoints],clearWindowActive,nearClearClock,replenishClock,cleanupWindow,cleanupStarted,cleanupActivations,bridgeTimer,bridgeBursts,bridgeTiles,upperOnlyBridgeCount,zoneCounts:zoneCounts(),clearPreviewCount:clearPreview.length,clearPreviewShown,summonWarningCount:summonSignals.length,ambientSummonClock,ambientSummonBursts,ambientSummonTiles,ambientSummonWarningCount:ambientSignals.length,overlapSummonCount,clearBurstCount,clearBurstTiles,bossActive:!!(boss&&boss.alive),bossHp:boss?.hp||0,bossDefeats,brickCount:livingCount(),surgeActive:elapsed<surgeUntil,hunterLevel,ricochetLevel,
       charge,activeBalls:balls.length,giantActive:!!giant,skillsUsed,ricochetTriggers,elapsed,
