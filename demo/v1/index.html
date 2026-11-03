@@ -21,7 +21,11 @@
         <h2 id="startTitle">弹珠超载</h2>
         <p>拖动控制炮台方向，弹球自动连续发射。清屏获得升级，选择裂变、电弧或机枪流派；击破第10关和第20关Boss即可获胜。</p>
         <section class="quick-lab" aria-label="六条专精分支一键直达速测">
-          <strong>六条分支一键对照 · 直达第 6 波</strong>
+          <strong>六条分支一键对照 · 选择测试场景</strong>
+          <select id="labScene" aria-label="专精流派测试场景">
+            <option value="crowd">第6波 · 密集砖阵</option>
+            <option value="boss">第10波 · Boss+护甲</option>
+          </select>
           <div class="quick-grid">
             <button type="button" id="quick-split-a"><b>裂变 A · 回旋</b><span>子球横向扫荡</span></button>
             <button type="button" id="quick-split-b"><b>裂变 B · 追猎</b><span>子球主动锁敌</span></button>
@@ -30,7 +34,7 @@
             <button type="button" id="quick-gun-a"><b>机枪 A · 贯穿</b><span>高频直线穿阵</span></button>
             <button type="button" id="quick-gun-b"><b>机枪 B · 齐射</b><span>扇面左右交替扫射</span></button>
           </div>
-          <small>同一砖阵与5次升级投入 · 禁用巨型球 · 直接比较破坏方式</small>
+          <small>同场景、同砖阵、同升级次数 · 暂停巨型球，以比较分支机制</small>
         </section>
         <button class="cta" id="start" type="button">从第 1 波正常挑战</button>
         <div class="boss-preview" id="qaBossPreview" hidden><label for="bossRoute">直达第10关Boss · 测试流派</label>
