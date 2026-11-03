@@ -1,75 +1,78 @@
 "use strict";
-/* Compare-lab headless logic smoke, not actual mobile/browser performance QA.
- * Run from repository root: node demo/v1/quick-build-lab-smoke.cjs
+/* Six-branch quick lab headless smoke. Run from repo root:
+ * node demo/v1/quick-build-lab-smoke.cjs
+ * Behavioral simulation only; not browser / real-phone FPS or human fun QA.
  */
 const assert=require("node:assert/strict");
 const fs=require("node:fs"),path=require("node:path"),vm=require("node:vm");
-const listeners=new Map(),nodes=new Map();let now=1000,frame;
-const graphic=new Proxy({createLinearGradient(){return {addColorStop(){}};}},{get(o,k){return k in o?o[k]:()=>{};},set(o,k,v){o[k]=v;return true;}});
-function element(id){
- if(!nodes.has(id))nodes.set(id,{
+const listeners=new Map(),els=new Map();let now=1000,frame;
+const canvas=new Proxy({createLinearGradient(){return{addColorStop(){}}}},
+ {get(o,k){return k in o?o[k]:()=>{}},set(o,k,v){o[k]=v;return true}});
+function el(id){
+ if(!els.has(id))els.set(id,{
   id,value:"",textContent:"",style:{},disabled:false,hidden:false,
-  parentElement:{classList:{add(){},remove(){},toggle(){}}},
   classList:{add(){},remove(){},toggle(){}},
-  addEventListener(k,cb){listeners.set(id+":"+k,cb);},
-  getContext(){return graphic;},
-  getBoundingClientRect(){return{left:0,top:0,width:360,height:60};},
-  focus(){},querySelectorAll(){return[];},setPointerCapture(){}
+  parentElement:{classList:{add(){},remove(){},toggle(){}}},
+  getContext(){return canvas},addEventListener(kind,fn){listeners.set(id+":"+kind,fn)},
+  getBoundingClientRect(){return{left:0,top:0,width:360,height:60}},
+  focus(){},setPointerCapture(){},querySelectorAll(){return[]}
  });
- return nodes.get(id);
+ return els.get(id);
 }
-const document={
- hidden:false,activeElement:null,
- querySelector:s=>element(s.slice(1)),getElementById:element,
- querySelectorAll(){return[];},addEventListener(){}
-};
-const window={__PINBALL_TEST__:true,__PINBALL_SEED__:20261101,innerWidth:360,innerHeight:560,
- addEventListener(){},matchMedia(){return{matches:false};}};
-const sandbox=vm.createContext({window,document,console,Math,Date,
- navigator:{vibrate(){return false;}},
- performance:{now(){return now;}},
- requestAnimationFrame(cb){frame=cb;},
- localStorage:{getItem(){return null;},setItem(){}}});
-for(const name of ["builds.js","juice-fx.js","game.js"]){
- vm.runInContext(fs.readFileSync(path.join(__dirname,name),"utf8"),sandbox,{filename:name});
-}
+const document={hidden:false,activeElement:null,querySelector:s=>el(s.slice(1)),
+ getElementById:el,querySelectorAll(){return[]},addEventListener(){}};
+const window={__PINBALL_TEST__:true,__PINBALL_SEED__:20261103,innerWidth:360,innerHeight:560,
+ addEventListener(){},matchMedia(){return{matches:false}}};
+const context=vm.createContext({window,document,Math,Date,console,
+ navigator:{vibrate(){return false}},
+ performance:{now(){return now}},
+ requestAnimationFrame(fn){frame=fn},
+ localStorage:{getItem(){return null},setItem(){}}
+});
+for(const n of ["builds.js","juice-fx.js","game.js"])
+ vm.runInContext(fs.readFileSync(path.join(__dirname,n),"utf8"),context,{filename:n});
 const t=window.__pinballTest,s=window.__pinballState;
 const html=fs.readFileSync(path.join(__dirname,"index.html"),"utf8");
-const advance=(n)=>{for(let i=0;i<n;i++){now+=1000/60;assert.equal(typeof frame,"function");frame(now);}};
-let baselineHp=null;
-for(const route of ["split","arc","gun"]){
- const id="quick-"+route;
- assert.ok(html.includes('id="'+id+'"'));
- const launch=listeners.get(id+":click");
- assert.equal(typeof launch,"function",id+" is bound");
- launch();
- const info=s();
- assert.equal(info.phase,"playing");
- assert.equal(info.wave,6);
- assert.equal(info.level,6);
- assert.equal(info.screenClears,5);
- assert.equal(info.seedAbility,route);
- assert.equal(info.quickLabRoute,route);
- assert.equal(info.quickLabActive,true);
- assert.equal(info.choiceHistory.length,5);
- assert.equal(info.brickCount,78);
- const hp=t.hpDistribution().map(b=>b.initialHp).join(",");
- if(baselineHp!==null)assert.equal(hp,baselineHp,"all routes use identical wave 6 HP");
- baselineHp=hp;
- advance(120);
- assert.equal(s().giantActive,false,"no ultimate in isolated route comparison");
- assert.equal(element("giant").disabled,true);
- assert.ok(s().shotsFired>0,"physical balls still fire");
- assert.equal(t.returnToQuickMenu(),true);
- assert.equal(s().phase,"ready");
- assert.equal(s().quickLabActive,false);
+const routes=["split-a","split-b","arc-a","arc-b","gun-a","gun-b"];
+const step=n=>{for(let i=0;i<n;i++){now+=1000/60;assert.equal(typeof frame,"function");frame(now)}};
+const records=[];
+for(const scene of ["crowd","boss"]){
+ let hpBaseline=null;
+ for(const route of routes){
+  const id="quick-"+route;
+  assert.ok(html.includes('id="'+id+'"'),"button missing "+id);
+  const fn=listeners.get(id+":click");
+  assert.equal(typeof fn,"function",id+" is unbound");
+  el("labScene").value=scene;fn();
+  const start=s(),hp=t.hpDistribution().map(b=>b.initialHp).join(",");
+  const wave=scene==="crowd"?6:10,upgrades=wave-1;
+  assert.equal(start.phase,"playing");assert.equal(start.wave,wave);
+  assert.equal(start.level,wave);assert.equal(start.quickLabRoute,route);
+  assert.equal(start.coreBranch,route);assert.equal(start.choiceHistory.length,upgrades);
+  assert.equal(start.quickLabActive,true);
+  if(hpBaseline!==null)assert.equal(hp,hpBaseline,"same field "+scene);
+  hpBaseline=hp;
+  step(scene==="crowd"?360:210);
+  const after=s();
+  assert.equal(after.giantActive,false);
+  assert.equal(el("giant").disabled,true);
+  assert.ok(after.shotsFired>0);
+  if(scene==="crowd"){
+   const expected={"split-a":"stormSweeps","split-b":"childLocks","arc-a":"relayForks",
+    "arc-b":"focusBursts","gun-a":"needleShots","gun-b":"fanExtraShots"}[route];
+   assert.ok(after[expected]>0,route+" did not trigger "+expected);
+  }else assert.equal(start.bossHp,128,"boss initial HP");
+  records.push({scene,route,wave:after.wave,hits:after.shotsFired,
+   storms:after.stormSweeps,hunts:after.childLocks,relay:after.relayForks,
+   focus:after.focusBursts,needle:after.needleShots,fan:after.fanExtraShots});
+  assert.equal(t.returnToQuickMenu(),true);
+  assert.equal(s().phase,"ready");
+ }
 }
+assert.ok(html.includes('id="labScene"'));
 for(const id of ["quickMenuPause","quickMenuEnd"])assert.ok(html.includes('id="'+id+'"'));
-assert.equal(t.begin(),true,"normal full run still available");
-assert.equal(s().wave,1);
-assert.equal(s().quickLabActive,false);
-advance(12);
-assert.deepEqual(Array.from(window.PinballBuilds.offer(window.PinballBuilds.createState(),1)),["split","arc","gun"]);
-assert.ok(!html.includes("quick-laser"),"laser button must be removed");
-assert.ok(!Object.hasOwn(window.PinballBuilds.DEFS,"laser"),"laser skill must be removed");
-console.log("PASS three one-tap midgame Builds; identical wave6; 5 legal upgrades; ultimate isolated; menu reset; normal game");
+assert.ok(!html.includes("quick-laser"));
+assert.ok(!Object.hasOwn(window.PinballBuilds.DEFS,"laser"));
+assert.equal(t.begin(),true);t.clearWave();step(12);
+assert.equal(s().choiceSet,"split,arc,gun","normal first upgrade unaffected");
+console.log("PASS six distinct branch mechanics, two same-field test scenes, return menu, regular game; "+records.length+" branches/scenes");
