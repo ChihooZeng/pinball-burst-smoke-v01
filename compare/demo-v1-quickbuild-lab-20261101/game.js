@@ -7,7 +7,6 @@
   let gunTarget=null,gunStreak=0,gunLast=-99;
   let precisionTurns=0,focusDamage=0,gunBonusDamage=0,weakpointDamage=0,weakpointCharge=0,damageDealt=0,shotsWithContact=0;
   let waveFallMultiplier=1;
-  let laserClock=0,laserSegments=[],laserHits=0,laserDamage=0,laserWaveHits=0;
   // Isolated comparison mode: skip the initial five clear rewards with a
   // legitimate five-choice build; do not save a result as a normal full run.
   let quickLabActive=false,quickLabRoute=null;
@@ -35,7 +34,7 @@
   function showCards(seed=false){
     $("choiceTitle").textContent=!build.seedAbility?"选一个新技能":"选择一次强化";
     $("choiceWave").textContent=!build.seedAbility?"第1波完成 · 第一次升级":"WAVE "+wave+" CLEAR · LV."+level;
-    for(let i=0;i<4;i++){
+    for(let i=0;i<3;i++){
       const visible=i<choiceSet.length;const button=$("choice"+i);
       button.classList.toggle("hidden",!visible);
       if(!visible)continue;
@@ -451,7 +450,7 @@
     const oldHeightFactor=Math.max(1,Math.min(3.2,1+Math.max(0,virtualOldGap/oldReferenceGap-1)*.70));
     waveFallMultiplier=n===1?1:oldHeightFactor*Math.max(.58,gap/Math.max(1,virtualOldGap));
     record("wave_pressure",{wave:n,fallMultiplier:+waveFallMultiplier.toFixed(3),gap:+gap.toFixed(1)});
-    waveStartingTargets=livingCount();laserWaveHits=0;laserClock=0;laserSegments=[];
+    waveStartingTargets=livingCount();
     waveStartGap=dangerGap();closestDangerGap=waveStartGap;
     nearDangerSeconds=0;pressureWarningStage=0;
     clearPreview=[];clearPreviewShown=false;clearWindowActive=false;
@@ -469,8 +468,8 @@
     DANGER_Y=H-105;SUMMON_SAFE_BOTTOM=DANGER_Y-88;canvas.height=H;shooter.y=H-37;
     WAVE_START_Y=window.innerWidth?Math.max(84,Math.ceil((document.querySelector(".topbar").getBoundingClientRect().height+28)*W/window.innerWidth)):84;
     pausedFrom=null;battleTime=0;waveReports=[];bankDamage=0;lockBackground(false);$("pauseOverlay").classList.add("hidden");
-    quickLabActive=false;quickLabRoute=null;gunTarget=null;gunStreak=0;gunLast=-99;laserClock=0;laserSegments=[];laserHits=0;laserDamage=0;laserWaveHits=0;precisionTurns=focusDamage=gunBonusDamage=weakpointDamage=weakpointCharge=damageDealt=shotsWithContact=0;build=Build.createState(initialSeed===null?Math.floor(Math.random()*4294967296):initialSeed);events=[];arcCharge=0;lastArcRelease=-99;fanClock=0;gunFlash=0;
-    counters={splitChildren:0,arcReleases:0,arcSingleDamage:0,budgetReclaims:0,suppressedShots:0,suppressedChildren:0,maxBallsAlive:0,wallBounces:0,shotsByBuild:{base:0,split:0,arc:0,gun:0,laser:0}};
+    quickLabActive=false;quickLabRoute=null;gunTarget=null;gunStreak=0;gunLast=-99;precisionTurns=focusDamage=gunBonusDamage=weakpointDamage=weakpointCharge=damageDealt=shotsWithContact=0;build=Build.createState(initialSeed===null?Math.floor(Math.random()*4294967296):initialSeed);events=[];arcCharge=0;lastArcRelease=-99;fanClock=0;gunFlash=0;
+    counters={splitChildren:0,arcReleases:0,arcSingleDamage:0,budgetReclaims:0,suppressedShots:0,suppressedChildren:0,maxBallsAlive:0,wallBounces:0,shotsByBuild:{base:0,split:0,arc:0,gun:0}};
     collisionChecks=0;physicsCostMs=0;physicsSteps=0;maxPhysicsMs=0;
     wave=1;score=0;phase="ready";charge=0;elapsed=0;level=1;xp=0;xpGoal=34;
     $("winTitle").textContent="砖阵触及警戒线";
@@ -502,14 +501,13 @@
     record("intro_start");setState("第1波 · 滑动瞄准，普通炮台开始破坏");updateUI();return true;
   }
 
-  // One-click four-core comparison: same wave 6, same brick map, same
+  // One-click three-core comparison: same wave 6, same brick map, same
   // number of legal upgrades. No active ultimate so core damage is isolated.
   function quickStart(route){
     const kits={
       split:["split","split","power","split-a","rate"],
       arc:["arc","arc","power","arc-a","rate"],
-      gun:["gun","gun","power","gun-a","rate"],
-      laser:["laser","laser","power","rate","life"]
+      gun:["gun","gun","power","gun-a","rate"]
     };
     if(!Object.hasOwn(kits,route))return false;
     reset();
@@ -538,8 +536,7 @@
     const loadouts={
       split:["split","split","power","split-a","split","rate","speed","power","life"],
       arc:["arc","arc","power","arc-a","arc","rate","speed","power","life"],
-      gun:["gun","gun","power","gun-a","gun","rate","speed","power","life"],
-      laser:["laser","laser","power","rate","speed","power","life","shock","drill"]
+      gun:["gun","gun","power","gun-a","gun","rate","speed","power","life"]
     };
     const picks=loadouts[route]||loadouts.split;
     for(let i=0;i<picks.length;i++){
@@ -752,44 +749,6 @@
     }else{ball.vx=speed*dx/d;ball.vy=speed*dy/d;}ball.huntsLeft--;
     homingTurns++;playSfx("hunt");
     return true;
-  }
-  // Laser lab: low-cost analytical ray casting. No extra ball instances or chain recursion.
-  // Laser is a secondary continuous weapon, not a new turret class or ultimate.
-  function traceLaser(){
-    const e=Build.effects(build),maxPierce=e.laserPierce;
-    if(!maxPierce)return {segments:[],targets:[]};
-    let x=shooter.x,y=shooter.y-32,dx=Math.sin(aim),dy=-Math.cos(aim);
-    let remaining=H+W*2,bounces=0;
-    const segments=[],targets=[],seen=new Set();
-    for(let step=0;step<9&&remaining>.02;step++){
-      const topT=dy<-.00001?-y/dy:Infinity;
-      const wallT=dx>.00001?(W-x)/dx:dx<-.00001?-x/dx:Infinity;
-      const boundT=Math.min(topT,wallT,remaining);
-      if(!(boundT>.00001))break;
-      let selected=null,selectedT=boundT;
-      for(const b of bricks){
-        if(!b.alive||seen.has(b.id))continue;
-        const tx0=Math.abs(dx)<.00001?(x>=b.x&&x<=b.x+b.w?-Infinity:Infinity):(b.x-x)/dx;
-        const tx1=Math.abs(dx)<.00001?(x>=b.x&&x<=b.x+b.w?Infinity:-Infinity):(b.x+b.w-x)/dx;
-        const ty0=(b.y-y)/dy,ty1=(b.y+b.h-y)/dy;
-        const tEnter=Math.max(0,Math.min(tx0,tx1),Math.min(ty0,ty1));
-        const tExit=Math.min(Math.max(tx0,tx1),Math.max(ty0,ty1));
-        if(tExit>=tEnter&&tEnter<selectedT){selected=b;selectedT=tEnter;}
-      }
-      const endX=x+dx*selectedT,endY=y+dy*selectedT;
-      segments.push({x1:x,y1:y,x2:endX,y2:endY});
-      if(selected){
-        targets.push(selected);seen.add(selected.id);
-        if(targets.length>=maxPierce)break;
-        remaining-=selectedT+.02;x=endX+dx*.02;y=endY+dy*.02;
-        continue;
-      }
-      remaining-=selectedT;
-      if(wallT<=topT&&wallT<=selectedT+.00001&&bounces<e.laserReflections){
-        bounces++;dx=-dx;x=endX+dx*.02;y=endY+dy*.02;remaining-=.02;
-      }else break;
-    }
-    return {segments,targets};
   }
   function fire(){
     if(phase!=="playing"||emptyLatch)return false;
@@ -1091,8 +1050,8 @@
   function eligibleSkills(){return Build.eligible(build,screenClears);}
   function offerChoice(){
     if(phase!=="playing"||choiceQueue<=0)return false;
-    choiceSet=Build.offer(build,screenClears);const expected=build.seedAbility?3:4;
-    if(choiceSet.length!==expected)throw Error("Upgrade pool must provide "+expected+" distinct effective cards");
+    choiceSet=Build.offer(build,screenClears);
+    if(choiceSet.length!==3)throw Error("Upgrade pool must provide three distinct effective cards");
     phase="choosing";choiceQueue--;showCards();record("offer",{cards:choiceSet.slice()});setState("清屏升级 · 选择期间暂停");updateUI();return true;
   }
   function chooseUpgrade(id){
@@ -1456,11 +1415,11 @@
       if(!live.length&&!boss&&!summonSignals.some(sig=>sig.finale)){
         // No projectiles or active giant may carry over into the next wave.
         // Pause combat at this boundary; only the wave-clear reward grants XP level.
-        balls=[];giant=null;shootClock=0;laserSegments=[];
+        balls=[];giant=null;shootClock=0;
         lightningArcs=[];combo=0;comboVisibility=0;
         emptyLatch=true;clearWindowActive=true;
         screenClears++;clearFlash=1;record("wave_clear",{duration:+waveElapsed.toFixed(3),build:build.coreBranch||build.seedAbility});
-        waveReports.push({wave,duration:+waveElapsed.toFixed(3),breaks:waveMetrics.breaks,breaksPerSecond:waveMetrics.breaks/Math.max(.01,waveElapsed),longestNoBreak:waveMetrics.longestNoBreak,tailSeconds:waveMetrics.tailSeconds,bossSoloSeconds:waveMetrics.bossSoloSeconds,shots:shotsFired-waveMetrics.shots,laserHits:laserWaveHits,children:counters.splitChildren-waveMetrics.children,reclaims:counters.budgetReclaims-waveMetrics.reclaims,suppressedShots:counters.suppressedShots-waveMetrics.suppressed,suppressedChildren:counters.suppressedChildren-waveMetrics.suppressedChildren,startGap:+waveStartGap.toFixed(1),closestGap:+closestDangerGap.toFixed(1),nearDangerSeconds:+nearDangerSeconds.toFixed(2)});
+        waveReports.push({wave,duration:+waveElapsed.toFixed(3),breaks:waveMetrics.breaks,breaksPerSecond:waveMetrics.breaks/Math.max(.01,waveElapsed),longestNoBreak:waveMetrics.longestNoBreak,tailSeconds:waveMetrics.tailSeconds,bossSoloSeconds:waveMetrics.bossSoloSeconds,shots:shotsFired-waveMetrics.shots,children:counters.splitChildren-waveMetrics.children,reclaims:counters.budgetReclaims-waveMetrics.reclaims,suppressedShots:counters.suppressedShots-waveMetrics.suppressed,suppressedChildren:counters.suppressedChildren-waveMetrics.suppressedChildren,startGap:+waveStartGap.toFixed(1),closestGap:+closestDangerGap.toFixed(1),nearDangerSeconds:+nearDangerSeconds.toFixed(2)});
         if(screenClears>=MAX_WAVES){finishPrototype();return;}
         build.recovery={power:0,speed:0,life:0};arcCharge=0;lastArcRelease=-99;
         level++;waveUpgrades++;choiceQueue++;choiceReason="wave";
@@ -1496,30 +1455,13 @@
       if(autoSkill&&!quickLabActive&&build.seedAbility&&charge>=MAX_CHARGE&&!giant)activateEquippedSkill();
       const fireInterval=Build.tuning(build).interval/Build.buffModifiers(build).rate;
       if(shootClock>=fireInterval){shootClock-=fireInterval;fire();}
-      const laser=Build.effects(build);
-      if(laser.laserPierce){
-        const ray=traceLaser();laserSegments=ray.segments;
-        laserClock+=dt;
-        const cadence=laser.laserInterval/Build.buffModifiers(build).rate;
-        if(laserClock>=cadence){
-          laserClock-=cadence;
-          const before=damageDealt;
-          for(const target of ray.targets){
-            if(!target.alive||bossVictory)break;
-            hitBrick(target,"normal",null,laser.laserDamage);
-            laserHits++;laserWaveHits++;
-          }
-          laserDamage+=damageDealt-before;
-          if(ray.targets.length)record("laser_tick",{targets:ray.targets.length,damage:damageDealt-before});
-        }
-      }else{laserSegments=[];laserClock=0;}
       const currentBalls=balls.slice(),kept=currentBalls.filter(b=>updateBall(b,dt));
       const newborn=balls.filter(b=>!currentBalls.includes(b));balls=kept.concat(newborn).slice(0,MAX_BALLS);
       updateLightningChains();
       lightningArcs.forEach(e=>e.age+=dt);lightningArcs=lightningArcs.filter(e=>e.age<e.duration);
       updateGiant(dt);
     }
-    if(bossVictory){lightningArcs=[];lightningChains=[];laserSegments=[];}
+    if(bossVictory){lightningArcs=[];lightningChains=[];}
     particles.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=.97;p.vy*=.97;p.life-=dt;});
     particles=particles.filter(p=>p.life>0);
     for(const b of bricks)if(b.alive&&b.bonk>0)b.bonk=Math.max(0,b.bonk-dt);
@@ -1684,15 +1626,6 @@
       ctx.lineTo(shooter.x+Math.sin(aim)*220,shooter.y-17-Math.cos(aim)*220);
       ctx.stroke();ctx.restore();
     }
-    if(phase==="playing"&&!emptyLatch&&!bossVictory&&laserSegments.length){
-      ctx.save();ctx.globalAlpha=.76;ctx.strokeStyle="#92f5ee";
-      ctx.lineWidth=2.5;ctx.lineCap="round";ctx.shadowColor="#69ebff";
-      ctx.shadowBlur=renderQuality==="full"?6:1;
-      for(const part of laserSegments){
-        ctx.beginPath();ctx.moveTo(part.x1,part.y1);ctx.lineTo(part.x2,part.y2);ctx.stroke();
-      }
-      ctx.restore();
-    }
     for(const b of balls){
       b.trail.forEach((p,i)=>{const t=1-i/b.trail.length;ctx.fillStyle="rgba(139,224,250,"+(.18*t)+")";
         ctx.beginPath();ctx.arc(p.x,p.y,Math.max(1,(b.visualR||b.r)*t*.7),0,Math.PI*2);ctx.fill();});
@@ -1815,14 +1748,14 @@
   $("skillSide").addEventListener("change",e=>{skillSide=e.target.value==="left"?"left":"right";store(SIDE_KEY,skillSide);applySkillSide();});
   $("autoSkill").addEventListener("change",e=>{autoSkill=!!e.target.checked;store(AUTO_KEY,autoSkill?"yes":"no");});
   $("start").addEventListener("click",begin);
-  for(const route of ["split","arc","gun","laser"]){
+  for(const route of ["split","arc","gun"]){
     $("quick-"+route)?.addEventListener("click",()=>quickStart(route));
   }
   $("quickMenuPause")?.addEventListener("click",returnToQuickMenu);
   $("quickMenuEnd")?.addEventListener("click",returnToQuickMenu);
   $("jumpBoss").addEventListener("click",jumpToBoss10);
   $("jumpFinalBoss").addEventListener("click",jumpToFinalBoss);
-  for(let i=0;i<4;i++)$("choice"+i).addEventListener("click",()=>{unlockSound();chooseUpgrade(choiceSet[i]);});
+  for(let i=0;i<3;i++)$("choice"+i).addEventListener("click",()=>{unlockSound();chooseUpgrade(choiceSet[i]);});
   $("again").addEventListener("click",()=>{unlockSound();reset();begin();});
   $("reset").addEventListener("click",()=>{unlockSound();reset();begin();});
   document.addEventListener?.("visibilitychange",()=>{if(document.hidden)pause();accumulator=0;lastFrame=performance.now();});
@@ -1866,7 +1799,7 @@
     draw();requestAnimationFrame(frame);
   }
   function snapshot() {
-    return {quickLabActive,quickLabRoute,laserHits,laserWaveHits,laserDamage,laserActive:laserSegments.length>0,laserSegmentCount:laserSegments.length,damageDealt,shotsWithContact,currentWaveMetrics:waveMetrics?{...waveMetrics,longestNoBreak:Math.max(waveMetrics.longestNoBreak,waveElapsed-waveMetrics.lastBreak)}:null,precisionTurns,focusDamage,gunBonusDamage,weakpointDamage,weakpointCharge,waveFallMultiplier,dangerGap:Number.isFinite(dangerGap())?+dangerGap().toFixed(1):null,waveStartGap:Number.isFinite(waveStartGap)?+waveStartGap.toFixed(1):null,nearDangerSeconds:+nearDangerSeconds.toFixed(2),pressureWarningStage,worldWidth:W,worldHeight:H,dangerY:DANGER_Y,shooterY:shooter.y,growthFocus:build.growthFocus,pausedFrom,battleTime,bankDamage,temporaryBuffs:build.temporaryBuffs.map(b=>({...b})),buildSummary:Build.summary(build),waveReports:waveReports.map(r=>({...r})),seed:build.seed,seedAbility:build.seedAbility,coreFocus:build.coreFocus,coreBranch:build.coreBranch,ranks:{...build.ranks},routeWeights:{...build.routeWeights},
+    return {quickLabActive,quickLabRoute,damageDealt,shotsWithContact,currentWaveMetrics:waveMetrics?{...waveMetrics,longestNoBreak:Math.max(waveMetrics.longestNoBreak,waveElapsed-waveMetrics.lastBreak)}:null,precisionTurns,focusDamage,gunBonusDamage,weakpointDamage,weakpointCharge,waveFallMultiplier,dangerGap:Number.isFinite(dangerGap())?+dangerGap().toFixed(1):null,waveStartGap:Number.isFinite(waveStartGap)?+waveStartGap.toFixed(1):null,nearDangerSeconds:+nearDangerSeconds.toFixed(2),pressureWarningStage,worldWidth:W,worldHeight:H,dangerY:DANGER_Y,shooterY:shooter.y,growthFocus:build.growthFocus,pausedFrom,battleTime,bankDamage,temporaryBuffs:build.temporaryBuffs.map(b=>({...b})),buildSummary:Build.summary(build),waveReports:waveReports.map(r=>({...r})),seed:build.seed,seedAbility:build.seedAbility,coreFocus:build.coreFocus,coreBranch:build.coreBranch,ranks:{...build.ranks},routeWeights:{...build.routeWeights},
       choiceHistory:build.choiceHistory.map(c=>({...c})),...counters,shotsByBuild:{...counters.shotsByBuild},collisionChecks,physicsMeanMs:physicsSteps?physicsCostMs/physicsSteps:0,maxPhysicsMs,
       phase,wave,score,aim,interval:Build.tuning(build).interval,fpsNow,renderQuality,physicsHz:120,level,xp,xpGoal,choiceQueue,choiceSet:choiceSet.join(","),powerLevel,volleyLevel,rateLevel,speedLevel,lifeLevel,rowIndex,screenClears,waveElapsed,waveSpawnCount,waveStartingTargets,waveUpgrades,bossSummonTotal,finaleStage,finaleWaveSpawns:[...finaleWaveSpawns],finaleDamageCheckpoints:[...finaleDamageCheckpoints],clearWindowActive,nearClearClock,replenishClock,cleanupWindow,cleanupStarted,cleanupActivations,bridgeTimer,bridgeBursts,bridgeTiles,upperOnlyBridgeCount,zoneCounts:zoneCounts(),clearPreviewCount:clearPreview.length,clearPreviewShown,summonWarningCount:summonSignals.length,ambientSummonClock,ambientSummonBursts,ambientSummonTiles,ambientSummonWarningCount:ambientSignals.length,overlapSummonCount,clearBurstCount,clearBurstTiles,bossActive:!!(boss&&boss.alive),bossHp:boss?.hp||0,bossDefeats,brickCount:livingCount(),surgeActive:elapsed<surgeUntil,hunterLevel,ricochetLevel,
       charge,activeBalls:balls.length,giantActive:!!giant,skillsUsed,ricochetTriggers,elapsed,
