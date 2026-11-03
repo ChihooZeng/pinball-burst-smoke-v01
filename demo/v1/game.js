@@ -496,7 +496,7 @@
     pausedFrom=null;battleTime=0;waveReports=[];bankDamage=0;lockBackground(false);$("pauseOverlay").classList.add("hidden");
     quickLabActive=false;quickLabRoute=null;gunTarget=null;gunStreak=0;gunLast=-99;focusTargetId=null;focusStacks=0;focusLastAt=-99;
     stormSweeps=0;childLocks=0;relayForks=0;focusBursts=0;needleShots=0;needlePasses=0;fanExtraShots=0;precisionTurns=focusDamage=gunBonusDamage=weakpointDamage=weakpointCharge=damageDealt=shotsWithContact=0;build=Build.createState(initialSeed===null?Math.floor(Math.random()*4294967296):initialSeed);events=[];arcCharge=0;lastArcRelease=-99;fanClock=0;gunFlash=0;
-    counters={splitChildren:0,arcReleases:0,arcSingleDamage:0,budgetReclaims:0,suppressedShots:0,suppressedChildren:0,maxBallsAlive:0,wallBounces:0,shotsByBuild:{base:0,split:0,arc:0,gun:0}};
+    counters={splitChildren:0,arcReleases:0,arcSingleDamage:0,budgetReclaims:0,suppressedShots:0,suppressedChildren:0,maxBallsAlive:0,wallBounces:0,fanWallBounces:0,fanBrickRebounds:0,shotsByBuild:{base:0,split:0,arc:0,gun:0}};
     collisionChecks=0;physicsCostMs=0;physicsSteps=0;maxPhysicsMs=0;
     wave=1;score=0;phase="ready";charge=0;elapsed=0;level=1;xp=0;xpGoal=34;
     $("winTitle").textContent="砖阵触及警戒线";
@@ -804,6 +804,7 @@
     // normal ball physics, including independent wall and brick rebounds.
     // No mini children, ray effects or virtual damage.
     const shot=makeBall(aim);
+    if(branch==="gun-b")shot.fanProjectile=true;
     if(branch==="gun-a"){
       const angle=aim+(shotNumber%2?1:-1)*.012;
       const speed=Math.hypot(shot.vx,shot.vy);
@@ -1045,7 +1046,7 @@
       if(ball.x>W-ball.r){ball.x=W-ball.r;ball.vx=-Math.abs(ball.vx);wall=true;}
       if(ball.y<ball.r+4){ball.y=ball.r+4;ball.vy=Math.abs(ball.vy);}
       if(wall){
-        counters.wallBounces++;
+        counters.wallBounces++;if(ball.fanProjectile)counters.fanWallBounces++;
         if(ricochetLevel){ball.chargeStacks=Math.min(ricochetLevel===1?2:4,ball.chargeStacks+ricochetLevel);ricochetTriggers++;}
         retargetBall(ball);
       }
@@ -1082,7 +1083,11 @@
         }else if(ball.drill&&ball.drillLeft>0){
           ball.drillLeft--;if(ball.drillLeft===0)ball.drill=false;
           if(!ball.drill&&!destroyed)reflect(ball,normal);
-        }else if(!destroyed)reflect(ball,normal);
+        }else if(!destroyed){
+          const vx=ball.vx,vy=ball.vy;
+          reflect(ball,normal);
+          if(ball.fanProjectile&&(Math.abs(ball.vx-vx)+Math.abs(ball.vy-vy))>.01)counters.fanBrickRebounds++;
+        }
         if(ball.stormNext){
           ball.vx=ball.stormNext.vx;ball.vy=ball.stormNext.vy;
           ball.stormNext=null;
