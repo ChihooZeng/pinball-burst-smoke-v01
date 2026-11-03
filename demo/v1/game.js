@@ -5,6 +5,8 @@
   let H = 560, DANGER_Y=455, WAVE_START_Y=84;
   let pausedFrom=null, focusBeforePause=null, battleTime=0, waveMetrics=null, waveReports=[], bankDamage=0;
   let gunTarget=null,gunStreak=0,gunLast=-99;
+  let focusTargetId=null,focusStacks=0,focusLastAt=-99;
+  let stormSweeps=0,childLocks=0,relayForks=0,focusBursts=0,needleShots=0,needlePasses=0,fanExtraShots=0;
   let precisionTurns=0,focusDamage=0,gunBonusDamage=0,weakpointDamage=0,weakpointCharge=0,damageDealt=0,shotsWithContact=0;
   let waveFallMultiplier=1;
   // Isolated comparison mode: skip the initial five clear rewards with a
@@ -468,7 +470,8 @@
     DANGER_Y=H-105;SUMMON_SAFE_BOTTOM=DANGER_Y-88;canvas.height=H;shooter.y=H-37;
     WAVE_START_Y=window.innerWidth?Math.max(84,Math.ceil((document.querySelector(".topbar").getBoundingClientRect().height+28)*W/window.innerWidth)):84;
     pausedFrom=null;battleTime=0;waveReports=[];bankDamage=0;lockBackground(false);$("pauseOverlay").classList.add("hidden");
-    quickLabActive=false;quickLabRoute=null;gunTarget=null;gunStreak=0;gunLast=-99;precisionTurns=focusDamage=gunBonusDamage=weakpointDamage=weakpointCharge=damageDealt=shotsWithContact=0;build=Build.createState(initialSeed===null?Math.floor(Math.random()*4294967296):initialSeed);events=[];arcCharge=0;lastArcRelease=-99;fanClock=0;gunFlash=0;
+    quickLabActive=false;quickLabRoute=null;gunTarget=null;gunStreak=0;gunLast=-99;focusTargetId=null;focusStacks=0;focusLastAt=-99;
+    stormSweeps=0;childLocks=0;relayForks=0;focusBursts=0;needleShots=0;needlePasses=0;fanExtraShots=0;precisionTurns=focusDamage=gunBonusDamage=weakpointDamage=weakpointCharge=damageDealt=shotsWithContact=0;build=Build.createState(initialSeed===null?Math.floor(Math.random()*4294967296):initialSeed);events=[];arcCharge=0;lastArcRelease=-99;fanClock=0;gunFlash=0;
     counters={splitChildren:0,arcReleases:0,arcSingleDamage:0,budgetReclaims:0,suppressedShots:0,suppressedChildren:0,maxBallsAlive:0,wallBounces:0,shotsByBuild:{base:0,split:0,arc:0,gun:0}};
     collisionChecks=0;physicsCostMs=0;physicsSteps=0;maxPhysicsMs=0;
     wave=1;score=0;phase="ready";charge=0;elapsed=0;level=1;xp=0;xpGoal=34;
@@ -728,7 +731,7 @@
     for(let i=0;i<count;i++){
       if(balls.length>=MAX_BALLS){counters.suppressedChildren+=count-i;break;}
       const delta=count===1?.22:((i/(count-1))*2-1)*spread,child=makeBall(theta+delta,true);
-      child.x=x;child.y=y;child.pursuitLeft=Math.max(0,splitLevel-1);child.guideAt=elapsed+.16;child.huntsLeft=hunterLevel+(branch==="split-b"?Build.effects(build).childTurns:0);child.huntChild=branch==="split-b";
+      child.x=x;child.y=y;child.pursuitLeft=Math.max(0,splitLevel-1);child.guideAt=elapsed+.16;child.huntsLeft=hunterLevel+(branch==="split-b"?Build.effects(build).childTurns:0);child.huntChild=branch==="split-b";child.stormSweep=branch==="split-a";child.stormUsed=false;
       child.lastHitId=ball.lastHitId;child.lastHitLife=0;balls.push(child);made++;
     }
     if(made){splitBursts++;bonusVolleyBalls+=made;counters.splitChildren+=made;record("split",{count:made});playSfx("split");setState("场内裂变 · +"+made+"颗真实弹球");}
@@ -747,7 +750,7 @@
       const diff=Math.atan2(Math.sin(desired-current),Math.cos(desired-current));
       const next=current+clamp(diff,-.65,.65);ball.vx=Math.cos(next)*speed;ball.vy=Math.sin(next)*speed;
     }else{ball.vx=speed*dx/d;ball.vy=speed*dy/d;}ball.huntsLeft--;
-    homingTurns++;playSfx("hunt");
+    homingTurns++;if(ball.huntChild)childLocks++;playSfx("hunt");
     return true;
   }
   function fire(){
@@ -761,10 +764,23 @@
     }
     const shotNumber=++shotsFired;let offset=0;
     if(build.coreBranch==="gun-a")offset=(shotNumber%2?1:-1)*.012;
-    if(build.coreBranch==="gun-b")offset=Math.sin(fanClock*Math.PI*2/CFG.fanPeriod)*CFG.fanAngle;
+    if(build.coreBranch==="gun-b"){
+      const lane=shotNumber%6;offset=((lane%3)-1)*CFG.fanAngle*1.25;
+    }
     lastShotAngle=aim+offset;const shot=makeBall(lastShotAngle);
+    const branch=build.coreBranch;
+    if(branch==="gun-a"&&shotNumber%(build.ranks["gun-a"]>1?5:6)===0){
+      shot.needle=true;shot.needleLeft=2;needleShots++;
+    }
     if(drillLevel>0&&shotNumber%(drillLevel===1?4:3)===0){shot.drill=true;shot.drillLeft=drillLevel===1?3:5;shot.r=SHOT_HIT_RADIUS*1.35;shot.visualR=SHOT_RADIUS*1.35;powerShots++;playSfx("drill");}
-    balls.push(shot);gunFlash=.07;counters.shotsByBuild[Build.preferred(build)||'base']++;
+    balls.push(shot);
+    if(branch==="gun-b"&&shotNumber%(build.ranks["gun-b"]>1?5:6)===0&&balls.length<MAX_BALLS){
+      const flank=makeBall(aim-offset,true);
+      flank.maxLife=Math.min(flank.maxLife,CFG.gunTTL);flank.mini=false;flank.r=shot.r;flank.visualR=shot.visualR;
+      balls.push(flank);fanExtraShots++;
+      record("fan_volley",{shot:shotNumber});
+    }
+    gunFlash=.07;counters.shotsByBuild[Build.preferred(build)||'base']++;
     counters.maxBallsAlive=Math.max(counters.maxBallsAlive,balls.length);
     record("shot",{angle:+(aim+offset).toFixed(5),ttl:shot.maxLife,interval:t.interval});beep(245,.045,.011);return true;
   }
@@ -925,7 +941,7 @@
     const weak=block.isBoss&&livingCount()===1&&waveElapsed%6>=4;
     if(weak){addCharge(4);weakpointCharge+=4;} // Boss weakpoint grants extra charge, not +1 hidden damage.
     gunBonusDamage+=Math.min(pressure,Math.max(0,block.hp-1));
-    const damage=pressure+(ball.damage||Build.tuning(build).damage)+bonus+(ball.drill?drillLevel+1:0)+ball.chargeStacks;
+    const damage=pressure+(ball.damage||Build.tuning(build).damage)+bonus+(ball.drill?drillLevel+1:0)+(ball.needle?1:0)+ball.chargeStacks;
     bankDamage+=Math.min(ball.chargeStacks,Math.max(0,block.hp-(damage-ball.chargeStacks)));
     const hpBefore=block.hp;
     const destroyed=hitBrick(block,ball.drill?"drill":"normal",incoming,damage);
