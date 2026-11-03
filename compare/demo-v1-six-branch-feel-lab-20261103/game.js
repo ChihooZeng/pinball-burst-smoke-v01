@@ -183,7 +183,7 @@
   let impactHaptics=true,lastHapticAt=-10000;
   const juice=window.PinballJuice.create({W,H,reducedMotion});
   const impactMode=$("impactMode");
-  impactMode.value=reducedMotion?"off":"bold";
+  impactMode.value=reducedMotion?"off":"punchy";
   if(reducedMotion)impactMode.disabled=true;
   juice.setMode(impactMode.value);
   impactMode.addEventListener("change",()=>{
@@ -246,8 +246,8 @@
     if(now-(sfxLast[kind]??-999)<(kind==="armor"?.095:kind==="break"?.075:.12))return;
     if(kind==="armor"&&now-(sfxLast.break??-999)<.075)return;
     sfxLast[kind]=now;
-    if(kind==="armor"){beep(820,.038,.021,"sine");}
-    else if(kind==="break"){beep(580+Math.min(combo,10)*22,.065,.031,"triangle");beep(1160,.028,.018,"sine");if(combo>=5&&combo%5===0)beep(370,.085,.025,"triangle");}
+    if(kind==="armor"){beep(740,.048,.027,"triangle");if(impactMode.value==="punchy")beep(260,.036,.014,"sine");}
+    else if(kind==="break"){beep(580+Math.min(combo,10)*22,.065,.031,"triangle");beep(1160,.028,.018,"sine");if(impactMode.value==="punchy")beep(240,.045,.018,"triangle");if(combo>=5&&combo%5===0)beep(370,.085,.025,"triangle");}
     else if(kind==="shock"){beep(145,.21,.065,"sawtooth");beep(360,.11,.038);}
     else if(kind==="drill"){beep(480,.105,.043,"sawtooth");}
     else if(kind==="split"){beep(820,.12,.037);beep(1140,.07,.022);}
@@ -282,9 +282,9 @@
     $("pause").disabled=false;
     $("buffStatus").textContent=build.temporaryBuffs.map(b=>Build.BUFFS[b.id].name+" "+Math.ceil(b.remaining)+"s").join(" · ");
     const ready=phase==="playing"&&!emptyLatch&&!!build.seedAbility&&charge>=MAX_CHARGE&&!giant;
-    ui.giant.parentElement.classList.toggle("hidden",quickLabActive||!build.seedAbility);
-    ui.giant.disabled=!ready||autoSkill;ui.giant.textContent=giant?"超载中 "+Math.ceil(GIANT_LIFETIME-giant.life)+"s":autoSkill?"超载·自动 "+Math.floor(charge)+"%":ready?"超载冲锋 READY":"超载冲锋 "+Math.floor(charge)+"%";
-    const showGuide=ready&&!firstSkillUsed&&!autoSkill;$("skillGuide").classList.toggle("hidden",!showGuide);ui.giant.classList.toggle("guide-pulse",showGuide);
+    ui.giant.parentElement.classList.toggle("hidden",!build.seedAbility);
+    ui.giant.disabled=!ready||(autoSkill&&!quickLabActive);ui.giant.textContent=giant?"超载中 "+Math.ceil(GIANT_LIFETIME-giant.life)+"s":(autoSkill&&!quickLabActive)?"超载·自动 "+Math.floor(charge)+"%":ready?"超载冲锋 READY":"超载冲锋 "+Math.floor(charge)+"%";
+    const showGuide=ready&&!firstSkillUsed&&!autoSkill&&!quickLabActive;$("skillGuide").classList.toggle("hidden",!showGuide);ui.giant.classList.toggle("guide-pulse",showGuide);
     $("giantLife").classList.toggle("hidden",!giant);
     $("giantTimeText").textContent=giant?Math.max(0,GIANT_LIFETIME-giant.life).toFixed(1)+"s":"0.0s";
     $("giantTimeFill").style.width=giant?Math.max(0,(GIANT_LIFETIME-giant.life)/GIANT_LIFETIME*100)+"%":"0%";
@@ -528,12 +528,12 @@
       if(!Build.choose(build,picks[i],i+1))throw Error("Quick lab illegal upgrade at wave "+(i+1)+": "+picks[i]);
     }
     syncBuild();screenClears=targetWave-1;level=targetWave;waveUpgrades=targetWave-1;
-    choiceQueue=0;choiceSet=[];balls=[];giant=null;charge=0;
+    choiceQueue=0;choiceSet=[];balls=[];giant=null;charge=100;
     quickLabActive=true;quickLabRoute=route;phase="playing";
     $("startOverlay").classList.add("hidden");ui.choice.classList.add("hidden");ui.win.classList.add("hidden");
     unlockSound();spawnWave(targetWave);shootClock=Build.tuning(build).interval-CFG.firstShot;
     record("quick_lab_start",{route,targetWave,simulatedUpgrades:picks,excludedFromNormalRecords:true});
-    setState("第"+targetWave+"波 · "+Build.DEFS[route].name+"专精速测 · 已配置"+picks.length+"次成长，不使用超载");
+    setState("第"+targetWave+"波 · "+Build.DEFS[route].name+"速测 · 巨型球已充能，可手动释放");
     updateUI();return true;
   }
   function returnToQuickMenu(){reset();return true;}
@@ -792,7 +792,7 @@
     record("shot",{angle:+(aim+offset).toFixed(5),ttl:shot.maxLife,interval:t.interval});beep(245,.045,.011);return true;
   }
   function fireGiant() {
-    if (phase !== "playing" || quickLabActive || !build.seedAbility || emptyLatch || charge < selectedActive.maxCharge || giant || selectedActive.kind!=="giant") return false;
+    if (phase !== "playing" || !build.seedAbility || emptyLatch || charge < selectedActive.maxCharge || giant || selectedActive.kind!=="giant") return false;
     unlockSound();
     charge=0;skillsUsed++;markSkillUsed();
     giant={x:shooter.x,y:shooter.y-27,
