@@ -80,7 +80,7 @@
   if(id==='hunter')return `每球${e.hunter}次侧墙后追猎`;
   if(id==='drill')return `每${e.drillEvery}发一颗穿透球，${e.drillPierces}次穿透、额外${e.drillDamage}伤害`;
   if(id==='shock')return `直接击碎${e.shockEvery}块（穿透球${n===1?3:2}块）震荡${e.shockTargets}目标×${e.shockDamage}伤害`;
-  if(DEFS[id].role==='branch')return {'split-a':'裂变子球首次撞砖后横向回旋追击另一块砖','split-b':'子球生成后主动追猎护甲目标，撞墙继续校正','arc-a':'击碎目标后闪电向两侧分叉，逐块传导','arc-b':'同一目标累计3次直接命中后集中爆发放电','gun-a':'每6发获得一颗可穿越2块砖的贯穿弹','gun-b':'扇面轮换扫射，每6发补一颗对侧齐射弹'}[id];
+  if(DEFS[id].role==='branch')return {'split-a':'裂变子球首次撞砖后横向回旋追击另一块砖','split-b':'子球生成后主动追猎护甲目标，撞墙继续校正','arc-a':'击碎目标后闪电向两侧分叉，逐块传导','arc-b':'累计3次直接命中后集中打击附近Boss或最高耐久砖','gun-a':'每6发获得一颗可穿越2块砖的贯穿弹','gun-b':'扇面轮换扫射，每6发补一颗对侧齐射弹'}[id];
   return {rate:`总射速${fmt(1/e.interval)}发/秒`,power:`总撞击伤害${e.damage}`,speed:`球速${e.speed}`,life:`留场${fmt(e.ttl)}秒`}[id]||'';
  }
  function card(s,id){
@@ -93,7 +93,7 @@
   'split-a':'裂变子球首次撞砖后横向回旋追击另一块砖（互斥）',
   'split-b':'裂变子球生成后主动寻找护甲目标，撞墙继续追猎（互斥）',
   'arc-a':'击碎砖块后电弧分叉，沿不同目标逐个传播（互斥）',
-  'arc-b':'同目标连续命中3次积蓄电荷，集中爆发（互斥）',
+  'arc-b':'累计3次直接命中蓄满电荷，自动重击附近Boss或厚甲砖（互斥）',
   'gun-a':'高速直射每6发穿阵弹，可穿越2块砖（互斥）',
   'gun-b':'高速扇面扫射，每6发增加对侧齐射（互斥）'
  }[id]};
