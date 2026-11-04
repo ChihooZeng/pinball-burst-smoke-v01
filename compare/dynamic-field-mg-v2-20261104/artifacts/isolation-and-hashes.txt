@@ -1,0 +1,20 @@
+branch: experiment/dynamic-field-mg-20261104
+base commit (published V1): 2fcd66349654f31fa56c1bf725cb7d9683b4a94a
+base tree: 8724940eb8e11d5b350f0fe847e3fe0a37a4d572
+frozen commit: 96f5d8482f0722bace6f471d441e2ee421c4d2f0
+
+V1 source sha256 (should remain unchanged):
+14893f1c28ea482ba3bd413b48e47c6a7d4b2f5af4c6a36e225a16b37c63bce7  compare/six-mechanic-lab-v1-20261104/index.html
+72ddd2e2686c980b4cfead4e88d89b9512c72cf23cd7907ed1995bb0d29d6c25  compare/six-mechanic-lab-v1-20261104/game.js
+db61d6d25a68bcd6d5425150fffa08f152d67cc56e116cd72939111c0fb286ce  compare/six-mechanic-lab-v1-20261104/lab-config.js
+1be2c1a852770cd860af44b1a5f4323355358fd1e0ffaf666ea9a5dca7456967  compare/six-mechanic-lab-v1-20261104/style.css
+
+frozen baseline sha256:
+5fbfc0f57c14fcab046bba720a159fee02ffebc13f9c6ea30e74687b1b693391  compare/core-foundation-baseline-20261103/index.html
+0722df87c71a1d01ee15f794cf0b8bf57908ea85235b06ac207e95f1eba72efa  compare/core-foundation-baseline-20261103/game.js
+b10e8482b3f4615039645f850ccf602f8ebc1ad131e281cf22928eeb892fa8ad  compare/core-foundation-baseline-20261103/builds.js
+f36bae8a163093e9fda1bca63b784c17f6206f9666fd78ebde14edf6e33a7d2d  compare/core-foundation-baseline-20261103/juice-fx.js
+a4e7d76377bfa87310e8a60786f3d084e626b5b92901a54ae64e36561c0e049c  compare/core-foundation-baseline-20261103/style.css
+
+git diff --stat for frozen/V1/demo at this branch point:
+(empty above = untouched)

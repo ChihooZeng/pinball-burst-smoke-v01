@@ -1,0 +1,483 @@
+{
+  "base": "http://127.0.0.1:4185/",
+  "sizes": [
+    {
+      "size": {
+        "name": "iPhoneSE",
+        "w": 375,
+        "h": 667,
+        "dpr": 2
+      },
+      "menu": {
+        "iw": 375,
+        "ih": 667,
+        "sw": 375,
+        "sh": 667,
+        "start": {
+          "y": 346.3,
+          "h": 39,
+          "bottom": 385.3
+        },
+        "lastMode": {
+          "y": 177.7,
+          "h": 36,
+          "bottom": 213.7
+        },
+        "lastField": {
+          "y": 252.7,
+          "h": 44,
+          "bottom": 296.7
+        },
+        "modes": 4,
+        "fields": 3
+      },
+      "play": {
+        "iw": 375,
+        "ih": 667,
+        "sw": 375,
+        "sh": 667,
+        "canvas": {
+          "y": 0,
+          "h": 667,
+          "bottom": 667
+        },
+        "hud": {
+          "y": 50,
+          "h": 17.3,
+          "bottom": 67.3
+        },
+        "giant": {
+          "y": 0,
+          "h": 0,
+          "bottom": 0
+        },
+        "status": {
+          "y": 631,
+          "h": 30,
+          "bottom": 661
+        },
+        "phase": "playing",
+        "balls": 20,
+        "peak": 20,
+        "startHidden": true
+      },
+      "resize": {
+        "phase": "playing",
+        "sw": 375
+      },
+      "touch": {
+        "before": 0,
+        "after": -0.54,
+        "changed": true
+      },
+      "pause": {
+        "hidden": false,
+        "overlay": {
+          "y": 8,
+          "h": 651,
+          "bottom": 659
+        },
+        "restart": {
+          "y": 580.6,
+          "h": 44,
+          "bottom": 624.6
+        },
+        "menu": {
+          "y": 580.6,
+          "h": 44,
+          "bottom": 624.6
+        },
+        "sub": "动态砖阵实验 · M1 极速直线机枪 · A 顶部下落 · dynamic-field-mg-v2-20261104"
+      }
+    },
+    {
+      "size": {
+        "name": "iPhone12",
+        "w": 390,
+        "h": 844,
+        "dpr": 3
+      },
+      "menu": {
+        "iw": 390,
+        "ih": 844,
+        "sw": 390,
+        "sh": 844,
+        "start": {
+          "y": 408,
+          "h": 39,
+          "bottom": 447
+        },
+        "lastMode": {
+          "y": 216,
+          "h": 40.4,
+          "bottom": 256.4
+        },
+        "lastField": {
+          "y": 304.4,
+          "h": 44,
+          "bottom": 348.4
+        },
+        "modes": 4,
+        "fields": 3
+      },
+      "play": {
+        "iw": 390,
+        "ih": 844,
+        "sw": 390,
+        "sh": 844,
+        "canvas": {
+          "y": 0,
+          "h": 844,
+          "bottom": 844
+        },
+        "hud": {
+          "y": 50,
+          "h": 17.3,
+          "bottom": 67.3
+        },
+        "giant": {
+          "y": 0,
+          "h": 0,
+          "bottom": 0
+        },
+        "status": {
+          "y": 808,
+          "h": 30,
+          "bottom": 838
+        },
+        "phase": "playing",
+        "balls": 23,
+        "peak": 23,
+        "startHidden": true
+      },
+      "resize": {
+        "phase": "playing",
+        "sw": 390
+      },
+      "touch": {
+        "before": 0,
+        "after": -0.54,
+        "changed": true
+      },
+      "pause": {
+        "hidden": false,
+        "overlay": {
+          "y": 8,
+          "h": 828,
+          "bottom": 836
+        },
+        "restart": {
+          "y": 602.9,
+          "h": 44,
+          "bottom": 646.9
+        },
+        "menu": {
+          "y": 602.9,
+          "h": 44,
+          "bottom": 646.9
+        },
+        "sub": "动态砖阵实验 · M1 极速直线机枪 · A 顶部下落 · dynamic-field-mg-v2-20261104"
+      }
+    },
+    {
+      "size": {
+        "name": "iPhone14ProMax",
+        "w": 430,
+        "h": 932,
+        "dpr": 3
+      },
+      "menu": {
+        "iw": 430,
+        "ih": 932,
+        "sw": 430,
+        "sh": 932,
+        "start": {
+          "y": 408,
+          "h": 39,
+          "bottom": 447
+        },
+        "lastMode": {
+          "y": 216,
+          "h": 40.4,
+          "bottom": 256.4
+        },
+        "lastField": {
+          "y": 304.4,
+          "h": 44,
+          "bottom": 348.4
+        },
+        "modes": 4,
+        "fields": 3
+      },
+      "play": {
+        "iw": 430,
+        "ih": 932,
+        "sw": 430,
+        "sh": 932,
+        "canvas": {
+          "y": 0,
+          "h": 932,
+          "bottom": 932
+        },
+        "hud": {
+          "y": 50,
+          "h": 17.3,
+          "bottom": 67.3
+        },
+        "giant": {
+          "y": 0,
+          "h": 0,
+          "bottom": 0
+        },
+        "status": {
+          "y": 896,
+          "h": 30,
+          "bottom": 926
+        },
+        "phase": "playing",
+        "balls": 23,
+        "peak": 23,
+        "startHidden": true
+      },
+      "resize": {
+        "phase": "playing",
+        "sw": 430
+      },
+      "touch": {
+        "before": 0,
+        "after": -0.54,
+        "changed": true
+      },
+      "pause": {
+        "hidden": false,
+        "overlay": {
+          "y": 8,
+          "h": 916,
+          "bottom": 924
+        },
+        "restart": {
+          "y": 602.9,
+          "h": 44,
+          "bottom": 646.9
+        },
+        "menu": {
+          "y": 602.9,
+          "h": 44,
+          "bottom": 646.9
+        },
+        "sub": "动态砖阵实验 · M1 极速直线机枪 · A 顶部下落 · dynamic-field-mg-v2-20261104"
+      }
+    },
+    {
+      "size": {
+        "name": "Android360",
+        "w": 360,
+        "h": 640,
+        "dpr": 3
+      },
+      "menu": {
+        "iw": 360,
+        "ih": 640,
+        "sw": 360,
+        "sh": 640,
+        "start": {
+          "y": 346.3,
+          "h": 39,
+          "bottom": 385.3
+        },
+        "lastMode": {
+          "y": 177.7,
+          "h": 36,
+          "bottom": 213.7
+        },
+        "lastField": {
+          "y": 252.7,
+          "h": 44,
+          "bottom": 296.7
+        },
+        "modes": 4,
+        "fields": 3
+      },
+      "play": {
+        "iw": 360,
+        "ih": 640,
+        "sw": 360,
+        "sh": 640,
+        "canvas": {
+          "y": 0,
+          "h": 640,
+          "bottom": 640
+        },
+        "hud": {
+          "y": 50,
+          "h": 17.3,
+          "bottom": 67.3
+        },
+        "giant": {
+          "y": 0,
+          "h": 0,
+          "bottom": 0
+        },
+        "status": {
+          "y": 604,
+          "h": 30,
+          "bottom": 634
+        },
+        "phase": "playing",
+        "balls": 20,
+        "peak": 20,
+        "startHidden": true
+      },
+      "resize": {
+        "phase": "playing",
+        "sw": 360
+      },
+      "touch": {
+        "before": 0,
+        "after": -0.54,
+        "changed": true
+      },
+      "pause": {
+        "hidden": false,
+        "overlay": {
+          "y": 8,
+          "h": 624,
+          "bottom": 632
+        },
+        "restart": {
+          "y": 580.6,
+          "h": 44,
+          "bottom": 624.6
+        },
+        "menu": {
+          "y": 580.6,
+          "h": 44,
+          "bottom": 624.6
+        },
+        "sub": "动态砖阵实验 · M1 极速直线机枪 · A 顶部下落 · dynamic-field-mg-v2-20261104"
+      }
+    },
+    {
+      "size": {
+        "name": "Pixel412",
+        "w": 412,
+        "h": 915,
+        "dpr": 2.6
+      },
+      "menu": {
+        "iw": 412,
+        "ih": 915,
+        "sw": 412,
+        "sh": 915,
+        "start": {
+          "y": 408,
+          "h": 39,
+          "bottom": 447
+        },
+        "lastMode": {
+          "y": 216,
+          "h": 40.4,
+          "bottom": 256.4
+        },
+        "lastField": {
+          "y": 304.4,
+          "h": 44,
+          "bottom": 348.4
+        },
+        "modes": 4,
+        "fields": 3
+      },
+      "play": {
+        "iw": 412,
+        "ih": 915,
+        "sw": 412,
+        "sh": 915,
+        "canvas": {
+          "y": 0,
+          "h": 915,
+          "bottom": 915
+        },
+        "hud": {
+          "y": 50,
+          "h": 17.3,
+          "bottom": 67.3
+        },
+        "giant": {
+          "y": 0,
+          "h": 0,
+          "bottom": 0
+        },
+        "status": {
+          "y": 879,
+          "h": 30,
+          "bottom": 909
+        },
+        "phase": "playing",
+        "balls": 23,
+        "peak": 23,
+        "startHidden": true
+      },
+      "resize": {
+        "phase": "playing",
+        "sw": 412
+      },
+      "touch": {
+        "before": 0,
+        "after": -0.5403278688524591,
+        "changed": true
+      },
+      "pause": {
+        "hidden": false,
+        "overlay": {
+          "y": 8,
+          "h": 899,
+          "bottom": 907
+        },
+        "restart": {
+          "y": 602.9,
+          "h": 44,
+          "bottom": 646.9
+        },
+        "menu": {
+          "y": 602.9,
+          "h": 44,
+          "bottom": 646.9
+        },
+        "sub": "动态砖阵实验 · M1 极速直线机枪 · A 顶部下落 · dynamic-field-mg-v2-20261104"
+      }
+    }
+  ],
+  "notch": {
+    "hud": {
+      "y": 97,
+      "h": 17.3,
+      "bottom": 114.3
+    },
+    "topbar": {
+      "y": 0,
+      "h": 95,
+      "bottom": 95
+    },
+    "brickLogicalY": 135.46037708333338,
+    "brickCssY": 146.8,
+    "canvas": {
+      "y": 0,
+      "h": 844,
+      "bottom": 844
+    },
+    "giant": {
+      "y": 746,
+      "h": 64,
+      "bottom": 810
+    },
+    "status": {
+      "y": 780,
+      "h": 30,
+      "bottom": 810
+    },
+    "sw": 390,
+    "iw": 390,
+    "phase": "playing"
+  },
+  "errors": []
+}
