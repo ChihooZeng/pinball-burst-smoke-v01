@@ -1,0 +1,13 @@
+branch: experiment/six-mechanic-lab-20261104
+base HEAD before lab commit: 96f5d8482f0722bace6f471d441e2ee421c4d2f0
+frozen commit: 96f5d8482f0722bace6f471d441e2ee421c4d2f0
+
+frozen baseline sha256:
+5fbfc0f57c14fcab046bba720a159fee02ffebc13f9c6ea30e74687b1b693391  compare/core-foundation-baseline-20261103/index.html
+0722df87c71a1d01ee15f794cf0b8bf57908ea85235b06ac207e95f1eba72efa  compare/core-foundation-baseline-20261103/game.js
+b10e8482b3f4615039645f850ccf602f8ebc1ad131e281cf22928eeb892fa8ad  compare/core-foundation-baseline-20261103/builds.js
+f36bae8a163093e9fda1bca63b784c17f6206f9666fd78ebde14edf6e33a7d2d  compare/core-foundation-baseline-20261103/juice-fx.js
+a4e7d76377bfa87310e8a60786f3d084e626b5b92901a54ae64e36561c0e049c  compare/core-foundation-baseline-20261103/style.css
+
+git diff --stat (tracked) for frozen/demo:
+(empty above = untouched)

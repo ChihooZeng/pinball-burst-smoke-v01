@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no"/>
+  <meta name="theme-color" content="#08182b"/>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%2212%22 fill=%22%2308192a%22 stroke=%22%2366ebf2%22 stroke-width=%223%22/%3E%3C/svg%3E"/>
+  <title>弹珠超载 · 六机制实验 V1</title>
+  <link rel="stylesheet" href="./style.css?v=six-mechanic-lab-3"/>
+</head>
+<body class="quick-lab-page lab-page">
+  <main class="shell">
+    <header class="topbar"><div class="combat-summary"><span id="waveLabel">六机制实验</span><span id="xpLabel">选择实验组开始</span></div><button id="pause" class="icon-btn" aria-label="设置与暂停" type="button">⚙</button></header>
+    <section class="arena">
+      <canvas id="game" width="360" height="560" aria-label="弹珠超载：拖动控制炮台方向，六机制实验"></canvas>
+      <div id="finalRushLabel" class="floating-label" role="status"></div>
+      <div class="lab-hud" id="labHud" aria-live="polite">
+        <span id="labHudMode">无技能对照</span><span id="labHudScenario">密集</span>
+        <span>球 <b id="labHudBalls">0/48</b></span><span><b id="labHudFps">FPS --</b></span>
+        <span id="labHudMeter">伤害 1</span>
+        <span class="lab-hud-detail">合体 <b id="labHudMerge">0/8</b></span><span class="lab-hud-detail">过载 <b id="labHudOverload">0/7</b></span>
+        <span class="lab-hud-detail">倾泻 <b id="labHudBarrage">0/6</b></span><span class="lab-hud-detail">电极 <b id="labHudElectrodes">0/5</b></span>
+      </div>
+      <div class="boss-hud hidden" id="bossHud"><div><span>核心 BOSS</span><strong id="bossText">60 / 60</strong></div><div class="boss-track"><div id="bossFill"></div></div></div>
+      <div class="ult-wrap"><div id="skillGuide" class="skill-guide hidden" role="status">巨型球充能完成后自动释放</div><button id="giant" class="auto-status" type="button" disabled aria-label="巨型球自动充能状态">巨型球 · 自动 0%</button></div>
+
+      <div class="overlay" id="startOverlay" role="dialog" aria-modal="true" aria-labelledby="startTitle">
+        <small class="label">SIX-MECHANIC LAB · V1 · 20261104</small>
+        <h2 id="startTitle">弹珠超载 · 六机制实验</h2>
+        <p>单指拖动瞄准，普通弹球自动发射。先选一种实验组，再选固定场景；同一场景只切换技能，便于对照。所有数值是可调试玩初值，不是正式平衡。</p>
+        <section class="lab-picker" aria-label="实验组选择">
+          <strong>① 选择实验组</strong>
+          <div class="lab-mode-grid" id="labModeGrid">
+            <button type="button" class="lab-mode" id="lab-mode-none" data-mode="none"><b>无技能对照</b><span>BASE · 只保留基础炮台</span></button>
+            <button type="button" class="lab-mode" id="lab-mode-S1" data-mode="S1"><b>S1 砖块开花</b><span>击碎后喷出短寿命子球</span></button>
+            <button type="button" class="lab-mode" id="lab-mode-S2" data-mode="S2"><b>S2 弹珠合体</b><span>命中积攒，下一发冲锋球</span></button>
+            <button type="button" class="lab-mode" id="lab-mode-S3" data-mode="S3"><b>S3 引雷针</b><span>命中布电极，连线放电</span></button>
+            <button type="button" class="lab-mode" id="lab-mode-S4" data-mode="S4"><b>S4 过载短路</b><span>命中蓄能，局部冲击波</span></button>
+            <button type="button" class="lab-mode" id="lab-mode-S5" data-mode="S5"><b>S5 双炮交火</b><span>左右炮口交替交叉射击</span></button>
+            <button type="button" class="lab-mode" id="lab-mode-S6" data-mode="S6"><b>S6 弹幕倾泻</b><span>命中蓄势，短时快速连射</span></button>
+            <button type="button" class="lab-mode" id="lab-mode-C1" data-mode="C1"><b>C1 雷花风暴</b><span>S1+S3 · 子球布微电极</span></button>
+            <button type="button" class="lab-mode" id="lab-mode-C2" data-mode="C2"><b>C2 超载雷核</b><span>S2+S4 · 冲锋球带雷核</span></button>
+            <button type="button" class="lab-mode" id="lab-mode-C3" data-mode="C3"><b>C3 交错火线</b><span>S5+S6 · 倾泻时左右夹击</span></button>
+          </div>
+        </section>
+        <section class="lab-picker" aria-label="场景选择">
+          <strong>② 选择固定场景</strong>
+          <div class="lab-scenario-grid">
+            <button type="button" class="lab-scenario" id="lab-scenario-dense" data-scenario="dense"><b>密集低HP</b><span>成片破坏</span></button>
+            <button type="button" class="lab-scenario" id="lab-scenario-sparse" data-scenario="sparse"><b>稀疏高HP</b><span>单体压制</span></button>
+            <button type="button" class="lab-scenario" id="lab-scenario-pressure" data-scenario="pressure"><b>增援+下落</b><span>真实压力</span></button>
+          </div>
+          <small id="labScenarioDesc" class="lab-desc"></small>
+        </section>
+        <div class="lab-current">当前：<b id="labSelection">无技能对照 · 密集低HP</b></div>
+        <button class="cta" id="labStartBtn" type="button">开始实验</button>
+        <small class="overlay-tip">保留自动发射、拖动瞄准、真实砖块HP、原有巨型球；普通球伤害固定 1。实验参数见 lab-config.js。</small>
+      </div>
+
+      <div class="overlay hidden" id="labResult" role="dialog" aria-modal="true" aria-labelledby="labResultTitle">
+        <div class="start-icon">✦</div><small class="label">LAB RESULT</small>
+        <h2 id="labResultTitle">场景清空</h2>
+        <p id="labResultReason"></p>
+        <p id="labResultStats" class="lab-result-stats"></p>
+        <button class="cta" id="labResultRestart" type="button">重开当前场景</button>
+        <button class="lab-menu-button" id="labResultMenu" type="button">返回实验菜单</button>
+      </div>
+
+      <div class="overlay hidden" id="choiceOverlay" role="dialog" aria-modal="true" aria-labelledby="choiceTitle">
+        <small id="choiceWave" class="label">LEVEL UP!</small>
+        <h2 id="choiceTitle">选择一次强化</h2>
+        <div id="upgradeOptions" class="upgrade-options">
+          <button id="choice0" class="upgrade-card" type="button"><b id="choiceTitle0">射速训练</b><span id="choiceDesc0">缩短发射间隔</span></button>
+          <button id="choice1" class="upgrade-card" type="button"><b id="choiceTitle1">弹速训练</b><span id="choiceDesc1">弹球速度小幅提升</span></button>
+          <button id="choice2" class="upgrade-card" type="button"><b id="choiceTitle2">弹跳续航</b><span id="choiceDesc2">弹球留场时间延长</span></button>
+        </div>
+        <small class="overlay-tip">实验页不进入正式升级树。</small>
+      </div>
+
+      <div class="overlay hidden" id="pauseOverlay" role="dialog" aria-modal="true" aria-labelledby="pauseTitle">
+        <div class="pause-heading"><div><small class="label">SETTINGS / LAB</small><h2 id="pauseTitle">设置 · 实验信息</h2><p id="pauseSubtitle"></p></div><button id="resume" class="cta" type="button">继续</button></div>
+        <div class="pause-scroll" tabindex="0">
+          <h3>实验状态</h3><p id="labPauseStats"></p>
+          <h3>单手操作</h3><label>技能按钮位置 <select id="skillSide" aria-label="技能按钮位置"><option value="right">右下角 · 右手</option><option value="left">左下角 · 左手</option></select></label><p class="one-hand-tip">只控制瞄准方向：普通炮台持续自动射击，巨型球满能量自动释放。实验技能的触发与预算见下方。</p>
+          <h3>声音与画面</h3><div class="sound-controls"><span id="soundValue">78%</span><input id="soundVolume" type="range" min="0" max="100" value="78" aria-label="音量"><button id="soundTest" class="icon-btn" aria-label="试听声音" type="button">♪</button></div>
+          <label>特效强度 <select id="impactMode" aria-label="特效强度"><option value="snap">脆击重做 · 默认（压缩反弹）</option><option value="punchy">上一版 · 强化击中</option><option value="bold">B版 · 轻快（对照）</option><option value="balanced">B版 · 更轻</option><option value="off">关闭</option></select></label><label class="auto-skill-label"><input type="checkbox" id="impactHaptic" checked/> 手机振动反馈（支持的安卓浏览器）</label>
+          <p class="one-hand-tip">普通碰撞不振动，重要连击、超载和 Boss 才触发短振动；iPhone网页端主要依靠画面与音效反馈。</p><p id="fpsStat">FPS --</p>
+          <button id="labRestartBtn" class="export-btn" type="button">重开当前实验</button>
+          <button id="labMenuBtn" class="export-btn lab-menu-button" type="button">返回实验菜单</button>
+          <button id="reset" class="export-btn" type="button">重新开始</button>
+          <h3>炮台总属性</h3><p id="buildStats"></p>
+          <h3>当前能力</h3><p id="buildSkills"></p>
+          <h3>临时增幅</h3><p id="buildBuffs"></p>
+          <h3>最近一次成长</h3><p id="lastUpgrade"></p>
+          <details><summary>完整成长记录</summary><p id="buildHistory"></p></details>
+          <button id="exportRun" class="export-btn" type="button">下载本局试玩记录</button>
+        </div>
+      </div>
+
+      <div class="overlay hidden" id="winOverlay" role="dialog" aria-modal="true" aria-labelledby="winTitle">
+        <div class="start-icon">✦</div><small class="label">RUN COMPLETE</small>
+        <h2 id="winTitle">砖阵触及警戒线</h2>
+        <p id="finalStats"></p>
+        <button class="cta" id="again" type="button">重新挑战</button><button id="quickMenuEnd" class="lab-menu-button" type="button">返回实验菜单</button>
+      </div>
+    </section>
+    <div class="combat-status"><span id="buffStatus"></span><span id="stateText"></span></div>
+    <div class="legacy-hidden" aria-hidden="true"><span id="wave"></span><span id="score"></span><span id="rate"></span><span id="balls"></span><span id="xpFill"></span><span id="chargeText"></span><span id="energyFill"></span><span id="buildText"></span><span id="loadoutLabel"></span>
+      <div id="giantLife" class="hidden"><span id="giantTimeText"></span><div id="giantTimeFill"></div></div>
+      <div id="previewBox" class="hidden"><select id="previewStage"><option value="finale">最终</option></select><button id="previewFinale"></button></div>
+      <div id="pickHunter"></div><div id="pickBounce"></div><div id="pickSplit"></div><div id="pickChain"></div><div id="pickPierce"></div><div id="pickArc"></div>
+      <div id="hunterDetails"></div><div id="bounceDetails"></div><div id="splitDetails"></div><div id="chainDetails"></div><div id="pierceDetails"></div><div id="arcDetails"></div>
+      <button id="start" type="button">start</button>
+      <button id="quickMenuPause" type="button">menu</button>
+    </div>
+  </main>
+  <script>if(new URLSearchParams(location.search).get("test")==="1")window.__PINBALL_TEST__=true;</script><script src="./juice-fx.js?v=six-mechanic-lab-3" defer></script><script src="./builds.js?v=six-mechanic-lab-3" defer></script><script src="./lab-config.js?v=six-mechanic-lab-3" defer></script><script src="./game.js?v=six-mechanic-lab-3" defer></script>
+</body>
+</html>

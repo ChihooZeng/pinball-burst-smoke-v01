@@ -1,0 +1,453 @@
+{
+  "base": "http://127.0.0.1:4184/",
+  "sizes": [
+    {
+      "size": {
+        "name": "iPhoneSE",
+        "w": 375,
+        "h": 667,
+        "dpr": 2
+      },
+      "menu": {
+        "iw": 375,
+        "ih": 667,
+        "sw": 375,
+        "sh": 667,
+        "start": {
+          "y": 469.3,
+          "h": 39,
+          "bottom": 508.3
+        },
+        "lastMode": {
+          "y": 300.7,
+          "h": 36,
+          "bottom": 336.7
+        },
+        "modes": 10,
+        "selected": "无技能对照 · 密集低HP"
+      },
+      "play": {
+        "iw": 375,
+        "ih": 667,
+        "sw": 375,
+        "sh": 667,
+        "canvas": {
+          "y": 0,
+          "h": 667,
+          "bottom": 667
+        },
+        "hud": {
+          "y": 50,
+          "h": 17.3,
+          "bottom": 67.3
+        },
+        "giant": {
+          "y": 587,
+          "h": 64,
+          "bottom": 651
+        },
+        "status": {
+          "y": 631,
+          "h": 30,
+          "bottom": 661
+        },
+        "phase": "playing",
+        "startHidden": true
+      },
+      "resize": {
+        "phase": "playing",
+        "sw": 375
+      },
+      "touch": {
+        "before": 0,
+        "after": -0.54,
+        "changed": true
+      },
+      "pause": {
+        "hidden": false,
+        "overlay": {
+          "y": 8,
+          "h": 651,
+          "bottom": 659
+        },
+        "scrollH": 649,
+        "restart": {
+          "y": 580.6,
+          "h": 44,
+          "bottom": 624.6
+        },
+        "menu": {
+          "y": 580.6,
+          "h": 44,
+          "bottom": 624.6
+        },
+        "sub": "六机制实验 · S1 砖块开花 · 密集低HP · 参数版本 six-mechanic-lab-v1-20261104"
+      }
+    },
+    {
+      "size": {
+        "name": "iPhone12",
+        "w": 390,
+        "h": 844,
+        "dpr": 3
+      },
+      "menu": {
+        "iw": 390,
+        "ih": 844,
+        "sw": 390,
+        "sh": 844,
+        "start": {
+          "y": 561.4,
+          "h": 39,
+          "bottom": 600.4
+        },
+        "lastMode": {
+          "y": 369.3,
+          "h": 40.4,
+          "bottom": 409.8
+        },
+        "modes": 10,
+        "selected": "无技能对照 · 密集低HP"
+      },
+      "play": {
+        "iw": 390,
+        "ih": 844,
+        "sw": 390,
+        "sh": 844,
+        "canvas": {
+          "y": 0,
+          "h": 844,
+          "bottom": 844
+        },
+        "hud": {
+          "y": 50,
+          "h": 17.3,
+          "bottom": 67.3
+        },
+        "giant": {
+          "y": 764,
+          "h": 64,
+          "bottom": 828
+        },
+        "status": {
+          "y": 808,
+          "h": 30,
+          "bottom": 838
+        },
+        "phase": "playing",
+        "startHidden": true
+      },
+      "resize": {
+        "phase": "playing",
+        "sw": 390
+      },
+      "touch": {
+        "before": 0,
+        "after": -0.54,
+        "changed": true
+      },
+      "pause": {
+        "hidden": false,
+        "overlay": {
+          "y": 8,
+          "h": 828,
+          "bottom": 836
+        },
+        "scrollH": 826,
+        "restart": {
+          "y": 602.9,
+          "h": 44,
+          "bottom": 646.9
+        },
+        "menu": {
+          "y": 602.9,
+          "h": 44,
+          "bottom": 646.9
+        },
+        "sub": "六机制实验 · S1 砖块开花 · 密集低HP · 参数版本 six-mechanic-lab-v1-20261104"
+      }
+    },
+    {
+      "size": {
+        "name": "iPhone14ProMax",
+        "w": 430,
+        "h": 932,
+        "dpr": 3
+      },
+      "menu": {
+        "iw": 430,
+        "ih": 932,
+        "sw": 430,
+        "sh": 932,
+        "start": {
+          "y": 561.4,
+          "h": 39,
+          "bottom": 600.4
+        },
+        "lastMode": {
+          "y": 369.3,
+          "h": 40.4,
+          "bottom": 409.8
+        },
+        "modes": 10,
+        "selected": "无技能对照 · 密集低HP"
+      },
+      "play": {
+        "iw": 430,
+        "ih": 932,
+        "sw": 430,
+        "sh": 932,
+        "canvas": {
+          "y": 0,
+          "h": 932,
+          "bottom": 932
+        },
+        "hud": {
+          "y": 50,
+          "h": 17.3,
+          "bottom": 67.3
+        },
+        "giant": {
+          "y": 852,
+          "h": 64,
+          "bottom": 916
+        },
+        "status": {
+          "y": 896,
+          "h": 30,
+          "bottom": 926
+        },
+        "phase": "playing",
+        "startHidden": true
+      },
+      "resize": {
+        "phase": "playing",
+        "sw": 430
+      },
+      "touch": {
+        "before": 0,
+        "after": -0.54,
+        "changed": true
+      },
+      "pause": {
+        "hidden": false,
+        "overlay": {
+          "y": 8,
+          "h": 916,
+          "bottom": 924
+        },
+        "scrollH": 914,
+        "restart": {
+          "y": 602.9,
+          "h": 44,
+          "bottom": 646.9
+        },
+        "menu": {
+          "y": 602.9,
+          "h": 44,
+          "bottom": 646.9
+        },
+        "sub": "六机制实验 · S1 砖块开花 · 密集低HP · 参数版本 six-mechanic-lab-v1-20261104"
+      }
+    },
+    {
+      "size": {
+        "name": "Android360",
+        "w": 360,
+        "h": 640,
+        "dpr": 3
+      },
+      "menu": {
+        "iw": 360,
+        "ih": 640,
+        "sw": 360,
+        "sh": 640,
+        "start": {
+          "y": 469.3,
+          "h": 39,
+          "bottom": 508.3
+        },
+        "lastMode": {
+          "y": 300.7,
+          "h": 36,
+          "bottom": 336.7
+        },
+        "modes": 10,
+        "selected": "无技能对照 · 密集低HP"
+      },
+      "play": {
+        "iw": 360,
+        "ih": 640,
+        "sw": 360,
+        "sh": 640,
+        "canvas": {
+          "y": 0,
+          "h": 640,
+          "bottom": 640
+        },
+        "hud": {
+          "y": 50,
+          "h": 17.3,
+          "bottom": 67.3
+        },
+        "giant": {
+          "y": 560,
+          "h": 64,
+          "bottom": 624
+        },
+        "status": {
+          "y": 604,
+          "h": 30,
+          "bottom": 634
+        },
+        "phase": "playing",
+        "startHidden": true
+      },
+      "resize": {
+        "phase": "playing",
+        "sw": 360
+      },
+      "touch": {
+        "before": 0,
+        "after": -0.54,
+        "changed": true
+      },
+      "pause": {
+        "hidden": false,
+        "overlay": {
+          "y": 8,
+          "h": 624,
+          "bottom": 632
+        },
+        "scrollH": 622,
+        "restart": {
+          "y": 580.6,
+          "h": 44,
+          "bottom": 624.6
+        },
+        "menu": {
+          "y": 580.6,
+          "h": 44,
+          "bottom": 624.6
+        },
+        "sub": "六机制实验 · S1 砖块开花 · 密集低HP · 参数版本 six-mechanic-lab-v1-20261104"
+      }
+    },
+    {
+      "size": {
+        "name": "Pixel412",
+        "w": 412,
+        "h": 915,
+        "dpr": 2.6
+      },
+      "menu": {
+        "iw": 412,
+        "ih": 915,
+        "sw": 412,
+        "sh": 915,
+        "start": {
+          "y": 561.4,
+          "h": 39,
+          "bottom": 600.4
+        },
+        "lastMode": {
+          "y": 369.3,
+          "h": 40.4,
+          "bottom": 409.8
+        },
+        "modes": 10,
+        "selected": "无技能对照 · 密集低HP"
+      },
+      "play": {
+        "iw": 412,
+        "ih": 915,
+        "sw": 412,
+        "sh": 915,
+        "canvas": {
+          "y": 0,
+          "h": 915,
+          "bottom": 915
+        },
+        "hud": {
+          "y": 50,
+          "h": 17.3,
+          "bottom": 67.3
+        },
+        "giant": {
+          "y": 835,
+          "h": 64,
+          "bottom": 899
+        },
+        "status": {
+          "y": 879,
+          "h": 30,
+          "bottom": 909
+        },
+        "phase": "playing",
+        "startHidden": true
+      },
+      "resize": {
+        "phase": "playing",
+        "sw": 412
+      },
+      "touch": {
+        "before": 0,
+        "after": -0.5403278688524591,
+        "changed": true
+      },
+      "pause": {
+        "hidden": false,
+        "overlay": {
+          "y": 8,
+          "h": 899,
+          "bottom": 907
+        },
+        "scrollH": 897,
+        "restart": {
+          "y": 602.9,
+          "h": 44,
+          "bottom": 646.9
+        },
+        "menu": {
+          "y": 602.9,
+          "h": 44,
+          "bottom": 646.9
+        },
+        "sub": "六机制实验 · S1 砖块开花 · 密集低HP · 参数版本 six-mechanic-lab-v1-20261104"
+      }
+    }
+  ],
+  "notch": {
+    "hud": {
+      "y": 97,
+      "h": 17.3,
+      "bottom": 114.3
+    },
+    "topbar": {
+      "y": 0,
+      "h": 95,
+      "bottom": 95
+    },
+    "brickLogicalY": 148,
+    "brickCssY": 160.3,
+    "canvas": {
+      "y": 0,
+      "h": 844,
+      "bottom": 844
+    },
+    "giant": {
+      "y": 746,
+      "h": 64,
+      "bottom": 810
+    },
+    "status": {
+      "y": 780,
+      "h": 30,
+      "bottom": 810
+    },
+    "sw": 390,
+    "iw": 390,
+    "phase": "playing"
+  },
+  "errors": []
+}
