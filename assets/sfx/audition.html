@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>弹珠超载 · 音效试听台 S1</title>
+<style>
+  :root{
+    --bg:#080b12; --panel:#101725; --panel2:#0c121d; --line:#1e2a3d;
+    --text:#e6edf7; --dim:#8d9cb3; --cyan:#7cf3ff; --orange:#ff9a5c;
+    --green:#7ee2a8; --purple:#b8a4ff;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:radial-gradient(1200px 600px at 50% -10%,#132033 0%,var(--bg) 60%);
+    color:var(--text);font:14px/1.5 -apple-system,"PingFang SC","Helvetica Neue",Arial,sans-serif;
+    padding:28px 20px 80px;
+  }
+  .wrap{max-width:1020px;margin:0 auto}
+  header{margin-bottom:22px}
+  .kicker{color:var(--cyan);font-size:11px;letter-spacing:.22em;text-transform:uppercase;font-weight:700}
+  h1{margin:6px 0 8px;font-size:26px;letter-spacing:-.01em}
+  .sub{color:var(--dim);font-size:13px;max-width:760px}
+  .badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+  .badge{font-size:11px;padding:4px 9px;border:1px solid var(--line);border-radius:999px;color:var(--dim)}
+  .badge b{color:var(--text);font-weight:600}
+
+  .toolbar{
+    position:sticky;top:0;z-index:9;margin:18px 0 22px;padding:12px 14px;
+    background:rgba(12,18,29,.94);backdrop-filter:blur(10px);
+    border:1px solid var(--line);border-radius:12px;
+    display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+  }
+  .toolbar label{display:flex;align-items:center;gap:8px;color:var(--dim);font-size:12px}
+  input[type=range]{width:130px;accent-color:var(--cyan)}
+  button{
+    font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);
+    background:#162132;color:var(--text);padding:6px 12px;transition:.14s;
+  }
+  button:hover{border-color:var(--cyan);color:var(--cyan)}
+  button.primary{background:linear-gradient(180deg,#1d4a5c,#12303d);border-color:#2b6b80;color:#d8fbff}
+  button.primary:hover{filter:brightness(1.15)}
+  button.ghost{background:transparent}
+  button.playing{border-color:var(--green);color:var(--green)}
+
+  section.event{margin:0 0 26px;padding-top:6px}
+  .ev-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:10px;
+    border-bottom:1px solid var(--line);padding-bottom:8px}
+  .ev-head h2{font-size:16px;margin:0;letter-spacing:.01em}
+  .ev-head .trig{color:var(--dim);font-size:12px}
+  .ev-head .cur{margin-left:auto;display:flex;align-items:center;gap:8px}
+  .cur .tag{font-size:11px;color:var(--orange);border:1px solid #4a2f22;background:#1c1310;padding:3px 8px;border-radius:6px}
+  .cur .none{font-size:11px;color:#6b7a90;border:1px dashed #2a3648;padding:3px 8px;border-radius:6px}
+
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+  .card{
+    background:linear-gradient(180deg,var(--panel),var(--panel2));
+    border:1px solid var(--line);border-radius:12px;padding:13px 14px;
+    display:flex;flex-direction:column;gap:9px;
+  }
+  .card.top{border-color:#2b5d70;box-shadow:0 0 0 1px rgba(124,243,255,.06) inset}
+  .card .row1{display:flex;align-items:center;gap:10px}
+  .play{
+    width:38px;height:38px;flex:0 0 38px;border-radius:50%;display:grid;place-items:center;
+    background:#152437;border:1px solid #27405a;font-size:13px;padding:0;
+  }
+  .play:hover{background:#1a3149}
+  .name{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;word-break:break-all}
+  .prio{font-size:10px;padding:2px 6px;border-radius:5px;border:1px solid var(--line);color:var(--dim);margin-left:auto;flex:0 0 auto}
+  .prio.P0{color:#ffd7a8;border-color:#5a3d22;background:#1f1710}
+  .prio.P1{color:#cfe6ff;border-color:#26405c;background:#101a26}
+  .prio.P2{color:#c9bdf5;border-color:#3a2f5c;background:#171326}
+  .meta{color:var(--dim);font-size:11.5px;display:flex;gap:10px;flex-wrap:wrap}
+  .meta span{white-space:nowrap}
+  .note{color:#a9b8cc;font-size:12px}
+  .use{color:var(--cyan);font-size:12px;font-weight:600}
+  .actions{display:flex;gap:8px;margin-top:2px}
+  .actions button{font-size:11.5px;padding:4px 9px}
+  .strip{display:flex;align-items:center;gap:6px;font-size:10.5px;color:#6f8099}
+  .bar{flex:1;height:4px;border-radius:3px;background:#1a2432;overflow:hidden;display:flex}
+  .bar i{display:block;height:100%}
+  .bar .lo{background:#4d7ea8}.bar .mi{background:#7cf3ff}.bar .hi{background:#ff9a5c}
+
+  .decisions{
+    margin-top:34px;border:1px solid #3a2f1e;background:linear-gradient(180deg,#171208,#0e0b06);
+    border-radius:12px;padding:18px 20px;
+  }
+  .decisions h2{margin:0 0 6px;font-size:16px;color:#ffcf8a}
+  .decisions p{margin:0 0 12px;color:#a2917a;font-size:12.5px}
+  .decisions ol{margin:0;padding-left:20px;color:#cbbba1;font-size:13px}
+  .decisions li{margin-bottom:9px}
+  .decisions b{color:#ffd9a8}
+  footer{margin-top:30px;color:#5f6d80;font-size:11.5px;line-height:1.7}
+  code{font-family:ui-monospace,Menlo,monospace;background:#131b28;padding:1px 5px;border-radius:4px;font-size:11.5px;color:#9fb6d0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="kicker">AUDIO SFX · STAGE S1 · AUDITION</div>
+    <h1>音效素材试听台</h1>
+    <p class="sub">Kenney 三个 CC0 包的候选素材，与 M2.5 现状合成音同页对照。左侧播放键试听单个素材；默认开启响度对齐，避免“更响 = 更好听”的误判。本页只做人工评审，不接入游戏。</p>
+    <div class="badges">
+      <span class="badge">包内总数 <b>255</b></span>
+      <span class="badge">已分析 <b>255</b></span>
+      <span class="badge">入选候选 <b>12</b></span>
+      <span class="badge">覆盖事件 <b>10</b></span>
+      <span class="badge">总体积 <b>133 KB</b></span>
+      <span class="badge">许可证 <b>CC0 1.0</b></span>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <label>主音量 <input id="vol" type="range" min="0" max="100" value="78"/> <b id="volTxt">78%</b></label>
+    <label><input id="norm" type="checkbox" checked/> 响度对齐（-18 dBFS 峰值）</label>
+    <button id="stopAll" class="ghost">停止全部</button>
+    <button id="playAll" class="primary">依次试听 12 个</button>
+  </div>
+
+  <div id="events"></div>
+
+  <div class="decisions">
+    <h2>需要人工拍板的事</h2>
+    <p>以下判断我无法用数据替代，必须靠耳朵。建议开一次 10 分钟集中试听，边听边决定。</p>
+    <ol>
+      <li><b>机枪选哪个：</b><code>laserSmall_001</code>（亮、干净）还是 <code>laserRetro_002</code>（更有复古味但更冲）。用卡片上的「连发 2 秒」实测 12.5 发/秒叠加是否刺耳。</li>
+      <li><b>击碎要不要双层：</b><code>impactMining_002</code> 单独用，还是叠 <code>impactGlass_light_002</code> 做高频碎屑层。双层更像"碎"，但也要多一路声部。</li>
+      <li><b>清屏 <code>forceField_004</code> 像不像过关：</b>它是低频能量音，可能听着像护盾而不是胜利。如果不像，S1 阶段就先用合成音占位，把"过关旋律"留到后续用 jsfxr 生成。</li>
+      <li><b>升级音缺口：</b>三个包里没有真正的"升级旋律"，<code>switch28</code> 只是 0.20 秒 UI 确认音。是否接受临时占位，或本轮就用 jsfxr 生成一个 3 音上行。</li>
+      <li><b>开花音是占位：</b><code>laserSmall_002</code> 是能量感候选，不是理想"爆开"。可接受 / 换 jsfxr / 从包里继续找。</li>
+      <li><b>失败音：</b><code>lowFrequency_explosion_001</code> 只有低频，是否够"失败"。它同时是爆炸的 sub 层候选，一人分饰两角是否冲突。</li>
+      <li><b>是否保留 A 组对照进游戏：</b>评审通过后，建议在游戏里留一个 <code>?audio=a|b</code> 开关，而不是直接替换。</li>
+    </ol>
+  </div>
+
+  <footer>
+    文件位置：<code>assets/sfx/kenney/</code>　·　元数据：<code>assets/sfx/manifest.json</code>　·　授权：<code>assets/sfx/CREDITS.md</code><br/>
+    现状对照音为 Demo <code>playSfx/beep</code> 的同参数重实现（含 -18dB 阈值 5:1 压缩器），仅用于听感对比，不改变游戏代码。
+  </footer>
+</div>
+
+<script src="./audition-data.js"></script>
+<script>
+(function(){
+  const D = window.AUDITION_DATA;
+  if(!D){ document.body.insertAdjacentHTML('afterbegin','<p style="color:#ff8a8a">audition-data.js 未加载</p>'); return; }
+
+  // ---------- 主音量 / 压缩链（与 Demo 一致：gain → compressor） ----------
+  let volume = 0.78, aligned = true;
+  let ctx = null, master = null, comp = null;
+  const active = new Set();
+
+  function ensureCtx(){
+    if(ctx) { if(ctx.state === 'suspended') ctx.resume().catch(()=>{}); return; }
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if(!AC) return;
+    ctx = new AC();
+    master = ctx.createGain();
+    comp = ctx.createDynamicsCompressor();
+    comp.threshold.value = -18; comp.knee.value = 18; comp.ratio.value = 5;
+    comp.attack.value = .003; comp.release.value = .18;
+    master.connect(comp); comp.connect(ctx.destination);
+    master.gain.value = volume * .82;
+  }
+  function setVol(v){
+    volume = v;
+    if(master) master.gain.value = v * .82;
+    document.getElementById('volTxt').textContent = Math.round(v*100)+'%';
+  }
+  document.getElementById('vol').addEventListener('input', e => setVol(Number(e.target.value)/100));
+  document.getElementById('norm').addEventListener('change', e => { aligned = e.target.checked; });
+  document.getElementById('stopAll').addEventListener('click', stopAll);
+
+  // ---------- 现状合成音（复刻 Demo 的 beep / playSfx） ----------
+  function beep(freq, seconds, amp, type){
+    seconds = seconds === undefined ? .06 : seconds;
+    amp = amp === undefined ? .026 : amp;
+    type = type || 'triangle';
+    if(!ctx || !master) return;
+    const t = ctx.currentTime;
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    const dur = Math.max(.02, Math.min(seconds, .4));
+    o.type = type;
+    o.frequency.setValueAtTime(Math.max(60, freq), t);
+    o.frequency.exponentialRampToValueAtTime(Math.max(65, freq*.56), t + dur);
+    const level = Math.min(.23, Math.max(.018, amp*4.0));
+    g.gain.setValueAtTime(.0001, t);
+    g.gain.exponentialRampToValueAtTime(level, t + .006);
+    g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    o.connect(g); g.connect(master);
+    o.start(t); o.stop(t + dur + .008);
+  }
+  const SYNTH = {
+    mg(){ beep(245,.035,.009); },
+    hit(){ beep(235,.08,.046,'sawtooth'); beep(680,.035,.022,'triangle'); },
+    break(){ beep(225,.11,.066,'sawtooth'); beep(440,.11,.046,'triangle'); beep(980,.045,.026,'square'); },
+    armor(){ beep(235,.08,.046,'sawtooth'); beep(680,.035,.022,'triangle'); },
+    bloom(){ beep(820,.12,.037); beep(1140,.07,.022); },
+    boom(){ beep(145,.21,.065,'sawtooth'); beep(360,.11,.038); },
+    upgrade(){ beep(540,.16,.06); beep(910,.2,.042); }
+  };
+
+  // ---------- 素材播放 ----------
+  function gainFor(item){
+    if(!aligned || item.peakDb === null || item.peakDb === undefined) return 1;
+    const g = Math.pow(10, (-18 - item.peakDb) / 20);
+    return Math.max(0.05, Math.min(1.6, g));
+  }
+  function playFile(item, loop){
+    const a = new Audio('./' + item.file);
+    a.volume = Math.min(1, volume * gainFor(item));
+    a.loop = !!loop;
+    a.play().catch(err => console.warn('play failed', item.file, err));
+    active.add(a);
+    a.addEventListener('ended', () => active.delete(a));
+    a.addEventListener('pause', () => { if(!a.loop) active.delete(a); });
+    return a;
+  }
+  function stopAll(){
+    active.forEach(a => { try{ a.pause(); }catch(_){} });
+    active.clear();
+    document.querySelectorAll('.play.playing').forEach(b => b.classList.remove('playing'));
+  }
+
+  // ---------- 渲染 ----------
+  const host = document.getElementById('events');
+  D.events.forEach(ev => {
+    const items = D.items.filter(i => i.event === ev.id);
+    const sec = document.createElement('section');
+    sec.className = 'event';
+
+    const head = document.createElement('div');
+    head.className = 'ev-head';
+    head.innerHTML =
+      '<h2>' + ev.label + '</h2>' +
+      '<span class="trig">触发：' + ev.trigger + '</span>' +
+      '<span class="cur">' + (ev.hasCurrent
+        ? '<span class="tag">M2.5 现状</span><button class="ghost" data-synth="' + ev.id + '">试听现状</button>'
+        : '<span class="none">现状无音效</span>') + '</span>';
+    sec.appendChild(head);
+
+    if(!items.length){
+      if(ev.fallback){
+        const f = document.createElement('div');
+        f.className = 'card';
+        f.style.borderStyle = 'dashed';
+        f.innerHTML =
+          '<div class="row1"><button class="play">▶</button>' +
+            '<span class="name">' + ev.fallback.original + '</span>' +
+            '<span class="prio P1">复用</span></div>' +
+          '<div class="note">' + ev.fallback.note + '</div>';
+        f.querySelector('.play').addEventListener('click', () => {
+          ensureCtx(); stopAll();
+          playFile({ file: ev.fallback.file, peakDb: -0.8 }, false);
+        });
+        sec.appendChild(f);
+      }
+      host.appendChild(sec);
+      return;
+    }
+
+    const grid = document.createElement('div');
+    grid.className = 'cards';
+
+    items.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'card' + (item.priority === 'P0' ? ' top' : '');
+      const lo = Math.round((item.lowRatio || 0) * 100);
+      const mi = Math.round((item.midRatio || 0) * 100);
+      const hiPct = Math.max(0, 100 - lo - mi);
+
+      card.innerHTML =
+        '<div class="row1">' +
+          '<button class="play" title="播放">▶</button>' +
+          '<span class="name">' + item.original + '</span>' +
+          '<span class="prio ' + item.priority + '">' + item.priority + '</span>' +
+        '</div>' +
+        '<div class="use">' + item.suggestedUse + '</div>' +
+        '<div class="meta">' +
+          '<span>' + item.duration.toFixed(2) + 's</span>' +
+          '<span>' + item.kb + ' KB</span>' +
+          '<span>' + (item.sampleRate/1000) + 'kHz ' + (item.channels === 1 ? '单声道' : '立体声') + '</span>' +
+          '<span>峰值 ' + (item.peakDb === null ? '—' : item.peakDb.toFixed(1)) + ' dB</span>' +
+        '</div>' +
+        '<div class="strip"><span>低频 ' + lo + '%</span><div class="bar">' +
+          '<i class="lo" style="width:' + lo + '%"></i>' +
+          '<i class="mi" style="width:' + mi + '%"></i>' +
+          '<i class="hi" style="width:' + hiPct + '%"></i>' +
+        '</div><span>中 ' + mi + '% · 高 ' + hiPct + '% · ' + (item.centroidHz || 0) + 'Hz</span></div>' +
+        '<div class="note">' + item.note + '</div>' +
+        '<div class="actions">' +
+          '<button data-act="loop">循环</button>' +
+          (ev.id === 'mg' ? '<button data-act="burst">连发 2 秒</button>' : '') +
+          '<button data-act="stop">停止</button>' +
+        '</div>';
+
+      const btn = card.querySelector('.play');
+      btn.addEventListener('click', () => {
+        ensureCtx();
+        stopAll();
+        playFile(item, false);
+        btn.classList.add('playing');
+        setTimeout(() => btn.classList.remove('playing'), Math.max(220, item.duration*1000));
+      });
+      card.querySelector('[data-act="loop"]').addEventListener('click', e => {
+        ensureCtx(); stopAll();
+        playFile(item, true);
+        e.target.classList.add('playing');
+      });
+      card.querySelector('[data-act="stop"]').addEventListener('click', e => {
+        stopAll();
+        e.target.classList.remove('playing');
+        card.querySelector('[data-act="loop"]').classList.remove('playing');
+      });
+      const burst = card.querySelector('[data-act="burst"]');
+      if(burst) burst.addEventListener('click', () => {
+        ensureCtx(); stopAll();
+        let n = 0;
+        const id = setInterval(() => {
+          playFile(item, false);
+          if(++n >= 25) clearInterval(id);   // 12.5 发/秒 × 2 秒
+        }, 80);
+      });
+
+      grid.appendChild(card);
+    });
+
+    sec.appendChild(grid);
+    host.appendChild(sec);
+  });
+
+  document.querySelectorAll('[data-synth]').forEach(b => {
+    b.addEventListener('click', () => {
+      ensureCtx(); stopAll();
+      const fn = SYNTH[b.dataset.synth];
+      if(fn) fn();
+    });
+  });
+
+  document.getElementById('playAll').addEventListener('click', async () => {
+    ensureCtx(); stopAll();
+    const list = D.items.slice();
+    for(const item of list){
+      playFile(item, false);
+      await new Promise(r => setTimeout(r, Math.max(700, item.duration*1000 + 350)));
+    }
+  });
+})();
+</script>
+</body>
+</html>
