@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a1020">
+<title>弹珠超载 · 音效选型台 V2</title>
+<style>
+:root{--bg:#090e18;--panel:#111c2a;--panel2:#151f2d;--stroke:#2a384d;--text:#ecf3ff;--dim:#97abc1;--cyan:#69dff1;--amber:#f6bc73;--green:#77e6bc}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(ellipse 85% 400px at 50% -120px,#1c3653,transparent),var(--bg);color:var(--text);font:14px/1.55 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",Arial,sans-serif}
+button,input,textarea{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+a{color:var(--cyan)}.page{max-width:1180px;margin:auto;padding:28px 22px 90px}.eyebrow{font-size:11px;letter-spacing:.2em;color:var(--cyan);font-weight:750}.intro h1{font-size:clamp(25px,4.8vw,38px);letter-spacing:-.03em;line-height:1.2;margin:9px 0 12px}.intro p{color:var(--dim);max-width:780px;margin:0 0 14px}.tags{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 22px}.tag{padding:3px 10px;border-radius:30px;border:1px solid var(--stroke);color:var(--dim);font-size:12px}.tag strong{color:var(--text)}
+.toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:12px;padding:13px 16px;background:#121e2e;border:1px solid var(--stroke);border-radius:14px;margin-bottom:22px}.toolbar label{display:flex;align-items:center;gap:8px;color:var(--dim);font-size:12px}.toolbar input[type=range]{accent-color:var(--cyan);width:112px}.toolbar input[type=checkbox]{accent-color:var(--cyan)}.toolbar .right{margin-left:auto}.toolbtn{color:var(--text);border:1px solid #36516b;background:#1a3046;border-radius:9px;padding:7px 12px}.toolbtn:hover{border-color:var(--cyan)}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 276px;gap:22px;align-items:start}
+.event{padding:20px;border:1px solid var(--stroke);border-radius:16px;background:linear-gradient(180deg,rgba(23,35,51,.96),rgba(16,24,37,.96));margin-bottom:15px;scroll-margin-top:20px}.event-head{display:flex;align-items:start;justify-content:space-between;gap:12px;margin-bottom:14px}.event-head h2{font-size:17px;margin:0 0 3px}.event-head p{font-size:12px;color:var(--dim);margin:0}.count{color:var(--dim);font-size:11px;white-space:nowrap}
+.options{display:flex;flex-direction:column;gap:8px}.option{display:flex;align-items:center;gap:10px;min-height:62px;padding:10px 12px;border:1px solid #2b3b52;border-radius:12px;background:#101b2a;transition:background .12s,border-color .12s}.option:hover{border-color:#58718a}.option.chosen{border-color:#66ddbd;background:#132b2d}.choose{accent-color:#52dab2;width:18px;height:18px;flex-shrink:0;cursor:pointer}.option-body{flex:1;min-width:0;cursor:pointer}.name{font-weight:650;font-size:13px;overflow-wrap:anywhere}.explain{font-size:12px;color:var(--dim);margin-top:3px}.audition{flex-shrink:0;border:1px solid #3b627f;border-radius:9px;padding:8px 11px;background:#153248;color:#b8ecff;font-size:12px}.audition:hover{background:#20506a}.audition:disabled{opacity:.4;cursor:not-allowed}.audition.sounding{border-color:var(--green);color:var(--green)}
+.chip{display:inline-block;font-size:10px;margin-left:6px;color:var(--amber);font-weight:500}.extras{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:10px}.mini{border:1px solid var(--stroke);background:#182637;border-radius:8px;color:var(--dim);padding:5px 9px;font-size:11px}.notes{margin-top:13px;width:100%;background:#0b1522;color:var(--text);border:1px solid var(--stroke);border-radius:10px;padding:9px 11px;resize:vertical;min-height:42px;font-size:12px}.notes::placeholder{color:#708397}
+.sidebar{position:sticky;top:16px;border:1px solid #34516c;border-radius:15px;background:#142335;padding:18px}.sidebar h2{font-size:17px;margin:0 0 8px}.subtle{font-size:12px;color:var(--dim)}.progress-bar{height:7px;background:#24374c;border-radius:7px;overflow:hidden;margin:14px 0 7px}.progress-fill{background:linear-gradient(90deg,#4aafce,#7ce4b2);height:100%;width:0;transition:width .2s}.summary{padding:0;list-style:none;margin:13px 0;max-height:360px;overflow:auto}.summary li{font-size:12px;display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid #2b4055}.summary li span:first-child{color:var(--dim);white-space:nowrap}.summary li span:last-child{text-align:right;overflow-wrap:anywhere}.exports{display:grid;gap:8px}.primary{border:0;background:var(--cyan);color:#05212c;font-weight:750;border-radius:9px;padding:10px}.primary:hover{background:#94ecf9}.secondary{background:#20384a;border:1px solid #486078;color:#e6f3ff;border-radius:9px;padding:9px}.secondary:hover{background:#2b4b60}.notice{font-size:11px;color:var(--dim);margin-top:12px}.status{min-height:18px;color:var(--green);font-size:12px;margin:6px 0 0}
+.footer{font-size:12px;color:var(--dim);margin-top:24px;border-top:1px solid var(--stroke);padding-top:20px;line-height:1.7}
+@media(max-width:860px){.layout{grid-template-columns:1fr}.sidebar{position:static;order:-1}.summary{max-height:170px}.toolbar .right{margin-left:0}}@media(max-width:520px){.page{padding:20px 12px 70px}.event{padding:14px}.option{gap:8px;padding:9px}.audition{padding:9px}.sidebar{padding:14px}}
+</style>
+</head>
+<body>
+<main class="page">
+<header class="intro">
+<div class="eyebrow">PINBALL OVERLOAD / SOUND SELECTION V2</div>
+<h1>弹珠超载 · 音效选型台</h1>
+<p>按游戏事件逐项试听，点击左侧圆点确定采用哪种声音。你的决定会自动保存在当前浏览器；完成后可以一键导出清单，直接交给 DeepSeek 接入。尚不满意的声音可选择「重新制作」。</p>
+<div class="tags"><span class="tag">候选素材 <strong>12</strong></span><span class="tag">事件组 <strong>10</strong></span><span class="tag">对照 <strong>原版 M2.5</strong></span><span class="tag">Kenney <strong>CC0</strong></span></div>
+</header>
+<section class="toolbar" aria-label="试听设置">
+<label>试听音量 <input id="volume" type="range" min="0" max="100" value="78"><strong id="volval">78%</strong></label>
+<label><input id="normalize" type="checkbox" checked> 统一峰值（-18 dBFS）</label>
+<button class="toolbtn" id="stop">■ 停止播放</button>
+<button class="toolbtn right" id="original">查看原试听台</button>
+</section>
+<div class="layout">
+<div id="event-list" aria-live="off"></div>
+<aside class="sidebar">
+<h2>评审结果</h2>
+<div class="subtle">已决定 <strong id="done">0</strong> / <span id="total">10</span> 项</div>
+<div class="progress-bar"><div id="progress" class="progress-fill"></div></div>
+<ul id="summary" class="summary"></ul>
+<div class="exports">
+<button id="export-json" class="primary">导出 JSON 选型结果</button>
+<button id="export-md" class="secondary">导出 Markdown 清单</button>
+<button id="copy" class="secondary">复制结果给 DeepSeek</button>
+</div>
+<p class="status" id="status" role="status"></p>
+<p class="notice">选项和备注仅保存在当前浏览器，换设备不会自动同步。请在评审结束后导出文件或复制结果。试听 ≠ 选择，只有勾选才会记入最终方案。</p>
+</aside>
+</div>
+<footer class="footer">
+本页仅用于音效选型，不改正式游戏代码。原版对照音参考 M2.5 合成参数；素材来源及许可证见 <a href="./CREDITS.md">CREDITS.md</a>。<br>
+如在 iPhone 上听不到声音，请先点击任意「试听」按钮并确认手机媒体音量；某些浏览器需要用户手势才允许播放声音。
+</footer>
+</main>
+<script src="./audition-data.js"></script>
+<script>
+(function(){
+"use strict";
+var D=window.AUDITION_DATA;
+var host=document.getElementById("event-list");
+if(!D||!Array.isArray(D.events)||!Array.isArray(D.items)){host.textContent="素材数据未加载。请检查 audition-data.js。";return;}
+var KEY="pinball-audio-selection-v2",choices={},notes={};
+try{var saved=JSON.parse(localStorage.getItem(KEY)||"{}");choices=saved.choices||{};notes=saved.notes||{}}catch(e){choices={};notes={}}
+var volume=.78,normalized=true,ctx=null,master=null,comp=null,active=new Set(),interval=null,timeout=null;
+var itemMap={};D.items.forEach(function(it){itemMap[it.id]=it;});
+var eventExtra={
+mg:"请用「连续射击2秒」判断高频叠加是否刺耳。",
+break:"建议先单听，再听双层叠加；厚重不一定更解压。",
+bloom:"当前候选偏能量感，如不像开花可选择重新制作。",
+plant:"植雷触发频繁，声音应轻短。",
+boom:"爆雷需要爆发力，但不能盖住整场的击碎音。",
+clear:"如果像护盾而不像胜利，请选重新制作。",
+fail:"当前候选复用爆炸低频，可能缺少失败语义。",
+upgrade:"switch28只是确认音；真正的升级旋律可另行制作。"
+};
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+function safeSave(){try{localStorage.setItem(KEY,JSON.stringify({choices:choices,notes:notes}))}catch(e){setStatus("本地保存不可用，请及时导出文件。");}}
+function setStatus(s){document.getElementById("status").textContent=s; }
+function ensureAudio(){if(ctx){if(ctx.state==="suspended")ctx.resume().catch(function(){});return;}
+var AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+ctx=new AC();master=ctx.createGain();comp=ctx.createDynamicsCompressor();
+comp.threshold.value=-18;comp.knee.value=18;comp.ratio.value=5;comp.attack.value=.003;comp.release.value=.18;
+master.connect(comp);comp.connect(ctx.destination);master.gain.value=volume*.82;
+}
+function beep(freq,seconds,amp,type){ensureAudio();if(!ctx||!master)return;
+var t=ctx.currentTime,dur=Math.max(.02,Math.min(seconds||.06,.4)),o=ctx.createOscillator(),g=ctx.createGain();
+o.type=type||"triangle";o.frequency.setValueAtTime(Math.max(60,freq),t);o.frequency.exponentialRampToValueAtTime(Math.max(65,freq*.56),t+dur);
+var level=Math.min(.23,Math.max(.018,amp*4));g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(level,t+.006);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+o.connect(g);g.connect(master);o.start(t);o.stop(t+dur+.008);
+}
+var synth={
+mg:function(){beep(245,.035,.009,"triangle");},
+hit:function(){beep(235,.08,.046,"sawtooth");beep(680,.035,.022,"triangle");},
+armor:function(){beep(235,.08,.046,"sawtooth");beep(680,.035,.022,"triangle");},
+break:function(){beep(225,.11,.066,"sawtooth");beep(440,.11,.046,"triangle");beep(980,.045,.026,"square");},
+bloom:function(){beep(820,.12,.037,"triangle");beep(1140,.07,.022,"triangle");},
+boom:function(){beep(145,.21,.065,"sawtooth");beep(360,.11,.038,"triangle");},
+upgrade:function(){beep(540,.16,.06,"triangle");beep(910,.2,.042,"triangle");}
+};
+function stop(){if(interval){clearInterval(interval);interval=null;}if(timeout){clearTimeout(timeout);timeout=null;}
+active.forEach(function(a){try{a.pause();a.currentTime=0;}catch(e){}});active.clear();
+document.querySelectorAll(".audition.sounding").forEach(function(b){b.classList.remove("sounding");});
+}
+function getItem(spec){return itemMap[spec]||null;}
+function getPlaySpecs(option){if(option.kind==="single")return [getItem(option.id)].filter(Boolean);
+if(option.kind==="combo")return option.ids.map(getItem).filter(Boolean);
+if(option.kind==="fallback")return [{file:option.file,peakDb:option.peakDb||-1,duration:1}];return [];}
+function playOne(it){var a=new Audio("./"+it.file);var multiplier=normalized&&typeof it.peakDb==="number"?Math.pow(10,(-18-it.peakDb)/20):1;
+a.volume=Math.min(1,Math.max(0,volume*Math.min(1.6,Math.max(.05,multiplier))));
+a.preload="auto";active.add(a);
+a.onended=function(){active.delete(a);};a.onerror=function(){active.delete(a);setStatus("音效加载失败："+it.file);};
+var p=a.play();if(p&&p.catch)p.catch(function(){active.delete(a);setStatus("播放失败：请检查浏览器声音权限。");});return a;
+}
+function play(ev,option,burst){stop();ensureAudio();
+if(option.kind==="synth"){if(!synth[ev.id]){setStatus("这一事件原版没有声音。");return;}if(burst){var n=0;interval=setInterval(function(){synth[ev.id]();if(++n>=25){clearInterval(interval);interval=null;}},80);}else synth[ev.id]();return;}
+var specs=getPlaySpecs(option);if(!specs.length)return;
+if(burst){var n=0;interval=setInterval(function(){specs.forEach(playOne);if(++n>=25){clearInterval(interval);interval=null;}},80);}else specs.forEach(playOne);
+}
+function makeOptions(ev){
+var items=D.items.filter(function(it){return it.event===ev.id;});
+var opts=[];
+if(ev.hasCurrent&&synth[ev.id])opts.push({id:"current",label:"保留现有 M2.5",detail:"与当前正式 Demo 的合成音相同",kind:"synth"});
+else opts.push({id:"silent",label:"保持无声音效",detail:"这一事件继续静音，不增加声音",kind:"silent"});
+items.forEach(function(it){opts.push({id:it.id,label:it.original,detail:it.suggestedUse+" · "+it.duration.toFixed(2)+" 秒 · "+it.kb+" KB",kind:"single",itemId:it.id});});
+if(ev.id==="break"&&items.length>=2)opts.push({id:"combo-break",label:"Mining + Glass 双层击碎",detail:"同时播放厚重主体和清脆碎片（实验组合）",kind:"combo",ids:items.slice(0,2).map(function(x){return x.id;})});
+if(ev.id==="boom"&&items.length>=2)opts.push({id:"combo-boom",label:"Crunch + Low 双层爆雷",detail:"爆裂主体叠加低频冲击（实验组合）",kind:"combo",ids:items.slice(0,2).map(function(x){return x.id;})});
+if(ev.fallback&&!items.length)opts.push({id:"fallback",label:ev.fallback.original+"（复用候选）",detail:ev.fallback.note,kind:"fallback",file:ev.fallback.file,peakDb:-.8});
+opts.push({id:"redo",label:"重新制作 / 继续找素材",detail:"现有候选不满意，标记为待制作",kind:"redo"});
+opts.push({id:"pending",label:"待定",detail:"先跳过这一项，之后再选择",kind:"pending"});
+return opts;
+}
+var optionMap={};
+function render(){
+host.innerHTML="";D.events.forEach(function(ev,i){
+var options=makeOptions(ev);optionMap[ev.id]=options;
+var section=document.createElement("section");section.className="event";section.id="event-"+ev.id;
+var title=document.createElement("div");title.className="event-head";
+title.innerHTML="<div><h2>"+String(i+1).padStart(2,"0")+" · "+escapeHtml(ev.label)+"</h2><p>"+escapeHtml(ev.trigger)+(eventExtra[ev.id]?" · "+escapeHtml(eventExtra[ev.id]):"")+"</p></div><span class='count'>"+options.length+"个方案</span>";
+section.appendChild(title);
+var holder=document.createElement("div");holder.className="options";
+options.forEach(function(opt){
+var row=document.createElement("div");row.className="option"+(choices[ev.id]===opt.id?" chosen":"");
+var id="pick-"+ev.id+"-"+opt.id;
+var radio=document.createElement("input");radio.type="radio";radio.name="event-"+ev.id;radio.id=id;radio.value=opt.id;radio.className="choose";radio.checked=choices[ev.id]===opt.id;radio.setAttribute("aria-label","选择 "+opt.label);
+radio.addEventListener("change",function(){choices[ev.id]=opt.id;safeSave();refreshChoice(ev.id);renderSummary();setStatus("已保存："+ev.label+" → "+opt.label);});
+var lab=document.createElement("label");lab.className="option-body";lab.htmlFor=id;lab.innerHTML="<div class='name'>"+escapeHtml(opt.label)+(opt.kind==="combo"?"<span class='chip'>双层组合</span>":"")+"</div><div class='explain'>"+escapeHtml(opt.detail)+"</div>";
+row.appendChild(radio);row.appendChild(lab);
+if(["synth","single","combo","fallback"].includes(opt.kind)){
+var playBtn=document.createElement("button");playBtn.className="audition";playBtn.type="button";playBtn.textContent="▶ 试听";playBtn.setAttribute("aria-label","试听 "+opt.label);
+playBtn.addEventListener("click",function(){play(ev,opt,false);document.querySelectorAll(".audition.sounding").forEach(function(b){b.classList.remove("sounding");});playBtn.classList.add("sounding");});
+row.appendChild(playBtn);
+}
+holder.appendChild(row);
+});
+section.appendChild(holder);
+if(ev.id==="mg"){
+var extra=document.createElement("div");extra.className="extras";extra.innerHTML="<span class='subtle'>机枪专用：听25发 / 2秒的叠加效果</span>";
+options.filter(function(x){return ["synth","single"].includes(x.kind);}).forEach(function(o){
+var b=document.createElement("button");b.type="button";b.className="mini";b.textContent=o.id==="current"?"现状连发2秒":o.label.replace(".ogg","")+" 连发2秒";b.addEventListener("click",function(){play(ev,o,true);});extra.appendChild(b);
+});section.appendChild(extra);
+}
+var note=document.createElement("textarea");note.className="notes";note.rows=2;note.placeholder="这组声音的评价或调整要求（例如：太闷、希望更脆、音量降低20%）";note.value=notes[ev.id]||"";note.setAttribute("aria-label",ev.label+"试听备注");note.addEventListener("input",function(){notes[ev.id]=note.value;safeSave();});section.appendChild(note);
+host.appendChild(section);
+});renderSummary();
+}
+function refreshChoice(id){var node=document.getElementById("event-"+id);if(!node)return;node.querySelectorAll(".option").forEach(function(r){var radio=r.querySelector("input[type=radio]");r.classList.toggle("chosen",!!radio&&radio.checked);});}
+function selected(ev){var opt=(optionMap[ev.id]||[]).find(function(x){return x.id===choices[ev.id]});return opt||null;}
+function renderSummary(){var done=0,html="";
+D.events.forEach(function(ev){var o=selected(ev);if(o&&o.id!=="pending")done++;html+="<li><span>"+escapeHtml(ev.label)+"</span><span>"+(o?escapeHtml(o.label):"未选择")+"</span></li>";});
+document.getElementById("done").textContent=done;document.getElementById("total").textContent=D.events.length;document.getElementById("progress").style.width=(done/D.events.length*100).toFixed(1)+"%";document.getElementById("summary").innerHTML=html;}
+function exportPayload(){return {project:"弹珠超载",title:"音效选型 V2",createdAt:new Date().toISOString(),source:"assets/sfx/selector.html",license:"Kenney CC0 1.0",settings:{normalize:normalized,listenVolume:volume},decisions:D.events.map(function(ev){var opt=selected(ev);return {eventId:ev.id,eventLabel:ev.label,status:!opt||opt.id==="pending"?"pending":opt.id==="redo"?"needs_new_asset":opt.id==="silent"?"keep_silent":opt.id==="current"?"keep_existing":"selected",choiceId:opt?opt.id:null,choiceLabel:opt?opt.label:null,audioFiles:opt?getPlaySpecs(opt).map(function(x){return x.file;}):[],notes:notes[ev.id]||""};})};}
+function asMarkdown(p){var lines=["# 弹珠超载 · 音效选型 V2","","> "+p.createdAt+" | 素材 Kenney CC0 | 仅人工选型，尚未接入游戏","", "| 游戏事件 | 选择 | 文件 | 状态 | 备注 |","| --- | --- | --- | --- | --- |"];
+p.decisions.forEach(function(d){var safe=function(x){return String(x||"").replace(/\|/g,"/").replace(/[\r\n]+/g,"；");};lines.push("| "+safe(d.eventLabel)+" | "+safe(d.choiceLabel||"未选择")+" | "+safe(d.audioFiles.join(" + "))+" | "+safe(d.status)+" | "+safe(d.notes)+" |");});
+lines.push("","实现说明：保留 M2.5 原音作为可回退方案；仅将被选中的新音效接入游戏，重做项不应偷偷用其他音效代替。");return lines.join("\n");}
+function download(name,data,type){var blob=new Blob([data],{type:type}),url=URL.createObjectURL(blob);var a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(url)},1500);}
+document.getElementById("export-json").addEventListener("click",function(){download("pinball-audio-selection-v2.json",JSON.stringify(exportPayload(),null,2),"application/json;charset=utf-8");setStatus("已导出 JSON 选型文件");});
+document.getElementById("export-md").addEventListener("click",function(){download("pinball-audio-selection-v2.md",asMarkdown(exportPayload()),"text/markdown;charset=utf-8");setStatus("已导出 Markdown 选型文件");});
+document.getElementById("copy").addEventListener("click",function(){var content=asMarkdown(exportPayload());if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(content).then(function(){setStatus("已复制评审结果，可直接粘贴给 DeepSeek")}).catch(function(){fallbackCopy(content);});}else fallbackCopy(content);});
+function fallbackCopy(content){var a=document.createElement("textarea");a.value=content;document.body.appendChild(a);a.select();try{document.execCommand("copy");setStatus("已复制结果")}catch(e){setStatus("无法自动复制，请使用导出 Markdown")}a.remove();}
+document.getElementById("volume").addEventListener("input",function(e){volume=Number(e.target.value)/100;document.getElementById("volval").textContent=Math.round(volume*100)+"%";if(master)master.gain.value=volume*.82;active.forEach(function(a){a.volume=Math.min(1,volume);});});
+document.getElementById("normalize").addEventListener("change",function(e){normalized=e.target.checked;setStatus(normalized?"试听峰值对齐已开启":"试听峰值对齐已关闭");});
+document.getElementById("stop").addEventListener("click",stop);
+document.getElementById("original").addEventListener("click",function(){window.open("./audition.html","_blank","noopener");});
+window.addEventListener("pagehide",stop);
+render();
+})();
+</script>
+</body>
+</html>
