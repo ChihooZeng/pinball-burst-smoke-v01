@@ -1,0 +1,58 @@
+{
+  "project": "弹珠超载",
+  "selectionType": "user_confirmed_from_mixkit_screenshots",
+  "date": "2026-11-06",
+  "previousSelectionContext": "V5 selected five categories; V6–V8 auditioned clear/fail without confirmed replacements. User now directly picks Mixkit assets for 3 distinct events.",
+  "selections": [
+    {
+      "eventId": "skill_select",
+      "eventName": "技能选择",
+      "trackTitle": "Unlock game notification",
+      "source": "Mixkit",
+      "categoryPage": "https://mixkit.co/free-sound-effects/game/",
+      "displayDuration": "0:01",
+      "selectedByUser": true,
+      "assetStatus": "Source named and screenshot-confirmed; source audio file not stored in repository",
+      "integrationStatus": "pending",
+      "implementationNote": "Play on confirming/choosing a skill in upgrade choice UI; do not automatically overwrite pre-existing upgrade/unlock reward cue."
+    },
+    {
+      "eventId": "clear",
+      "eventName": "清屏过关",
+      "trackTitle": "Casino bling achievement",
+      "source": "Mixkit",
+      "categoryPage": "https://mixkit.co/free-sound-effects/casino/",
+      "displayDuration": "0:04",
+      "selectedByUser": true,
+      "assetStatus": "Source named and screenshot-confirmed; source audio file not stored in repository",
+      "integrationStatus": "pending",
+      "implementationNote": "Keep full original recording intact for first in-game test. Four-second sound may overlap rapid next-wave play. Adjust length/mix only after hearing it in real game."
+    },
+    {
+      "eventId": "fail",
+      "eventName": "触线失败",
+      "trackTitle": "Arcade retro game over",
+      "source": "Mixkit",
+      "categoryPage": "https://mixkit.co/free-sound-effects/game-over/",
+      "displayDuration": "0:01",
+      "selectedByUser": true,
+      "assetStatus": "Source named and screenshot-confirmed; source audio file not stored in repository",
+      "integrationStatus": "pending",
+      "implementationNote": "Play once when touchline fail state is confirmed, not on each hazard contact."
+    }
+  ],
+  "sourceLicense": {
+    "title": "Mixkit Sound Effects Free License",
+    "url": "https://mixkit.co/license/modal/sfxFree/",
+    "confirmedAllows": "Commercial video games as an incorporated End Product",
+    "restrictions": "No separate redistribution of sound item as stock, raw source files, or standalone asset pack. This commit only archives identifiers, not extracted Mixkit audio bytes."
+  },
+  "retainedPriorSelections": {
+    "mg": "mg-01; reserve mg-01/02/03",
+    "hit": "hit-02; reserve V5 additional",
+    "break": "break-x18",
+    "boom": "boom-03; reserve V5 additional",
+    "upgrade": "upgrade-03 and V5 reserve; distinguish from skill_select"
+  },
+  "caveat": "Source screenshot displays 1s/4s/1s (rounded). Do not claim exact sample length until actual audio is downloaded and inspected. No gameplay changes made by this archival commit."
+}
