@@ -183,8 +183,8 @@
   let impactRings=[], floatTexts=[], combo=0, maxCombo=0, lastBreak=-99, comboVisibility=0, shake=0, hitCount=0;
   let impactHaptics=true,lastHapticAt=-10000;
   // ===== 动态砖阵 + 双机枪实验 V2 状态 =====
-  let labActive=false,labMode="none",labField="C",labCleared=false,labFailed=false,labGiantEnabled=false;
-  let labPickMode="none",labPickField="C";
+  let labActive=false,labMode="none",labField="R1",labCleared=false,labFailed=false,labGiantEnabled=false;
+  let labPickMode="none",labPickField="R1";
   let labSide=0,labMerge=0,labOverload=0,labBarrage=0,labBarrageUntil=0,labBarrageCooldown=0,labOverloadLock=0;
   let labElectrodes=[],labMicros=[],labPulses=[],labElectrodeClock=0,labElectricCooldown=Object.create(null);
   let labTopRemaining=0,labMidRemaining=0,labTopClock=0,labMidClock=0,labSummonClock=0;
@@ -1418,8 +1418,8 @@
     }[mode]||"";
   }
   function labResetState(){
-    labActive=false;labMode="none";labField="C";labCleared=false;labFailed=false;labGiantEnabled=false;
-    labPickMode="none";labPickField="C";
+    labActive=false;labMode="none";labField="R1";labCleared=false;labFailed=false;labGiantEnabled=false;
+    labPickMode="none";labPickField="R1";
     labSide=0;labMerge=0;labOverload=0;labBarrage=0;labBarrageUntil=0;labBarrageCooldown=0;labOverloadLock=0;
     labElectrodes=[];labMicros=[];labPulses=[];labElectrodeClock=0;labElectricCooldown=Object.create(null);
     labTopRemaining=0;labMidRemaining=0;labTopClock=0;labMidClock=0;labSummonClock=0;labWarnings=[];labSummonerId=null;labMidBatches=0;
