@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#080f1b">
+<title>弹珠超载 · 音效选型 V4 · 每组10个备选</title>
+<style>
+:root{--bg:#08101d;--panel:#121f2e;--panel2:#0e1927;--line:#2a4055;--txt:#edf4fd;--muted:#9daec1;--cyan:#70e1eb;--green:#7bd3ad;--amber:#ffcc7b;--red:#ed9b97}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse 85% 430px at 50% -170px,#193859,transparent),var(--bg);font:14px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft Yahei",sans-serif;color:var(--txt)}button,input,textarea{font:inherit}button{cursor:pointer}button:disabled{opacity:.48;cursor:not-allowed}button:focus-visible,input:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}a{color:var(--cyan)}
+main{max-width:1180px;margin:auto;padding:26px 20px 70px}.kicker{font-size:11px;letter-spacing:.17em;color:var(--cyan);font-weight:800}h1{font-size:clamp(25px,5vw,36px);margin:9px 0 10px;letter-spacing:-.02em}h2{font-size:17px;margin:0}h3{font-size:13px;margin:0}.sub{color:var(--muted);max-width:900px}.tags{display:flex;flex-wrap:wrap;gap:7px;margin:17px 0}.tag{border:1px solid var(--line);border-radius:20px;padding:5px 9px;font-size:12px;color:var(--muted)}.tag b{color:var(--txt)}.warn{border-left:3px solid var(--amber);background:#252016;padding:10px 13px;border-radius:8px;font-size:12px;color:#ffddb0;margin-bottom:16px}
+.toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:13px;border:1px solid var(--line);background:#142438;border-radius:11px;padding:10px 13px;margin:18px 0}.toolbar label{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted)}.toolbar input[type=range]{width:125px;accent-color:var(--cyan)}.btn{border:1px solid #45637d;background:#1c374c;color:var(--txt);padding:8px 11px;border-radius:8px}.btn:hover{border-color:var(--cyan)}.small{font-size:12px}.layout{display:grid;grid-template-columns:minmax(0,1fr) 276px;gap:20px;align-items:start}
+.group{padding:18px;border:1px solid var(--line);background:linear-gradient(165deg,#152537,#0d1723);border-radius:15px;margin-bottom:15px;scroll-margin-top:18px}.group-head{display:flex;align-items:start;justify-content:space-between;gap:12px;margin-bottom:15px}.group-desc{font-size:12px;color:var(--muted);margin:5px 0 0}.group-count{border:1px solid var(--line);border-radius:7px;color:var(--cyan);font-size:11px;padding:4px 7px;white-space:nowrap}.note-old{border:1px dashed #5a6471;background:#17202b;padding:11px;border-radius:10px;margin-bottom:11px;font-size:12px}.note-old strong{color:var(--amber)}.note-old p{margin:5px 0;color:var(--muted)}.old-row{display:flex;gap:10px;align-items:center}.old-row label{display:flex;align-items:center;gap:7px;flex:1;cursor:pointer}.old-row input{accent-color:var(--green);width:17px;height:17px}
+.list{display:flex;flex-direction:column;gap:7px}.entry{display:flex;align-items:center;gap:9px;min-height:52px;border:1px solid #2a3d51;border-radius:10px;background:#0c1826;padding:8px 10px}.entry.on{background:#12332f;border-color:var(--green)}.entry:hover{border-color:#638ba1}.entry input[type=radio]{width:18px;height:18px;accent-color:var(--green);flex-shrink:0;cursor:pointer}.item-name{flex:1;min-width:0}.item-name label{cursor:pointer;display:block}.item-name strong{font-size:13px}.meta{font-size:11px;color:var(--muted);word-break:break-word}.play{border:1px solid #34637c;background:#15354c;color:#b5ecfd;padding:8px 10px;border-radius:8px;white-space:nowrap;min-width:75px}.play:hover{background:#21536c}.play.loading{color:var(--amber)}.play.playing{color:var(--green);border-color:var(--green)}.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}.actions button{font-size:11px;padding:5px 9px}.actions span{color:var(--muted);font-size:11px}.notearea{margin-top:11px;display:block;width:100%;border-radius:9px;background:#0a1522;color:var(--txt);border:1px solid var(--line);padding:10px;min-height:44px;resize:vertical;font-size:12px}.notearea::placeholder{color:#708497}
+.side{position:sticky;top:14px;background:#15273a;border:1px solid #3a536b;border-radius:15px;padding:17px}.side p{font-size:12px;color:var(--muted);margin:8px 0}.meter{height:8px;border-radius:8px;background:#31445b;overflow:hidden;margin:13px 0 6px}.fill{height:100%;background:linear-gradient(90deg,#4f9ec7,#7bd3ad);width:0}.progress{font-size:12px}.summ{list-style:none;padding:0;max-height:400px;overflow:auto;margin:10px 0}.summ li{padding:7px 0;border-bottom:1px solid #33485b;font-size:12px;display:flex;justify-content:space-between;gap:6px}.summ span:first-child{color:var(--muted);white-space:nowrap}.summ span:last-child{text-align:right;word-break:break-word}.exports{display:grid;gap:7px}.mainbutton{border:none;border-radius:8px;background:var(--cyan);color:#06202c;padding:10px;font-weight:750}.mainbutton:hover{background:#aff4fa}.side .btn{width:100%;text-align:center}.state{font-size:11px;color:var(--green);min-height:18px;margin-top:9px}.help{font-size:11px;color:var(--muted);line-height:1.6}.foot{font-size:12px;color:var(--muted);line-height:1.7;border-top:1px solid var(--line);padding-top:19px;margin-top:24px}
+@media(max-width:900px){.layout{display:block}.side{position:static;margin-bottom:16px}.summ{max-height:160px}.play{padding:9px}.group{padding:13px}}@media(max-width:500px){main{padding:19px 11px 55px}.group-head{display:block}.group-count{display:inline-block;margin-top:8px}.entry{gap:7px;padding:8px}.play{min-width:66px;padding:10px 6px}.tag{font-size:11px}.toolbar{gap:9px}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<div class="kicker">PINBALL OVERLOAD / SOUND SELECTION V4</div>
+<h1>音效选型台 · 每组10个备选</h1>
+<div class="sub">10组游戏事件，每组10段不同的真实音频，点击右侧试听、左侧选定。你在V3已确认的7项会保留为原有选择，未通过的3项不自动选中。所有决定可保存、备注并导出。</div>
+<div class="tags"><span class="tag"><b>100</b> 个新增备选</span><span class="tag"><b>10</b> 组</span><span class="tag">原版 <b>V3决策保留</b></span><span class="tag">候选音频 <b>CC0</b></span></div>
+<div class="warn"><b>试听与正式游戏分开。</b>新增100段音频来自公开CC0素材索引，在线试听从GitHub镜像加载；还未经过你的听感验收。V3原有7个已选WAV仍在本地V3工作树，没有部署到线上，因此本页保留其选择记录但不能播放那些WAV。选定新音效后需将实际文件下载进项目，不能将外部热链作为正式发布依赖。</div>
+</header>
+<div class="toolbar">
+<label>主音量 <input type="range" id="volume" min="0" max="100" value="70"><b id="vol-label">70%</b></label>
+<span class="sub small">优先采用RMS校准＋峰值上限；若跨站解码失败则降级播放</span>
+<button class="btn" id="stop">停止全部</button>
+<button class="btn" id="copy-link">复制页面链接</button>
+</div>
+<div class="layout">
+<div id="groups"></div>
+<aside class="side">
+<h2>音效筛选记录</h2>
+<div class="progress">已确定 <b id="selected">0</b> / 10 · 待重做 <b id="redo">0</b></div>
+<div class="meter"><div id="fill" class="fill"></div></div>
+<ul id="summary" class="summ"></ul>
+<div class="exports">
+<button class="mainbutton" id="export-json">下载选型结果 JSON</button>
+<button class="btn" id="export-md">下载 Markdown 清单</button>
+<button class="btn" id="copy-md">复制结果给 DeepSeek</button>
+<button class="btn" id="reset">恢复V3原始决策</button>
+</div>
+<p class="state" id="state" role="status"></p>
+<p class="help">选择、备注自动保存在此浏览器。更换设备需导出结果。本轮没有修改Demo、R1战场或音频播放逻辑。</p>
+</aside>
+</div>
+<footer class="foot">素材源：<a href="https://github.com/Mcamento8/open-game-sfx-index" target="_blank" rel="noopener noreferrer">Open Game SFX Index</a>（Kenney / OpenGameArt CC0素材目录，具体资源另有原始许可证记录）。源码与候选记录保存在本仓库 <code>assets/sfx/v4/</code>。如需在苹果手机试听，建议在可访问GitHub的网络环境中手动点击播放按钮。</footer>
+</main>
+<script src="./catalog.js"></script>
+<script>
+(function(){
+"use strict";
+const C=window.PINBALL_SFX_V4,dom=document.getElementById("groups");
+if(!C||!C.groups||C.groups.length!==10){dom.textContent="音频目录缺失，请检查 catalog.js";return;}
+const KEY="pinball-sfx-v4-choices-20261106";
+function fresh(){const c={};C.groups.forEach(g=>{c[g.id]={value:g.v3.status==="selected"?"keep-v3":"redo",note:""};});return c;}
+let selections=fresh();try{const obj=JSON.parse(localStorage.getItem(KEY)||"null");if(obj&&typeof obj==="object")C.groups.forEach(g=>{if(obj[g.id]&&typeof obj[g.id].value==="string"){const v=obj[g.id].value;if(v==="keep-v3"||v==="redo"||v==="pending"||g.candidates.some(c=>c.id===v))selections[g.id]={value:v,note:String(obj[g.id].note||"")};}});}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(selections));}catch(e){status("本地存储不可用，请及时导出");}}
+function status(t){document.getElementById("state").textContent=t;}
+function h(s){return String(s).replace(/[&<>"']/g,k=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[k]));}
+let ac=null,gain=null,comp=null,activeNodes=[],playingHTML=[],playTicket=0,cache=new Map(),vol=.7;
+function ensureCtx(){if(!ac){const A=window.AudioContext||window.webkitAudioContext;if(!A)throw Error("浏览器不支持Web Audio");ac=new A();gain=ac.createGain();comp=ac.createDynamicsCompressor();comp.threshold.value=-12;comp.knee.value=14;comp.ratio.value=4;comp.attack.value=.004;comp.release.value=.14;gain.connect(comp);comp.connect(ac.destination);gain.gain.value=vol*.75;}if(ac.state==="suspended")ac.resume();return ac;}
+function stop(){playTicket++;activeNodes.forEach(n=>{try{n.stop()}catch(e){}});activeNodes=[];playingHTML.forEach(a=>{try{a.pause();a.currentTime=0;}catch(e){}});playingHTML=[];document.querySelectorAll("button.play").forEach(b=>{b.classList.remove("playing","loading");b.textContent="▶ 试听";});}
+async function audioData(item){if(!cache.has(item.url)){const prom=(async()=>{const res=await fetch(item.url,{mode:"cors"});if(!res.ok)throw Error("HTTP "+res.status);const bytes=await res.arrayBuffer();const audio=ensureCtx();const buf=await audio.decodeAudioData(bytes.slice(0));let sum=0,peak=0,n=0;for(let c=0;c<buf.numberOfChannels;c++){const data=buf.getChannelData(c);for(let i=0;i<data.length;i++){const v=data[i];sum+=v*v;peak=Math.max(peak,Math.abs(v));n++;}}const rms=Math.sqrt(sum/Math.max(1,n));const rmsGain=.10/Math.max(.0001,rms);const peakGain=.7/Math.max(.0001,peak);return {buffer:buf,gain:Math.max(.15,Math.min(2.0,rmsGain,peakGain))};})();cache.set(item.url,prom);prom.catch(()=>cache.delete(item.url));}return cache.get(item.url);}
+function playBuffered(buf,g,at){const node=ac.createBufferSource(),gNode=ac.createGain();node.buffer=buf;gNode.gain.value=g;node.connect(gNode).connect(gain);node.start(at);activeNodes.push(node);node.onended=()=>{const i=activeNodes.indexOf(node);if(i>=0)activeNodes.splice(i,1);};}
+function mediaFallback(item,mode){const a=new Audio(item.url);a.preload="auto";a.volume=Math.min(1,vol*.45);playingHTML.push(a);const total=mode==="mg"?25:mode==="hit"?12:mode==="boom"?3:1;const interval=mode==="mg"?80:mode==="hit"?165:230;for(let i=0;i<total;i++){setTimeout(()=>{if(!playingHTML.includes(a))return;let clone=i===0?a:new Audio(item.url);clone.volume=a.volume;clone.play().catch(()=>status("播放失败，可能是素材站被网络限制："+item.original));if(i>0)playingHTML.push(clone);},interval*i);}}
+async function play(item,button,mode){stop();const ticket=playTicket;button.classList.add("loading");button.textContent="载入中";ensureCtx();try{const data=await audioData(item);if(ticket!==playTicket)return;button.classList.remove("loading");button.classList.add("playing");button.textContent="正在播放";const count=mode==="mg"?25:mode==="hit"?12:mode==="boom"?3:1,step=mode==="mg"?.08:mode==="hit"?.165:.23;const start=ac.currentTime+.035;for(let i=0;i<count;i++)playBuffered(data.buffer,data.gain*(count>1?.55:1),start+i*step);setTimeout(()=>{if(ticket===playTicket){button.classList.remove("playing");button.textContent="▶ 试听";}},(count-1)*step*1000+data.buffer.duration*1000+120);}catch(e){if(ticket!==playTicket)return;button.classList.remove("loading");button.textContent="▶ 试听";status("跨站解码失败，已尝试降级播放；试听响度未校准。");mediaFallback(item,mode);}}
+function render(){dom.innerHTML="";C.groups.forEach((g,idx)=>{const section=document.createElement("section");section.className="group";section.id="g-"+g.id;section.innerHTML='<div class="group-head"><div><h2>'+String(idx+1).padStart(2,"0")+' · '+h(g.name)+'</h2><p class="group-desc">'+h(g.feedback)+'</p></div><span class="group-count">10个新备选</span></div>';
+const old=document.createElement("div");old.className="note-old";const isSelected=g.v3.status==="selected";old.innerHTML='<div class="old-row"><label><input type="radio" name="choose-'+g.id+'" value="keep-v3" '+(selections[g.id].value==="keep-v3"?"checked":"")+' '+(!isSelected?"disabled":"")+'><strong>'+h(isSelected?"保留 V3 已选音效："+g.v3.label:"V3 当前：需要重新选择")+'</strong></label></div><p>'+(isSelected?"已保留你的原始选择。该WAV还未公开部署，本页无法在线播放；以下10个是新增对照。":"V3不满意，不自动给你选任何新候选。")+'</p>';
+section.appendChild(old);const list=document.createElement("div");list.className="list";
+g.candidates.forEach((item)=>{const row=document.createElement("div");row.className="entry";row.dataset.choice=item.id;
+const id="r-"+item.id;
+row.innerHTML='<input type="radio" name="choose-'+g.id+'" id="'+id+'" value="'+item.id+'" '+(selections[g.id].value===item.id?"checked":"")+'><div class="item-name"><label for="'+id+'"><strong>'+h(item.label)+'</strong></label><div class="meta">'+h(item.original)+' · '+item.seconds.toFixed(2)+'s · '+h(item.sourcePack)+'</div></div>';
+const button=document.createElement("button");button.type="button";button.className="play";button.textContent="▶ 试听";button.addEventListener("click",()=>play(item,button,"single"));row.appendChild(button);list.appendChild(row);});
+section.appendChild(list);const actions=document.createElement("div");actions.className="actions";
+if(g.id==="mg"||g.id==="hit"||g.id==="boom"){
+const burst=document.createElement("button");burst.className="btn";burst.type="button";burst.textContent=g.id==="mg"?"播放25发／12.5发/秒":g.id==="hit"?"连续命中12次": "爆雷三段接力";burst.addEventListener("click",()=>{const cur=g.candidates.find(x=>x.id===selections[g.id].value);if(!cur){status("请先选定这组的一个新候选，再试听连续效果");return;}play(cur,burst,g.id);});actions.appendChild(burst);}
+const redo=document.createElement("button");redo.className="btn";redo.type="button";redo.textContent="这些都不满意";redo.addEventListener("click",()=>{selections[g.id].value="redo";syncGroup(g.id);save();updateSummary();});actions.appendChild(redo);
+const pending=document.createElement("button");pending.className="btn";pending.type="button";pending.textContent="暂不决定";pending.addEventListener("click",()=>{selections[g.id].value="pending";syncGroup(g.id);save();updateSummary();});actions.appendChild(pending);section.appendChild(actions);
+const note=document.createElement("textarea");note.className="notearea";note.rows=2;note.placeholder="这一组音效的反馈，例如：太尖、想更清脆、太闷、比V3更好...";note.value=selections[g.id].note||"";note.addEventListener("input",()=>{selections[g.id].note=note.value;save();});section.appendChild(note);
+section.addEventListener("change",e=>{if(e.target&&e.target.matches('input[type="radio"]')){selections[g.id].value=e.target.value;syncGroup(g.id);save();updateSummary();status("已保存："+g.name);}});
+dom.appendChild(section);syncGroup(g.id);});updateSummary();}
+function syncGroup(groupId){const sec=document.getElementById("g-"+groupId);if(!sec)return;sec.querySelectorAll('input[type="radio"]').forEach(el=>{el.checked=el.value===selections[groupId].value;});sec.querySelectorAll(".entry").forEach(el=>el.classList.toggle("on",el.dataset.choice===selections[groupId].value));}
+function selectionFor(g){return g.candidates.find(c=>c.id===selections[g.id].value)||null;}
+function updateSummary(){let done=0,redo=0,parts=[];C.groups.forEach(g=>{let id=selections[g.id].value,item=selectionFor(g),label=item?item.label:id==="keep-v3"?g.v3.label:id==="redo"?"需重做":"待定";if(item||id==="keep-v3")done++;if(id==="redo")redo++;parts.push('<li><span>'+h(g.name)+'</span><span>'+h(label)+'</span></li>');});
+document.getElementById("selected").textContent=done;document.getElementById("redo").textContent=redo;document.getElementById("fill").style.width=done*10+"%";document.getElementById("summary").innerHTML=parts.join("");}
+function payload(){return {project:"弹珠超载",version:"音效选型V4-100候选",createdAt:new Date().toISOString(),source:"assets/sfx/v4/selector.html",license:"CC0-1.0 (Kenney/OpenGameArt)",externalSource:"Mcamento8/open-game-sfx-index",decisions:C.groups.map(g=>{const chosen=selectionFor(g),value=selections[g.id].value;return {eventId:g.id,eventLabel:g.name,status:chosen?"selected_new":value==="keep-v3"?"keep_v3":value==="redo"?"needs_new_asset":"pending",choiceId:chosen?chosen.id:value,choiceLabel:chosen?chosen.label:value==="keep-v3"?g.v3.label:null,audioFiles:chosen?[chosen.url]:value==="keep-v3"?[g.v3.file]:[],originalSource:chosen?{pack:chosen.sourcePack,original:chosen.original,uri:chosen.url}:null,notes:selections[g.id].note||""};})};}
+function markdown(){const p=payload(),rows=["# 弹珠超载 · 音效选型V4","","导出时间："+p.createdAt,"", "| 游戏事件 | 选择 | 音频来源 | 状态 | 备注 |","|---|---|---|---|---|"];p.decisions.forEach(d=>{const safe=s=>String(s||"").replace(/\|/g,"／").replace(/[\r\n]+/g,"；");rows.push("| "+safe(d.eventLabel)+" | "+safe(d.choiceLabel||"待定")+" | "+safe(d.audioFiles.join(" + "))+" | "+safe(d.status)+" | "+safe(d.notes)+" |");});rows.push("","注意：V3已选音频为原有工作树文件，V4新候选为CC0外部试听来源；接入正式游戏前须将获选音频自托管、核对文件许可与设备兼容。");return rows.join("\n");}
+function download(name,content,mime){const blob=new Blob([content],{type:mime}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);}
+document.getElementById("export-json").addEventListener("click",()=>{download("pinball-audio-selection-v4.json",JSON.stringify(payload(),null,2),"application/json;charset=utf-8");status("已导出JSON");});
+document.getElementById("export-md").addEventListener("click",()=>{download("pinball-audio-selection-v4.md",markdown(),"text/markdown;charset=utf-8");status("已导出Markdown");});
+document.getElementById("copy-md").addEventListener("click",async()=>{try{await navigator.clipboard.writeText(markdown());status("已复制结果，可粘贴给DeepSeek");}catch(e){download("pinball-audio-selection-v4.md",markdown(),"text/markdown;charset=utf-8");status("浏览器不支持复制，已改为下载文件");}});
+document.getElementById("reset").addEventListener("click",()=>{if(!confirm("确认恢复到刚才V3的七项已选、三项待重做状态？当前V4选型会被覆盖。"))return;selections=fresh();save();render();status("已恢复V3基线");});
+document.getElementById("volume").addEventListener("input",e=>{vol=Number(e.target.value)/100;document.getElementById("vol-label").textContent=Math.round(vol*100)+"%";if(gain)gain.gain.value=vol*.75;playingHTML.forEach(a=>a.volume=vol*.45);});
+document.getElementById("stop").addEventListener("click",stop);
+document.getElementById("copy-link").addEventListener("click",async()=>{try{await navigator.clipboard.writeText(location.href);status("页面地址已复制");}catch(e){status("复制链接失败，请从地址栏复制");}});
+window.addEventListener("pagehide",stop);
+render();
+})();
+</script>
+</body>
+</html>
