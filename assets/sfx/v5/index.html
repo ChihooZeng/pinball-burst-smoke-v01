@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0c121d">
+<title>弹珠超载 · 音效独立选型 V5</title>
+<style>
+:root{--bg:#0a111c;--surface:#122131;--surface2:#15283c;--line:#30475b;--text:#f0f6fd;--muted:#93aabc;--accent:#67e2e9;--green:#78e7ba;--gold:#f0bd80}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font:14px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft Yahei",sans-serif}
+body{background:radial-gradient(ellipse 90% 500px at 40% -160px,#20445f,transparent),var(--bg)}
+button,select,input,textarea{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+button:disabled{opacity:.45;cursor:default}a{color:var(--accent)}
+.app{max-width:1530px;margin:auto;padding:28px 24px 68px}
+.kicker{letter-spacing:.19em;font-size:11px;color:var(--accent);font-weight:750}
+h1{font-size:clamp(25px,3vw,38px);margin:8px 0;letter-spacing:-.025em}
+.lead{color:#b2c4d4;max-width:950px;margin:4px 0 14px}
+.topline{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:15px 0 18px}
+.pill{font-size:11px;padding:4px 10px;border:1px solid var(--line);border-radius:20px;color:#b2cde1}.pill strong{color:#e3fcff}
+.workstation{display:grid;grid-template-columns:205px minmax(0,1fr) 290px;gap:16px;align-items:start}
+.panel{background:rgba(16,29,44,.95);border:1px solid var(--line);border-radius:16px;min-width:0}
+.menu{position:sticky;top:15px;padding:12px;display:flex;flex-direction:column;gap:6px}
+.menu h2{font-size:13px;margin:0 0 7px;color:#b4d1e3}
+.event-nav{width:100%;display:flex;align-items:center;gap:9px;text-align:left;color:#c0d5e5;padding:11px 10px;background:#132437;border:1px solid transparent;border-radius:10px;font-size:12px}
+.event-nav:hover{background:#1c384c}.event-nav.active{background:#164a4b;border-color:#5ad7bd;color:#e2fff5}
+.event-nav .nav-number{font-variant-numeric:tabular-nums;color:#91b2ca;width:18px;flex-shrink:0}
+.event-nav .nav-title{flex:1}
+.event-nav .nav-status{font-size:10px;color:#f7c585;white-space:nowrap}
+.nav-footer{font-size:11px;color:var(--muted);margin:12px 3px 3px;border-top:1px solid var(--line);padding-top:12px}
+.mainpanel{padding:18px;min-height:650px}
+.category-title{display:flex;justify-content:space-between;align-items:start;gap:12px;margin-bottom:10px}
+.category-title h2{font-size:22px;margin:0}
+.category-title .sub{font-size:12px;color:var(--muted);margin:5px 0 0}
+.summary-count{font-size:11px;white-space:nowrap;border:1px solid var(--line);border-radius:9px;padding:6px 9px;color:var(--accent)}
+.review-note{background:#1c2835;border-left:3px solid #e0bd7a;border-radius:8px;padding:10px 12px;color:#c4cfdd;font-size:12px;margin:12px 0}
+.toolbars{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:13px 0}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}.tabs button{padding:7px 10px;background:#182a40;border:1px solid #30485a;border-radius:8px;font-size:11px;color:#b5cede}
+.tabs button.active{color:#e9fff4;border-color:#61d9ba;background:#154b45}
+.global{display:flex;align-items:center;gap:8px;font-size:12px;color:#aac4d5}.global input[type=range]{width:98px;accent-color:var(--accent)}
+.global button{padding:7px 9px;border:1px solid #3e5b72;border-radius:8px;background:#1d3b4c;color:#b5e9fa;font-size:11px}
+.rows{display:flex;flex-direction:column;gap:7px}
+.group-head{font-size:11px;letter-spacing:.06em;color:#a4b9ca;margin:13px 0 3px;padding:8px 0 3px;border-bottom:1px solid #274055}
+.option{display:flex;gap:10px;align-items:center;border:1px solid #2c4055;background:#0f1b2b;border-radius:11px;padding:9px 11px;min-height:61px}
+.option:hover{border-color:#58788d}.option.selected{background:#12372f;border-color:#61ceae}
+.option input[type=radio]{accent-color:var(--green);width:18px;height:18px;flex-shrink:0;cursor:pointer}
+.opt-label{flex:1;min-width:0;cursor:pointer}.opt-title{font-size:13px;font-weight:650;line-height:1.3}.opt-meta{color:var(--muted);font-size:11px;margin-top:3px;overflow-wrap:anywhere}
+.audio-actions{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.play{font-size:12px;padding:8px 10px;min-height:35px;border:1px solid #38637c;border-radius:8px;color:#c8f2fb;background:#17374a;white-space:nowrap}
+.play:hover{background:#24536b}.play.playing{border-color:#7ddcba;color:#8cffe2;background:#204b44}
+.favorite{font-size:18px;line-height:1;min-width:36px;height:36px;border-radius:9px;border:1px solid #405669;background:#14283b;color:#7e9eaf}
+.favorite.on{color:#ffcf84;border-color:#8d714b}
+.opt-chip{font-size:10px;color:#7ee4c4;margin-left:6px}
+.no-results{color:var(--muted);padding:45px 10px;text-align:center;font-size:13px}
+.notes{margin-top:15px}.notes label{display:block;font-size:12px;font-weight:700;margin-bottom:7px}
+.notes textarea{background:#0c1b2a;border:1px solid #365069;border-radius:10px;color:#e7f6fb;padding:11px;width:100%;min-height:80px;resize:vertical;font-size:12px}
+.notes textarea::placeholder{color:#6e8b9f}
+.side{position:sticky;top:15px;padding:17px}.side h2{font-size:17px;margin:0 0 7px}
+.meter{background:#2a4354;border-radius:7px;height:8px;overflow:hidden;margin:12px 0 5px}.fill{background:linear-gradient(90deg,#54bdcb,#87e9b4);height:100%;width:0}
+.side .count{font-size:12px;color:#a9c4d6}.sum{list-style:none;margin:12px 0;padding:0;max-height:395px;overflow:auto}
+.sum li{display:flex;align-items:start;justify-content:space-between;gap:7px;font-size:12px;padding:9px 0;border-bottom:1px solid #2b4156}
+.sum li span:first-child{color:#9bb5c9;white-space:nowrap}.sum li span:last-child{text-align:right;word-break:break-word}
+.buttons{display:flex;flex-direction:column;gap:8px}.buttons button,.buttons label{display:block;width:100%;padding:9px;border:1px solid #476179;border-radius:9px;background:#1b3649;color:#e7f4fc;text-align:center;font-size:12px;cursor:pointer}
+.buttons button.primary{background:var(--accent);color:#042b38;font-weight:750;border-color:transparent}
+.buttons button:hover,.buttons label:hover{border-color:#71e6f0}.buttons input{display:none}
+#status{font-size:11px;color:#8cdeb7;min-height:17px;margin:10px 0 0}.hint{font-size:11px;line-height:1.6;color:#8ea8bd;margin:12px 0 0}
+footer{margin-top:24px;color:#89a5b7;font-size:12px;line-height:1.65}
+@media(max-width:1190px){.workstation{grid-template-columns:175px minmax(0,1fr)}.side{position:static;grid-column:1/-1}.sum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 15px;max-height:none}}
+@media(max-width:770px){.app{padding:20px 11px 55px}.workstation{display:block}.menu{position:static;flex-direction:row;flex-wrap:nowrap;overflow-x:auto;margin-bottom:12px;gap:6px}.menu h2,.nav-footer{display:none}.event-nav{width:auto;flex-shrink:0;white-space:nowrap}.event-nav .nav-status{display:none}.mainpanel{padding:13px;min-height:600px}.side{margin-top:12px}.sum{display:block}.audio-actions{gap:4px}.play{padding:9px 7px}}
+@media(max-width:460px){.option{flex-wrap:wrap;padding:9px;gap:8px}.audio-actions{width:100%;justify-content:flex-end;padding-left:25px}.opt-label{flex-basis:calc(100% - 44px)}.category-title{display:block}.summary-count{display:inline-block;margin-top:8px}}
+</style>
+<script src="../v4/catalog.js" defer></script>
+<script src="../../../compare/audio-in-game-lab-v1/extra-catalog.js" defer></script>
+<script src="./more-catalog.js" defer></script>
+<script src="./selector.js" defer></script>
+</head>
+<body>
+<main class="app">
+<header>
+<div class="kicker">PINBALL OVERLOAD / AUDIO SELECTION · V5</div>
+<h1>音效独立选型台</h1>
+<p class="lead">先确定真正需要的7类音效。每类30个不同音频候选，可以单听、连续听3秒、收藏多个备用、指定一个首选，完成后统一导出结果。这里不运行游戏，也不修改游戏音效。</p>
+<div class="topline">
+<span class="pill"><strong>7</strong> 类核心音效</span><span class="pill"><strong>210</strong> 条候选</span><span class="pill">单次 + 连续<strong>3秒</strong></span><span class="pill">保留V4选择</span><span class="pill">素材标注CC0</span>
+</div>
+</header>
+<div class="workstation">
+<nav class="panel menu" id="nav" aria-label="7类音效选择"><h2>声音分类</h2></nav>
+<section class="panel mainpanel">
+<div class="category-title"><div><h2 id="category-name">载入音频目录…</h2><p class="sub" id="category-hint"></p></div><span class="summary-count" id="group-count">30个候选</span></div>
+<div class="review-note" id="review-note"></div>
+<div class="toolbars">
+<div class="tabs" id="filter" aria-label="音频筛选">
+<button type="button" data-filter="all" class="active">全部30</button>
+<button type="button" data-filter="old">原选10</button>
+<button type="button" data-filter="new">扩展20</button>
+<button type="button" data-filter="saved">仅看保留</button>
+</div>
+<div class="global"><label for="volume">试听音量</label><input id="volume" type="range" min="0" max="100" value="68"/><span id="volume-value">68%</span><button id="stop" type="button">■ 停止</button></div>
+</div>
+<div id="rows" class="rows"></div>
+<div class="notes"><label for="notes">这类音效的评价 / 调整意见</label><textarea id="notes" placeholder="例如：第8、第15比较好，但希望更厚一点；持续播放时太尖锐…"></textarea></div>
+</section>
+<aside class="panel side">
+<h2>选型进度</h2><p class="count">已选 <strong id="done">0</strong> / 7，收藏 <strong id="kept">0</strong> 项</p><div class="meter"><div class="fill" id="fill"></div></div>
+<ul class="sum" id="summary"></ul>
+<div class="buttons">
+<button id="export-json" type="button" class="primary">下载选型 JSON</button>
+<button id="export-md" type="button">下载 Markdown 清单</button>
+<button id="copy" type="button">复制结果</button>
+<label for="import-json">导入之前导出的 JSON<input type="file" id="import-json" accept=".json,application/json"/></label>
+<button id="reset" type="button">恢复V4人工选择</button>
+</div>
+<p id="status" role="status"></p>
+<p class="hint">选择、收藏、备注自动保存在此浏览器。播放音效不等于确认，只有点击选择圆点才会成为首选。可收藏多个备用。</p>
+<p class="hint">★ 代表此前已归档到本项目的音频，可从本仓库直接播放；其余候选会按需从公开CC0素材索引加载。听不到时请检查音频源网络。</p>
+</aside>
+</div>
+<footer>本页是选音效工具。已归档的V4素材作为候选保留；取消独立「装甲命中 / 开花 / 植雷」类别不代表删除旧录音或否认后续可能需要细微辅助声。部分候选来自同一素材系列的不同录音，是否合适必须由你人耳确认。发行前还需复核各个原始来源的许可证。<br>来源：<a href="https://github.com/Mcamento8/open-game-sfx-index" target="_blank" rel="noopener">Open Game SFX Index</a>、Kenney、OpenGameArt。试玩和正式游戏不会因本页选择而自动改变。</footer>
+</main>
+</body>
+</html>
