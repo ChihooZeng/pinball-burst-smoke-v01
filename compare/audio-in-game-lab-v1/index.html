@@ -7,10 +7,10 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%2212%22 fill=%22%2308192a%22 stroke=%22%2366ebf2%22 stroke-width=%223%22/%3E%3C/svg%3E"/>
   <title>弹珠超载 · 游戏内音效实验室（200候选）</title>
   <link rel="stylesheet" href="../../compare/rapid-refill-lab-v6-20261105/style.css?v=rapid-v6-1"/>
-<link rel="stylesheet" href="./audio-lab.css?v=1"/>
+<link rel="stylesheet" href="./audio-lab.css?v=desktop-2"/>
 <script src="../../assets/sfx/v4/catalog.js?v=1" defer></script>
 <script src="./extra-catalog.js?v=1" defer></script>
-<script src="./audio-lab.js?v=1" defer></script>
+<script src="./audio-lab.js?v=desktop-2" defer></script>
 </head>
 <body class="quick-lab-page lab-page audio-in-game">
   <main class="shell">
@@ -116,15 +116,15 @@
   <script>if(new URLSearchParams(location.search).get("test")==="1")window.__PINBALL_TEST__=true;</script><script src="../../compare/rapid-refill-lab-v6-20261105/juice-fx.js?v=rapid-v6-1" defer></script><script src="../../compare/rapid-refill-lab-v6-20261105/builds.js?v=rapid-v6-1" defer></script><script src="./lab-config.js?v=audio-lab-1" defer></script><script src="./game.js?v=audio-lab-1" defer></script>
 <button id="al-open" type="button" aria-label="打开游戏音效实验室">音效 · 200</button>
 <aside id="al-panel" aria-label="游戏音效实时调试面板">
-  <div class="al-title"><div><b>弹珠超载 · 游戏内音效实验室</b><small>R1真实战场 / 技能 × 20音效/组</small></div><button id="al-close" aria-label="关闭调试面板">×</button></div>
+  <div class="al-title"><div><b>弹珠超载 · 游戏内音效实验室</b><small>电脑版 · 左侧实时游戏 / 右侧音效控制 · 每组20项</small></div><button id="al-close" aria-label="关闭调试面板">×</button></div>
   <section class="al-skill"><h3>技能单独调试</h3><p>切技能会重开R1战场；当前音效设置原样保留。</p><div class="al-buttons" id="al-skills"></div>
   <label>战场 <select id="al-field"><option value="R1">R1 · 极速补砖（建议）</option><option value="C">C · 批次对照</option><option value="R2">R2 · 高HP对照</option></select></label>
   <div class="al-active" id="al-active">从上方选择技能开始 · 默认R1</div></section>
   <section class="al-global"><div class="al-switch"><button id="al-original" type="button">A · 原M2.5音效</button><button id="al-custom" type="button">B · 实时选型</button></div>
   <label>总音量 <input id="al-master" type="range" min="0" max="100" step="1" value="70"><span id="al-master-value">70%</span></label>
   <p id="al-load">音频仅按需解码，首次播放可能稍慢；可在游戏运行时直接换声音。</p></section>
-  <section class="al-event-section"><h3>音效分组 · 每组20个备选</h3><p>每组可独立选音、试听、连续播放3秒、静音和调整音量。更改后立即作用于真实战斗事件。</p><div id="al-events"></div></section>
-  <section class="al-save"><button id="al-export" type="button">导出本次音效方案JSON</button><button id="al-reset" type="button">恢复V4已选候选</button><p id="al-status" role="status"></p></section>
+  <section class="al-event-section"><div class="al-event-title"><h3>音效分组 · 每组20个备选</h3><span>选新声音后立即应用到游戏</span></div><div id="al-filters" class="al-filters" role="group" aria-label="筛选音效类型"><button type="button" class="active" data-filter="all">全部10组</button><button type="button" data-filter="impact">命中/破碎 4组</button><button type="button" data-filter="skill">技能反馈 3组</button><button type="button" data-filter="result">结算/奖励 3组</button></div><div id="al-events"></div></section>
+  <section class="al-save"><button id="al-export" type="button">导出本次音效方案 JSON</button><button id="al-reset" type="button">恢复V4已选候选</button><p id="al-status" role="status"></p></section>
   <div class="al-footer">实验版本：不修改正式Demo与原V6。外链音效仅用于试听，正式发布必须本地托管。<a href="../../assets/sfx/v4/selector.html">打开原音效选型页</a></div>
 </aside>
 </body>

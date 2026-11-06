@@ -174,10 +174,34 @@ function preview(id,repeat,button){
   setTimeout(()=>{if(token===previewTokens){button.textContent=repeat?"↻ 连续3秒":"▶ 单次";button.classList.remove("pressed");}},repeat?3150:buffer.duration*1000+150);
  }).catch(()=>{button.classList.remove("pressed");button.textContent=repeat?"↻ 连续3秒":"▶ 单次";status("采样解码失败，已尝试普通播放");fallbackPreview(item);});
 }
+const FILTERS={all:null,impact:["mg","hit","break","armor"],skill:["bloom","plant","boom"],result:["clear","fail","upgrade"]};
+let activeFilter="all";
+function applyFilter(){
+ document.querySelectorAll("#al-events details.al-event-group").forEach(detail=>{
+  detail.hidden=activeFilter!=="all"&&!FILTERS[activeFilter].includes(detail.dataset.group);
+ });
+ document.querySelectorAll("#al-filters button").forEach(button=>{
+  const active=button.dataset.filter===activeFilter;
+  button.classList.toggle("active",active);
+  button.setAttribute("aria-pressed",String(active));
+ });
+}
+document.getElementById("al-filters").addEventListener("click",event=>{
+ const button=event.target.closest("button[data-filter]");
+ if(!button||!FILTERS.hasOwnProperty(button.dataset.filter))return;
+ activeFilter=button.dataset.filter;applyFilter();
+});
+function cycleChoice(id,step){
+ const g=MAP.get(id),list=["original",...g.all.map(item=>item.id)];
+ const current=Math.max(0,list.indexOf(config.groups[id].chosen));
+ const next=list[(current+step+list.length)%list.length];
+ API.setSelected(id,next);
+ status(g.name+" · 已切换到 "+(getChoice(id)?.label||"原始音效")+" · 新音效已立即应用");
+}
 function renderGroups(){
  const root=document.getElementById("al-events");root.replaceChildren();
  for(const g of GROUPS){
-  const id=g.id,detail=document.createElement("details");detail.className="al-event-group";
+  const id=g.id,detail=document.createElement("details");detail.className="al-event-group";detail.dataset.group=id;
   if(["break","armor","boom"].includes(id))detail.open=true;
   detail.innerHTML='<summary><span>'+esc(g.name)+'</span><small data-choice-name="'+id+'"></small><b class="al-counter" data-count="'+id+'">0次</b></summary>';
   const content=document.createElement("div");content.className="al-inside";
@@ -186,7 +210,15 @@ function renderGroups(){
   g.all.forEach((item,index)=>{
     const opt=document.createElement("option");opt.value=item.id;opt.textContent=String(index+1).padStart(2,"0")+" · "+item.label.replace(/^\d{2}(?:\s*·\s*|\s+)/,"")+(SELFHOST[item.id]?" ★":"");select.appendChild(opt);
   });
-  select.addEventListener("change",()=>API.setSelected(id,select.value));content.appendChild(select);
+  select.addEventListener("change",()=>API.setSelected(id,select.value));
+  const selectLine=document.createElement("div");selectLine.className="al-select-line";
+  selectLine.appendChild(select);
+  const arrows=document.createElement("div");arrows.className="al-cycle";
+  const prev=document.createElement("button");prev.type="button";prev.textContent="◀";prev.title="上一个候选";prev.setAttribute("aria-label",g.name+" 上一个音效");
+  const next=document.createElement("button");next.type="button";next.textContent="▶";next.title="下一个候选";next.setAttribute("aria-label",g.name+" 下一个音效");
+  prev.addEventListener("click",()=>cycleChoice(id,-1));
+  next.addEventListener("click",()=>cycleChoice(id,1));
+  arrows.appendChild(prev);arrows.appendChild(next);selectLine.appendChild(arrows);content.appendChild(selectLine);
   const buttons=document.createElement("div");buttons.className="al-test";
   const play=document.createElement("button");play.textContent="▶ 单次";play.dataset.idleLabel="▶ 单次";play.addEventListener("click",()=>preview(id,false,play));
   const repeat=document.createElement("button");repeat.textContent="↻ 连续3秒";repeat.dataset.idleLabel="↻ 连续3秒";repeat.addEventListener("click",()=>preview(id,true,repeat));
@@ -202,6 +234,7 @@ function renderGroups(){
   const info=document.createElement("small");info.className="al-info";info.setAttribute("data-info",id);content.appendChild(info);
   detail.appendChild(content);root.appendChild(detail);renderCurrent(id);
  }
+ applyFilter();
 }
 function refreshSkill(){
  document.querySelectorAll("#al-skills button").forEach(b=>{b.classList.toggle("selected",b.dataset.mode===config.skill);});
