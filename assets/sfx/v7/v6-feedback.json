@@ -1,0 +1,29 @@
+{
+  "origin": "User V6 audition export",
+  "at": "2026-11-06T07:50:27.853Z",
+  "version": "V6",
+  "scope": "Only clear and fail. Other five categories retained from V5.",
+  "events": [
+    {
+      "id": "clear",
+      "status": "pending",
+      "choice": null,
+      "favorites": [],
+      "note": "过关音乐不需要太长，我认为上面的音乐都偏长，因为我们是过关式的，很快节奏就开始下一关，不宜太长"
+    },
+    {
+      "id": "fail",
+      "status": "pending",
+      "choice": null,
+      "favorites": [
+        "简单收尾提示"
+      ],
+      "note": "一样，都太长，而且都和我们的风格不符"
+    }
+  ],
+  "interpretation": {
+    "clear": "Reject V6 long fanfares. Aim 0.4–0.7s bright positive rising and satisfying tiny success cues, no long intro.",
+    "fail": "Reject V6 long Game Over/music. Aim 0.25–0.55s gentle, identifiable, no intrusive electronic/game-over song.",
+    "others": "Five V5 retained categories unchanged; do not auto-fill V6 pending entries."
+  }
+}
