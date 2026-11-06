@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="zh-CN"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0c1422">
+<title>弹珠超载 · 音效V8 中等时长反馈选型</title>
+<style>
+:root{--bg:#0a121e;--panel:#122236;--surface:#0d1b2b;--line:#314b60;--text:#eff7ff;--sub:#9ab3c4;--cyan:#73deea;--green:#8fe6be;--gold:#f5c880}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse 95% 520px at 40% -150px,#1e4464,transparent),var(--bg);color:var(--text);font:14px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft Yahei",sans-serif}
+button,textarea,input{font:inherit}button{cursor:pointer}button:disabled{opacity:.5;cursor:default}button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}a{color:var(--cyan)}
+main{max-width:1450px;margin:auto;padding:25px 22px 65px}.eyebrow{font-size:11px;color:var(--cyan);font-weight:800;letter-spacing:.17em}
+h1{font-size:clamp(24px,3.3vw,35px);margin:8px 0}.intro{color:#b3c9d8;max-width:980px;margin:0 0 14px}
+.tags{display:flex;gap:7px;flex-wrap:wrap;margin:17px 0 21px}.tag{border:1px solid #395365;border-radius:22px;padding:5px 10px;font-size:12px;color:#bad3df}.tag b{color:white}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 295px;gap:17px;align-items:start}.category{background:var(--panel);border:1px solid var(--line);padding:16px;border-radius:15px;margin-bottom:17px}
+.category-head{display:flex;justify-content:space-between;gap:15px;align-items:start}.category h2{font-size:20px;margin:0 0 5px}.category p{color:var(--sub);font-size:12px;margin:3px 0 13px}.range{color:#9deccb;border:1px solid #3d6571;border-radius:8px;white-space:nowrap;padding:5px 8px;font-size:11px}
+.warning{border-left:3px solid var(--gold);background:#252b32;color:#e3d0b1;border-radius:7px;padding:10px;font-size:12px;margin:11px 0 14px}
+.options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.item{border:1px solid #2f4b5c;background:var(--surface);padding:11px;border-radius:11px;min-width:0}
+.item.selected{border-color:#7be2b9;background:#14382f}.item-head{display:flex;gap:9px;align-items:start}.item input[type=radio]{width:18px;height:18px;accent-color:#7fe6b5;cursor:pointer;flex-shrink:0}
+.item-title{flex:1;min-width:0;cursor:pointer;font-size:13px;font-weight:700}.item-sub{font-size:11px;color:var(--sub);margin:5px 0 8px;min-height:16px}
+.item-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.play{background:#1b3b52;color:#d4f5ff;border:1px solid #3f7084;border-radius:8px;padding:8px 9px;min-height:36px;font-size:12px;white-space:nowrap}.play.playing{border-color:var(--green);color:#a0fcd4}
+.star{border:1px solid #536575;background:#1b2a39;color:#829cac;border-radius:8px;font-size:18px;height:36px;min-width:36px}.star.on{color:#ffca77;border-color:#ae8752}
+.note{display:block;margin-top:14px;font-size:12px;color:#d4e8f4;font-weight:650}.note textarea{margin-top:8px;width:100%;background:#091926;border:1px solid var(--line);border-radius:9px;min-height:62px;padding:10px;color:white;resize:vertical;font-size:12px}.note textarea::placeholder{color:#7f9aac}
+.side{position:sticky;top:14px;background:#14273b;border:1px solid #426079;border-radius:15px;padding:16px}
+.side h2{font-size:17px;margin:0 0 12px}.meter{height:8px;border-radius:8px;background:#375265;overflow:hidden;margin:10px 0}.meter div{height:100%;width:0;background:linear-gradient(90deg,#62b7e0,#82e7b4)}
+.summary{list-style:none;padding:0;margin:5px 0 13px}.summary li{display:flex;justify-content:space-between;gap:9px;align-items:start;padding:10px 0;border-bottom:1px solid #2e4b60;font-size:12px}.summary li span:first-child{color:#a4becd}.summary li span:last-child{text-align:right}
+.controls{display:grid;gap:8px}.controls button{border-radius:9px;background:#1a3c53;border:1px solid #42697e;color:#e5f6ff;padding:9px 10px;font-size:12px}.controls .primary{background:var(--cyan);color:#062938;font-weight:750;border:none}.controls label{display:flex;justify-content:space-between;align-items:center;gap:9px;color:#b7d3e1;font-size:12px}.controls input[type=range]{width:132px;accent-color:var(--cyan)}
+.feedback{font-size:11px;color:#86dfb8;min-height:22px;margin-top:9px}.help{font-size:11px;color:#91aabf;line-height:1.7}.archive{border-top:1px solid #31516a;margin-top:16px;padding-top:14px;font-size:11px;color:#9cbacb}.archive strong{display:block;color:#c9effa;margin-bottom:7px}.archive div{margin:5px 0}
+footer{color:#8da8b9;border-top:1px solid #32495c;margin-top:22px;padding-top:15px;font-size:12px;line-height:1.75}
+@media(max-width:970px){.layout{grid-template-columns:1fr}.side{position:static;order:-1}.side .controls{grid-template-columns:repeat(2,1fr)}.archive{display:none}}
+@media(max-width:640px){main{padding:18px 11px 55px}.category{padding:11px}.options{grid-template-columns:1fr}.side .controls{grid-template-columns:1fr}.category-head{display:block}.range{display:inline-block;margin:5px 0}}
+</style>
+<script src="./catalog.js" defer></script>
+<script src="./selector.js" defer></script>
+</head><body>
+<main>
+<header>
+<div class="eyebrow">PINBALL OVERLOAD · AUDIO REVIEW V8</div>
+<h1>V8 音效独立选型 · 过关与失败</h1>
+<p class="intro">根据你对V6过长、V7过短的反馈，这版改为中等时长。你可以自己听20组音效，逐个对比、收藏或选定喜欢的声音，所有结果都能导出。</p>
+<div class="tags">
+<span class="tag"><b>过关</b> 0.98–1.31秒</span>
+<span class="tag"><b>失败</b> 0.76–1.08秒</span>
+<span class="tag">各<b>10</b>组中等时长组合</span>
+<span class="tag">不是长篇音乐</span>
+<span class="tag">单次／连播3秒</span>
+</div>
+</header>
+<div class="layout">
+<div id="groups"></div>
+<aside class="side">
+<h2>试听选择</h2>
+<div style="font-size:12px;color:#b6cfdc">已选择 <b id="done">0</b>/2 · 收藏 <b id="favorites">0</b> 组</div>
+<div class="meter"><div id="meter-fill"></div></div>
+<ul class="summary" id="summary"></ul>
+<div class="controls">
+<label>音量 <input type="range" id="volume" min="0" max="100" value="68"/><span id="vol-val">68%</span></label>
+<button type="button" id="stop">■ 停止</button>
+<button type="button" id="export-json" class="primary">导出选型结果 JSON</button>
+<button type="button" id="export-md">导出 Markdown 反馈</button>
+<button type="button" id="copy">复制选型反馈</button>
+<button type="button" id="export-wav">导出已选音效 WAV</button>
+<button type="button" id="reset">恢复本轮未选择状态</button>
+</div>
+<div class="feedback" role="status" id="status"></div>
+<p class="help">选择和备注只保存在本浏览器；V5、V6记录不会被覆盖。试听时首次解码可能需要网络加载。</p>
+<div class="archive">
+<strong>其他5类沿用V5选择</strong>
+<div>机枪：木质轻敲（01/02/03留备选）</div>
+<div>普通命中：木板闷响</div>
+<div>击碎：dice throw 1</div>
+<div>爆雷：硬脆爆裂</div>
+<div>升级：短上扬音</div>
+</div>
+</aside>
+</div>
+<footer>本轮是在V7短采样基础上重新安排节奏和收尾，形成中等时长试听配方，不是20首独立曲目；最终听感由你自己决定。下载的WAV为浏览器按当前配方生成的音频。未修改正式游戏、R1、V5或V6的任何源文件。采样来源为Kenney（<a href="https://kenney.nl/assets/interface-sounds" target="_blank" rel="noopener">Interface Sounds</a>、Impact Sounds）及同为CC0的短音素材索引。</footer>
+</main>
+</body></html>
