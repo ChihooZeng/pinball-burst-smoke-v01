@@ -1,0 +1,38 @@
+/* Standalone audio-QA cockpit — original 20-wave Demo CSS is untouched. */
+body.audio-qa{background:#071321}
+#audioQaPanel{font-family:Inter,system-ui,"PingFang SC",sans-serif;color:#e5f5ff;background:#0e1c2a;border-left:1px solid #39546b}
+#audioQaPanel button,#audioQaPanel input{touch-action:manipulation}
+#audioQaPanel button:focus-visible,#audioQaPanel input:focus-visible{outline:2px solid #75e8f4;outline-offset:2px}
+#audioQaPanel h2{font-size:17px;margin:0 0 5px;color:#d7f6ff}
+#audioQaPanel p{font-size:11px;color:#a1bbce;line-height:1.5;margin:0 0 10px}
+#audioQaPanel .aq-top{display:flex;justify-content:space-between;align-items:start;border-bottom:1px solid #304a5b;padding-bottom:12px;gap:12px}
+#audioQaPanel .aq-top small{color:#7be5c5;font-size:10px}
+#audioQaPanel .aq-subtitle{margin:11px 0 7px;font-size:12px;font-weight:700;color:#bce2ed}
+#audioQaPanel .aq-mode{display:flex;gap:6px}
+#audioQaPanel .aq-mode button{flex:1;background:#20384a;border:1px solid #3c617a;padding:10px 5px;border-radius:8px;font-size:12px;color:#ccdfec}
+#audioQaPanel .aq-mode button.active{background:#125448;border-color:#7bdac1;color:#ccfbe9}
+#audioQaPanel .aq-list{display:flex;flex-direction:column;gap:6px}
+#audioQaPanel .aq-row{display:grid;grid-template-columns:minmax(0,1fr) 49px;gap:7px;align-items:center;border:1px solid #2c4b5f;border-radius:9px;padding:7px;background:#12293b}
+#audioQaPanel .aq-row label{font-size:12px;font-weight:650;display:block}
+#audioQaPanel .aq-row small{font-size:10px;color:#93b1c0;display:block;line-height:1.4}
+#audioQaPanel .aq-row input{accent-color:#70dcda;width:100%;height:20px;cursor:pointer}
+#audioQaPanel .aq-row button{border:1px solid #39738b;border-radius:8px;background:#1b465b;color:#d7f3fa;min-height:36px}
+#audioQaPanel .aq-footer{border-top:1px solid #2b495b;margin-top:12px;padding-top:12px}
+#audioQaPanel .aq-footer a{font-size:11px;color:#7addec}
+#audioQaPanel #aq-state{white-space:pre-line;font-size:10px;color:#99eacb;line-height:1.45;min-height:32px;overflow-wrap:anywhere}
+#aq-open{position:fixed;right:12px;bottom:12px;border:1px solid #68d9e5;border-radius:11px;background:#17414d;color:#e4fff6;padding:11px 14px;z-index:160;font-size:12px;font-weight:800}
+#audioQaPanel .aq-hide{border:1px solid #3e5a70;color:#cee6f1;background:#24394c;border-radius:9px;width:36px;height:33px}
+@media(min-width:980px){
+ body.audio-qa>.shell{margin:0!important;width:calc(100vw - 350px);max-width:none;height:100dvh;position:relative}
+ body.audio-qa>.shell .arena{left:50%!important;right:auto!important;transform:translateX(-50%)!important;width:min(100%,calc(100dvh * .93))!important;height:100dvh;aspect-ratio:auto}
+ body.audio-qa>.shell .topbar{left:12px!important;right:12px!important}
+ body.audio-qa #pauseOverlay{left:max(8px,calc((100% - 520px)/2))!important;right:max(8px,calc((100% - 520px)/2))!important}
+ #audioQaPanel{position:fixed;right:0;top:0;bottom:0;width:350px;height:100dvh;z-index:100;overflow-y:auto;padding:17px 15px 22px;box-shadow:-18px 0 34px #0007}
+ #aq-open,#audioQaPanel .aq-hide{display:none}
+}
+@media(max-width:979px){
+ #audioQaPanel{position:fixed;right:0;top:0;bottom:0;max-width:365px;width:100%;z-index:180;height:100dvh;overflow-y:auto;padding:16px 15px 70px;transform:translateX(105%);transition:transform .18s ease;box-shadow:-16px 0 28px #0008}
+ body.audio-qa.aq-open #audioQaPanel{transform:translateX(0)}
+ body.audio-qa.aq-open #aq-open{display:none}
+ #aq-open{display:block}
+}
