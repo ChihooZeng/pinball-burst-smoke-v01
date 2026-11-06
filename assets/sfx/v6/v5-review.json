@@ -1,0 +1,124 @@
+{
+  "version": "V5",
+  "exportedAt": "2026-11-06T07:33:40.545Z",
+  "origin": "user V5 markdown export",
+  "project": "弹珠超载",
+  "lockedFive": [
+    "mg",
+    "hit",
+    "break",
+    "boom",
+    "upgrade"
+  ],
+  "reviewStatus": "5 groups retained for future real-game audio A/B; 2 groups (clear/fail) rejected by user written feedback and should NOT be marked approved.",
+  "groups": [
+    {
+      "id": "mg",
+      "name": "机枪射击",
+      "choiceId": "mg-01",
+      "choice": "01 木质轻敲",
+      "status": "retained_candidate",
+      "file": "../selected-v4/impact-sounds/impactWood_light_000.ogg",
+      "saved": [
+        "mg-01",
+        "mg-02",
+        "mg-03"
+      ],
+      "notes": "01、02、03 都可以，先保留。"
+    },
+    {
+      "id": "hit",
+      "name": "普通命中（砖未碎）",
+      "choiceId": "hit-02",
+      "choice": "02 木板闷响",
+      "status": "retained_candidate",
+      "file": "../selected-v4/impact-sounds/impactWood_medium_001.ogg",
+      "saved": [
+        "hit-02",
+        "hit-x11",
+        "hit-x14",
+        "hit-more-21",
+        "hit-more-29",
+        "hit-01",
+        "hit-03"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "break",
+      "name": "砖块击碎",
+      "choiceId": "break-x18",
+      "choice": "18 dice throw 1",
+      "status": "retained_candidate",
+      "file": "https://raw.githubusercontent.com/Mcamento8/open-game-sfx-index/main/audio/casino-audio/dice-throw-1.ogg",
+      "saved": [
+        "break-x18"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "boom",
+      "name": "爆雷引爆",
+      "choiceId": "boom-03",
+      "choice": "03 硬脆爆裂",
+      "status": "retained_candidate",
+      "file": "../selected-v4/impact-sounds/impactGlass_heavy_002.ogg",
+      "saved": [
+        "boom-03",
+        "boom-05",
+        "boom-09",
+        "boom-more-30"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "clear",
+      "name": "清屏过关",
+      "choiceId": "clear-10",
+      "choice": "10 上升完成",
+      "status": "rejected_for_reselection",
+      "file": "../selected-v4/oga-levelup-powerup/Rise03.wav",
+      "saved": [
+        "clear-10"
+      ],
+      "notes": "过关的声音都是向下的，素材都不对，要的是成功的喜悦的声音"
+    },
+    {
+      "id": "fail",
+      "name": "触线失败",
+      "choiceId": null,
+      "choice": "待定",
+      "status": "rejected_for_reselection",
+      "file": null,
+      "saved": [
+        "fail-08",
+        "fail-x19"
+      ],
+      "notes": "也都不对，都给我重新选"
+    },
+    {
+      "id": "upgrade",
+      "name": "升级 / 解锁",
+      "choiceId": "upgrade-03",
+      "choice": "03 短上扬音",
+      "status": "retained_candidate",
+      "file": "../selected-v4/oga-levelup-powerup/Rise03.wav",
+      "saved": [
+        "upgrade-03",
+        "upgrade-01",
+        "upgrade-02",
+        "upgrade-05",
+        "upgrade-x16",
+        "upgrade-x19",
+        "upgrade-x20"
+      ],
+      "notes": ""
+    }
+  ],
+  "constraints": [
+    "Do not auto-pick clear/fail despite clear-10 historical technical selected status.",
+    "Do not change V4/V5 original data. No game edits.",
+    "Old shortlisted materials are retained, not final sound mix."
+  ],
+  "next": "V6 stand-alone review only for clear and fail with genuinely different CC0 victory/defeat sources."
+}

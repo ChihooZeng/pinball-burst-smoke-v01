@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-CN"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0c1422">
+<title>弹珠超载 · 音效V6 专项重选</title>
+<style>
+:root{--b:#0b1420;--p:#132234;--p2:#102033;--t:#eef6ff;--sub:#91a9be;--line:#294259;--blue:#68ddea;--green:#78e6b7;--gold:#e8bf80}
+*{box-sizing:border-box}body{background:radial-gradient(ellipse 90% 400px at 48% -110px,#24415c,transparent),var(--b);color:var(--t);margin:0;font:14px/1.55 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}button,textarea{font:inherit}button{cursor:pointer}button:disabled{opacity:.48;cursor:default}button:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid var(--blue);outline-offset:2px}a{color:var(--blue)}.app{max-width:1400px;padding:30px 22px 75px;margin:auto}h1{font-size:clamp(25px,3vw,37px);margin:8px 0}.eyebrow{font-size:11px;letter-spacing:.17em;color:var(--blue);font-weight:800}.lead{max-width:990px;color:#b5c9d8;margin:0 0 15px}.tags{display:flex;flex-wrap:wrap;gap:7px;margin:14px 0 20px}.tag{border:1px solid var(--line);border-radius:30px;padding:5px 10px;color:#b9cedc;font-size:12px}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:18px;align-items:start}.category{background:#112033;border:1px solid #304a60;padding:16px;border-radius:15px;margin-bottom:16px;scroll-margin-top:18px}.cat-head{display:flex;justify-content:space-between;align-items:start;gap:14px;margin-bottom:12px}.cat-head h2{font-size:20px;margin:0}.cat-head p{margin:5px 0 0;color:#aec5d4;font-size:12px}.cat-tag{font-size:11px;padding:6px 9px;border:1px solid #466074;border-radius:8px;color:#87e8d0;white-space:nowrap}.notice{border-left:3px solid var(--gold);padding:10px 12px;background:#242c36;color:#d1c9b9;font-size:12px;border-radius:6px;margin:10px 0}.notice strong{color:#ffe3b1}
+.list{display:flex;flex-direction:column;gap:8px}.item{display:flex;gap:10px;align-items:center;min-height:68px;padding:10px;border-radius:11px;background:#0e1a29;border:1px solid #2d4054}.item.chosen{border-color:var(--green);background:#11352f}.item input[type=radio]{accent-color:#75e3b8;width:19px;height:19px;flex-shrink:0;cursor:pointer}.content{flex:1;min-width:0;cursor:pointer}.item-title{font-weight:700;font-size:13px;line-height:1.35}.item-detail{font-size:11px;color:var(--sub);margin-top:3px}.buttons{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.preview{padding:8px 11px;background:#17364b;color:#bbf3fe;border:1px solid #356680;border-radius:9px;white-space:nowrap;font-size:12px}.preview.playing{border-color:#76e6c0;color:#8aecc8}.star{border:1px solid #57606b;border-radius:9px;width:37px;height:37px;background:#1b2939;color:#879aab;font-size:20px}.star.on{color:#ffcd7b;border-color:#b18e56}.source{font-size:11px;color:#92c8df;white-space:nowrap}
+.notes{display:block;margin-top:14px}.notes span{display:block;font-size:12px;font-weight:700;margin-bottom:7px}.notes textarea{display:block;width:100%;min-height:65px;background:#0b1927;color:#ecf8ff;border:1px solid var(--line);border-radius:9px;padding:10px;resize:vertical}.notes textarea::placeholder{color:#7b96aa}
+.sidebar{position:sticky;top:15px;background:#142538;border:1px solid #36536d;border-radius:16px;padding:17px}.sidebar h2{font-size:16px;margin:0 0 10px}.summary{list-style:none;padding:0;margin:9px 0 15px}.summary li{border-bottom:1px solid #2e475d;padding:10px 0;display:flex;justify-content:space-between;gap:8px;font-size:12px}.summary li span:first-child{color:#a2bed0}.summary li span:last-child{text-align:right}.bar{height:7px;border-radius:7px;background:#2b4758;overflow:hidden;margin:12px 0}.fill{height:100%;background:var(--green);width:0}.side-buttons{display:grid;gap:7px}.side-buttons button{border:1px solid #49718b;background:#183c51;color:#def4fd;border-radius:9px;padding:10px}.side-buttons button.primary{background:var(--blue);border:0;color:#05303d;font-weight:800}.status{font-size:11px;min-height:20px;color:#9ae9c7}.fine{font-size:11px;color:#95adbe;line-height:1.7;margin:11px 0}.retained{background:#132538;border:1px solid #2e4b62;border-radius:12px;padding:15px;margin-top:11px}.retained h3{font-size:14px;margin:0 0 10px}.retained div{font-size:12px;color:#afcadb;margin:6px 0}.retained b{color:#9aeacb}.retained small{display:block;font-size:11px;color:#8fafc4;line-height:1.6;margin-top:8px}
+footer{border-top:1px solid #2e475e;padding-top:16px;color:#8eacbf;font-size:12px;margin-top:20px;line-height:1.65}
+@media(max-width:900px){.layout{display:flex;flex-direction:column}.sidebar{position:static;width:100%;order:-1}.category{width:100%}}
+@media(max-width:630px){.app{padding:20px 11px 60px}.category{padding:12px}.item{flex-wrap:wrap}.content{flex-basis:calc(100% - 40px)}.buttons{width:100%;justify-content:flex-end;padding-left:28px}.source{margin-right:auto}.cat-head{display:block}.cat-tag{display:inline-block;margin-top:10px}}
+</style>
+<script src="./catalog.js" defer></script>
+<script src="./selector.js" defer></script>
+</head><body>
+<main class="app">
+<header>
+<div class="eyebrow">PINBALL OVERLOAD · AUDIO REVIEW V6</div>
+<h1>音效专项重选：成功与失败</h1>
+<p class="lead">这次只重新筛选2类声音。过关要有真正的成功喜悦，不再沿用听起来向下的音效；失败要明确但不能刺耳。每类10个来自不同原始作品的候选，能整段试听、单独收藏和直接确定首选。</p>
+<div class="tags"><span class="tag">2类重点重选</span><span class="tag">每类10个全新候选</span><span class="tag">真实音频 · 原始作品出处</span><span class="tag">保留V5已选的其他5类</span></div>
+</header>
+<div class="layout">
+<div id="groups"></div>
+<aside class="sidebar">
+<h2>评审状态</h2>
+<div style="font-size:12px;color:#a8c4d4">本轮已确认 <strong id="done">0</strong> / 2 · 已收藏 <strong id="favnum">0</strong></div>
+<div class="bar"><div class="fill" id="fill"></div></div>
+<ul class="summary" id="summary"></ul>
+<div class="side-buttons">
+<button class="primary" type="button" id="export-json">导出 V6 JSON 选型</button>
+<button type="button" id="export-md">导出 Markdown 清单</button>
+<button type="button" id="copy">复制本次结论</button>
+<button type="button" id="stop">■ 停止所有试听</button>
+<button type="button" id="reset">清空本轮两组选择</button>
+</div>
+<div class="status" id="status" role="status"></div>
+<p class="fine">提示：这些是真实的OpenGameArt外部CC0音频，在线播放可能受网络限制。点“原出处”可去素材作者页面试听；尚未人耳验收，不表示已正式入库。</p>
+<section class="retained">
+<h3>V5已保留的五组</h3>
+<div>机枪：<b>01 木质轻敲</b>，保留01/02/03</div>
+<div>普通命中：<b>02 木板闷响</b>，另保留6个备用</div>
+<div>砖块击碎：<b>18 dice throw 1</b></div>
+<div>爆雷引爆：<b>03 硬脆爆裂</b>，另保留3个备用</div>
+<div>升级 / 解锁：<b>03 短上扬音</b>，另保留6个备用</div>
+<small>上面是已保留的试听候选，不代表已在真实游戏中验收。清屏旧选Rise03虽然出现在V5“selected”，但按你的新备注已改为待重选。</small>
+</section>
+<p class="fine">上轮全量记录：<a href="./v5-review.json" target="_blank" rel="noopener">查看V5选择与收藏</a></p>
+</aside>
+</div>
+<footer>每个备选的来源页明确标注CC0，本页提供原出处链接；正式游戏接入前仍要复核授权、下载所选素材并自行托管。未修改正式游戏、V5页面或音效母带。</footer>
+</main>
+</body></html>
