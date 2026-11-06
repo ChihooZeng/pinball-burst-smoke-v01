@@ -1,0 +1,53 @@
+
+/* Standalone 200-choice in-game audio testing overlay. Does not change archived V6 styling. */
+.audio-in-game #al-open{position:fixed;right:max(12px,env(safe-area-inset-right));bottom:calc(16px + env(safe-area-inset-bottom));z-index:10010;padding:11px 18px;border:1px solid #5ad9e4;background:#163847;color:#dcfaff;border-radius:12px;font-size:13px;font-weight:800;box-shadow:0 7px 20px #0008;cursor:pointer}
+.audio-in-game #al-panel{position:fixed;right:0;top:0;bottom:0;z-index:10009;display:flex;flex-direction:column;width:min(435px,100vw);height:100vh;height:100dvh;background:#0b1724;color:#ecf7fc;border-left:1px solid #365367;box-shadow:-16px 0 40px #0008;overflow-y:auto;overscroll-behavior:contain;padding:12px 15px calc(65px + env(safe-area-inset-bottom));gap:11px}
+.audio-in-game #al-panel button,.audio-in-game #al-panel select{cursor:pointer;touch-action:manipulation}
+.audio-in-game #al-panel input,.audio-in-game #al-panel select,.audio-in-game #al-panel button{font:inherit}
+.audio-in-game #al-panel button:focus-visible,.audio-in-game #al-panel select:focus-visible{outline:2px solid #79e6f4;outline-offset:2px}
+.audio-in-game .al-title{display:flex;justify-content:space-between;gap:8px;align-items:start;border-bottom:1px solid #2b485d;padding:6px 1px 12px}
+.audio-in-game .al-title b{display:block;font-size:17px;line-height:1.35;color:#dffcff}
+.audio-in-game .al-title small{display:block;color:#88adbe;font-size:11px;margin-top:3px}
+.audio-in-game #al-close{background:#1e354b;color:#e4f3fb;border:1px solid #3a6178;border-radius:9px;font-size:23px;width:39px;height:39px;line-height:1;flex-shrink:0}
+.audio-in-game #al-panel section{background:#101e2b;border:1px solid #284458;border-radius:12px;padding:12px}
+.audio-in-game #al-panel h3{font-size:13px;margin:0 0 5px;color:#d8efff}
+.audio-in-game #al-panel p{font-size:11px;color:#8cb1c4;line-height:1.5;margin:3px 0 10px}
+.audio-in-game .al-buttons{display:flex;gap:5px;flex-wrap:wrap;margin:9px 0}
+.audio-in-game .al-buttons button{font-size:11px;border:1px solid #2e6178;background:#19384d;color:#d7eeff;border-radius:8px;padding:8px 9px}
+.audio-in-game .al-buttons button.selected{border-color:#79e9c0;background:#155343;color:#d3ffeb}
+.audio-in-game .al-skill label{display:flex;align-items:center;gap:8px;color:#a5cad8;font-size:12px}
+.audio-in-game #al-field{padding:7px;border:1px solid #396179;border-radius:8px;color:#ecf8fb;background:#122739;font-size:12px;min-width:0;flex:1}
+.audio-in-game .al-active{font-size:11px;color:#7eeec7;margin-top:6px}
+.audio-in-game .al-switch{display:flex;gap:6px;margin-bottom:10px}
+.audio-in-game .al-switch button{flex:1;border:1px solid #3a596e;background:#162e41;color:#a4c0d2;border-radius:8px;font-size:12px;padding:9px 6px}
+.audio-in-game .al-switch button.active{background:#235650;color:#baffec;border-color:#65dfc4}
+.audio-in-game .al-global label{display:flex;align-items:center;gap:9px;color:#b7dbe9;font-size:12px}
+.audio-in-game #al-master{flex:1;accent-color:#65d9e9}
+.audio-in-game #al-master-value{width:35px;text-align:right}
+.audio-in-game .al-event-section{min-height:100px}
+.audio-in-game .al-event-group{background:#0c1927;border:1px solid #304558;border-radius:9px;padding:9px;margin:7px 0}
+.audio-in-game .al-event-group summary{font-size:13px;font-weight:700;cursor:pointer;display:flex;justify-content:space-between;gap:6px;align-items:center;list-style:none}
+.audio-in-game .al-event-group summary::-webkit-details-marker{display:none}
+.audio-in-game .al-event-group summary::before{content:"▸";color:#6baecb;flex-shrink:0}
+.audio-in-game .al-event-group[open] summary::before{content:"▾"}
+.audio-in-game .al-event-group summary span{flex:1}
+.audio-in-game .al-event-group summary small{max-width:50%;text-align:right;font-size:10px;color:#8db2c4;font-weight:400;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.audio-in-game .al-event-group .al-inside{padding-top:11px}
+.audio-in-game .al-inside label{font-size:11px;color:#a9c9d8;display:flex;align-items:center;gap:7px}
+.audio-in-game .al-inside select{display:block;background:#182a39;color:#e6f6ff;border:1px solid #3a6178;border-radius:8px;width:100%;padding:9px 8px;font-size:12px;min-height:40px;margin:7px 0}
+.audio-in-game .al-test{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:8px 0}
+.audio-in-game .al-test button{border:1px solid #3a6578;border-radius:8px;background:#194058;color:#d8f6ff;padding:8px 9px;font-size:12px;min-height:38px}
+.audio-in-game .al-test button.mute{background:#2c2635;border-color:#6a5272}
+.audio-in-game .al-test button.pressed{border-color:#7ddbb6;color:#80e4c6}
+.audio-in-game .al-inside input[type=range]{accent-color:#71dce9;flex:1;min-width:40px}
+.audio-in-game .al-inside input[type=checkbox]{accent-color:#70d9b4}
+.audio-in-game .al-info{display:block;color:#819dae;font-size:10px;line-height:1.4;min-height:28px;overflow-wrap:anywhere}
+.audio-in-game .al-counter{font-size:10px;color:#88d8c0;white-space:nowrap}
+.audio-in-game .al-save{display:grid;gap:8px}
+.audio-in-game .al-save button{padding:9px;border-radius:8px;border:1px solid #3e687f;background:#1a3952;color:#daf1fa}
+.audio-in-game .al-save #al-export{background:#6bdce8;color:#073442;border:none;font-weight:800}
+.audio-in-game #al-status{min-height:16px;margin:0!important;color:#86e6c0!important}
+.audio-in-game .al-footer{font-size:10px;color:#88a7ba;line-height:1.65}.audio-in-game .al-footer a{color:#77dff3}
+@media(min-width:860px){.audio-in-game .shell{margin-left:max(8px,calc((100vw - 435px - 440px) / 2));margin-right:auto}.audio-in-game #al-open{display:none}.audio-in-game #al-close{display:none}}
+@media(max-width:859px){.audio-in-game #al-panel{transform:translateX(103%);transition:transform .18s ease;will-change:transform;width:min(440px,100%);z-index:10020}.audio-in-game.al-show #al-panel{transform:translateX(0)}.audio-in-game.al-show #al-open{display:none}.audio-in-game #al-open{z-index:10012}.audio-in-game #al-panel{padding-top:max(12px,env(safe-area-inset-top))}}
+@media(max-width:450px){.audio-in-game #al-panel{padding-left:12px;padding-right:12px}.audio-in-game #al-panel section{padding:10px}.audio-in-game .al-event-group summary small{max-width:42%}}
