@@ -36,7 +36,7 @@ try{const old=JSON.parse(localStorage.getItem(KEY)||"null");if(old&&old.groups){
 }}catch(_){}
 function store(){try{localStorage.setItem(KEY,JSON.stringify(config));}catch(_){status("本地存储不可用，请导出配置");}}
 function status(t){const el=document.getElementById("al-status");if(el)el.textContent=t;}
-let audioCtx=null,mix=null,limiter=null,cache=new Map(),voices=[],lastPlay={},counts={},currentSkill=null,previewTokens=0;
+let audioCtx=null,mix=null,limiter=null,cache=new Map(),voices=[],previewVoices=[],lastPlay={},counts={},currentSkill=null,previewTokens=0;
 function context(){
  if(!audioCtx){const A=window.AudioContext||window.webkitAudioContext;if(!A)return null;
  audioCtx=new A();mix=audioCtx.createGain();limiter=audioCtx.createDynamicsCompressor();
@@ -68,8 +68,9 @@ function bufferFor(item){
 }
 function warm(id){const item=getChoice(id);if(item)bufferFor(item).catch(()=>{status(id+" 音效加载失败，可能是网络阻断，请换候选");});}
 function warmSelected(){GROUPS.forEach(g=>warm(g.id));}
-function playBuffer(buffer,category,at,volumeFactor,hardEnd,playbackRate){
- if(!audioCtx||voices.length>=18)return;
+function playBuffer(buffer,category,at,volumeFactor,hardEnd,playbackRate,isPreview=false){
+ const pool=isPreview?previewVoices:voices;
+ if(!audioCtx||(!isPreview&&pool.length>=18))return;
  const src=audioCtx.createBufferSource(),g=audioCtx.createGain();
  src.buffer=buffer;src.playbackRate.value=playbackRate||1;
  const groupLevel=config.groups[category]?.volume??.6;
@@ -83,8 +84,8 @@ function playBuffer(buffer,category,at,volumeFactor,hardEnd,playbackRate){
   g.gain.linearRampToValueAtTime(.0001,end);
   src.stop(end);
  }
- voices.push(src);
- src.onended=()=>{const i=voices.indexOf(src);if(i>=0)voices.splice(i,1);try{src.disconnect();g.disconnect();}catch(_){}};
+ pool.push(src);
+ src.onended=()=>{const i=pool.indexOf(src);if(i>=0)pool.splice(i,1);try{src.disconnect();g.disconnect();}catch(_){}};
 }
 function own(id){return config.mode==="B"&&!!config.groups[id]&&(config.groups[id].muted||config.groups[id].chosen!=="original");}
 function emit(id,{force=false}={}){
@@ -152,9 +153,14 @@ function renderCurrent(id){
  const value=document.querySelector('[data-level-val="'+id+'"]');if(value)value.textContent=Math.round(config.groups[id].volume*100)+"%";
  const title=document.querySelector('[data-choice-name="'+id+'"]');if(title)title.textContent=config.groups[id].muted?"已静音":item?item.label:"原声/无声";
 }
+function stopPreview(){
+ previewVoices.forEach(v=>{try{v.stop()}catch(_){}});
+ previewVoices=[];
+ document.querySelectorAll(".al-test button.pressed").forEach(b=>{b.classList.remove("pressed");b.textContent=b.dataset.idleLabel||"▶ 单次";});
+}
 function preview(id,repeat,button){
  const item=getChoice(id);if(!item){status("请先为"+MAP.get(id).name+"选择一个新音效");return;}
- const token=++previewTokens;button.classList.add("pressed");button.textContent="载入中…";
+ stopPreview();const token=++previewTokens;button.classList.add("pressed");button.textContent="载入中…";
  const c=context();if(!c){status("当前浏览器不支持音效");return;}
  bufferFor(item).then(({buffer,level})=>{
   if(token!==previewTokens)return;
@@ -164,7 +170,7 @@ function preview(id,repeat,button){
   const at=c.currentTime+.025;
   const overlaps=Math.max(1,Math.ceil(buffer.duration/step));
   const amp=repeat?Math.min(.85,1/Math.sqrt(overlaps)):1;
-  for(let i=0;i<count;i++)playBuffer(buffer,id,at+i*step,amp*level,repeat?at+3:null,1);
+  for(let i=0;i<count;i++)playBuffer(buffer,id,at+i*step,amp*level,repeat?at+3:null,1,true);
   setTimeout(()=>{if(token===previewTokens){button.textContent=repeat?"↻ 连续3秒":"▶ 单次";button.classList.remove("pressed");}},repeat?3150:buffer.duration*1000+150);
  }).catch(()=>{button.classList.remove("pressed");button.textContent=repeat?"↻ 连续3秒":"▶ 单次";status("采样解码失败，已尝试普通播放");fallbackPreview(item);});
 }
@@ -178,12 +184,12 @@ function renderGroups(){
   const select=document.createElement("select");select.setAttribute("data-select",id);select.setAttribute("aria-label",g.name+"声音候选");
   const original=document.createElement("option");original.value="original";original.textContent="A · 原始M2.5/该事件原本静音";select.appendChild(original);
   g.all.forEach((item,index)=>{
-    const opt=document.createElement("option");opt.value=item.id;opt.textContent=String(index+1).padStart(2,"0")+" · "+item.label+(SELFHOST[item.id]?" ★":"");select.appendChild(opt);
+    const opt=document.createElement("option");opt.value=item.id;opt.textContent=String(index+1).padStart(2,"0")+" · "+item.label.replace(/^\d{2}(?:\s*·\s*|\s+)/,"")+(SELFHOST[item.id]?" ★":"");select.appendChild(opt);
   });
   select.addEventListener("change",()=>API.setSelected(id,select.value));content.appendChild(select);
   const buttons=document.createElement("div");buttons.className="al-test";
-  const play=document.createElement("button");play.textContent="▶ 单次";play.addEventListener("click",()=>preview(id,false,play));
-  const repeat=document.createElement("button");repeat.textContent="↻ 连续3秒";repeat.addEventListener("click",()=>preview(id,true,repeat));
+  const play=document.createElement("button");play.textContent="▶ 单次";play.dataset.idleLabel="▶ 单次";play.addEventListener("click",()=>preview(id,false,play));
+  const repeat=document.createElement("button");repeat.textContent="↻ 连续3秒";repeat.dataset.idleLabel="↻ 连续3秒";repeat.addEventListener("click",()=>preview(id,true,repeat));
   buttons.appendChild(play);buttons.appendChild(repeat);content.appendChild(buttons);
   const volrow=document.createElement("label");volrow.textContent="音量";
   const vol=document.createElement("input");vol.type="range";vol.min="0";vol.max="120";vol.step="5";vol.setAttribute("data-level",id);
@@ -239,5 +245,5 @@ document.getElementById("al-close").addEventListener("click",()=>document.body.c
 renderGroups();renderSkills();renderMode();
 const dataFromUI=Object.fromEntries(GROUPS.map(g=>[g.id,g.all.length]));
 window.__pinballAudioLabInspect={groups:dataFromUI,selection:()=>JSON.parse(JSON.stringify(config)),lastPlay,counts,help:"AudioLab event audio is fetched on demand. Original game code is not overwritten."};
-window.addEventListener("pagehide",()=>{voices.forEach(s=>{try{s.stop()}catch(_){}});voices=[];});
+window.addEventListener("pagehide",()=>{voices.concat(previewVoices).forEach(s=>{try{s.stop()}catch(_){}});voices=[];previewVoices=[];});
 })();
