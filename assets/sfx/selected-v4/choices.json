@@ -1,0 +1,157 @@
+{
+  "version": "V4",
+  "project": "弹珠超载",
+  "exportedAt": "2026-11-06T04:32:31.386Z",
+  "storedAt": "2026-11-06",
+  "purpose": "Archive player's V4 listening selection. Not yet wired to game.",
+  "count": {
+    "eventGroups": 10,
+    "selected": 7,
+    "pending": 3,
+    "machinegunAlternatives": 3,
+    "distinctAudioFiles": 8
+  },
+  "selection": [
+    {
+      "id": "mg",
+      "name": "机枪射击",
+      "choiceLabel": "01 木质轻敲",
+      "status": "selected_new",
+      "note": "1.2.3.都可以，先进行保留",
+      "choiceId": "mg-01",
+      "originalUrl": "https://raw.githubusercontent.com/Mcamento8/open-game-sfx-index/main/audio/impact-sounds/impactWood_light_000.ogg",
+      "localPath": "assets/sfx/selected-v4/impact-sounds/impactWood_light_000.ogg",
+      "upstreamSourcePack": "impact-sounds",
+      "originalFilename": "impactWood light 000"
+    },
+    {
+      "id": "hit",
+      "name": "普通命中（砖未碎）",
+      "choiceLabel": "02 木板闷响",
+      "status": "selected_new",
+      "note": "",
+      "choiceId": "hit-02",
+      "originalUrl": "https://raw.githubusercontent.com/Mcamento8/open-game-sfx-index/main/audio/impact-sounds/impactWood_medium_001.ogg",
+      "localPath": "assets/sfx/selected-v4/impact-sounds/impactWood_medium_001.ogg",
+      "upstreamSourcePack": "impact-sounds",
+      "originalFilename": "impactWood medium 001"
+    },
+    {
+      "id": "break",
+      "name": "砖块击碎",
+      "choiceLabel": "待定",
+      "status": "needs_new_asset",
+      "note": "",
+      "choiceId": null,
+      "originalUrl": null,
+      "localPath": null
+    },
+    {
+      "id": "armor",
+      "name": "装甲砖命中",
+      "choiceLabel": "待定",
+      "status": "needs_new_asset",
+      "note": "",
+      "choiceId": null,
+      "originalUrl": null,
+      "localPath": null
+    },
+    {
+      "id": "bloom",
+      "name": "砖块开花",
+      "choiceLabel": "05 弹润破裂",
+      "status": "selected_new",
+      "note": "",
+      "choiceId": "bloom-05",
+      "originalUrl": "https://raw.githubusercontent.com/Mcamento8/open-game-sfx-index/main/audio/oga-rpg-pack/RPG Sound Pack/NPC/slime/slime1.wav",
+      "localPath": "assets/sfx/selected-v4/oga-rpg-pack/RPG Sound Pack/NPC/slime/slime1.wav",
+      "upstreamSourcePack": "oga-rpg-pack",
+      "originalFilename": "slime1"
+    },
+    {
+      "id": "plant",
+      "name": "植雷",
+      "choiceLabel": "02 轻落点",
+      "status": "selected_new",
+      "note": "",
+      "choiceId": "plant-02",
+      "originalUrl": "https://raw.githubusercontent.com/Mcamento8/open-game-sfx-index/main/audio/interface-sounds/drop_002.ogg",
+      "localPath": "assets/sfx/selected-v4/interface-sounds/drop_002.ogg",
+      "upstreamSourcePack": "interface-sounds",
+      "originalFilename": "drop 002"
+    },
+    {
+      "id": "boom",
+      "name": "爆雷引爆",
+      "choiceLabel": "03 硬脆爆裂",
+      "status": "selected_new",
+      "note": "",
+      "choiceId": "boom-03",
+      "originalUrl": "https://raw.githubusercontent.com/Mcamento8/open-game-sfx-index/main/audio/impact-sounds/impactGlass_heavy_002.ogg",
+      "localPath": "assets/sfx/selected-v4/impact-sounds/impactGlass_heavy_002.ogg",
+      "upstreamSourcePack": "impact-sounds",
+      "originalFilename": "impactGlass heavy 002"
+    },
+    {
+      "id": "clear",
+      "name": "清屏过关",
+      "choiceLabel": "10 上升完成",
+      "status": "selected_new",
+      "note": "",
+      "choiceId": "clear-10",
+      "originalUrl": "https://raw.githubusercontent.com/Mcamento8/open-game-sfx-index/main/audio/oga-levelup-powerup/Rise03.wav",
+      "localPath": "assets/sfx/selected-v4/oga-levelup-powerup/Rise03.wav",
+      "upstreamSourcePack": "oga-levelup-powerup",
+      "originalFilename": "Rise03"
+    },
+    {
+      "id": "fail",
+      "name": "触线失败",
+      "choiceLabel": "待定",
+      "status": "needs_new_asset",
+      "note": "",
+      "choiceId": null,
+      "originalUrl": null,
+      "localPath": null
+    },
+    {
+      "id": "upgrade",
+      "name": "升级 / 解锁",
+      "choiceLabel": "03 短上扬音",
+      "status": "selected_new",
+      "note": "",
+      "choiceId": "upgrade-03",
+      "originalUrl": "https://raw.githubusercontent.com/Mcamento8/open-game-sfx-index/main/audio/oga-levelup-powerup/Rise03.wav",
+      "localPath": "assets/sfx/selected-v4/oga-levelup-powerup/Rise03.wav",
+      "upstreamSourcePack": "oga-levelup-powerup",
+      "originalFilename": "Rise03"
+    }
+  ],
+  "machinegunReserves": [
+    {
+      "id": "mg-01",
+      "label": "01 木质轻敲",
+      "originalUrl": "https://raw.githubusercontent.com/Mcamento8/open-game-sfx-index/main/audio/impact-sounds/impactWood_light_000.ogg",
+      "localPath": "assets/sfx/selected-v4/impact-sounds/impactWood_light_000.ogg"
+    },
+    {
+      "id": "mg-02",
+      "label": "02 薄铁轻碰",
+      "originalUrl": "https://raw.githubusercontent.com/Mcamento8/open-game-sfx-index/main/audio/impact-sounds/impactTin_medium_002.ogg",
+      "localPath": "assets/sfx/selected-v4/impact-sounds/impactTin_medium_002.ogg"
+    },
+    {
+      "id": "mg-03",
+      "label": "03 短促硬击",
+      "originalUrl": "https://raw.githubusercontent.com/Mcamento8/open-game-sfx-index/main/audio/impact-sounds/impactGeneric_light_000.ogg",
+      "localPath": "assets/sfx/selected-v4/impact-sounds/impactGeneric_light_000.ogg"
+    }
+  ],
+  "sharedAudioNotice": "Rise03.wav selected for both clear and upgrade. Retain user picks, flag for later differentiation in context.",
+  "cautions": [
+    "Do not auto-fill missing break/armor/fail.",
+    "Do not overwrite V3 original choices or mark in-game sound implementation finished.",
+    "Original source URLs are kept for audit; selected copies are self-hosted in this archive.",
+    "Before release independently reconfirm official CC0 licensing and mobile playback."
+  ]
+}
