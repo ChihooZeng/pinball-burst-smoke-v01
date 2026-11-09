@@ -9,7 +9,7 @@
 (() => {
 "use strict";
 
-const REVISION = "audio-qa-v21c-20261109";
+const REVISION = "audio-qa-v21f-20261109";
 const STORAGE = "pinball-audio-qa-v21-20261109";
 
 /* 事件表：唯一事实来源。调试台、JSON 导出、游戏路由都读这一份。 */
@@ -63,31 +63,15 @@ const EVENTS = Object.freeze({
     hint: "清屏过关与升级选择同一节点，只播一次",
     variants: Object.freeze([
       Object.freeze({
-        id: "clear-x14",
-        label: "A · Upper01 原版（3.44s）",
-        detail: "clear-x14 · Upper01 完整版 3.437s / 保留原样，未重编码",
-        url: "audio/clear-x14-Upper01.wav",
-        gain: .46,
-        seconds: 3.437
-      }),
-      Object.freeze({
-        id: "clear-x14-short-135",
-        label: "B · Upper01 短版（1.35s）",
-        detail: "同一波形裁剪至 1.35s，尾部 200ms 淡出，不变速不变调",
-        url: "audio/clear-x14-Upper01-short-1.35s.wav",
-        gain: .46,
-        seconds: 1.35
-      }),
-      Object.freeze({
-        id: "clear-x14-short-180",
-        label: "C · Upper01 中短版（1.80s）",
-        detail: "同一波形裁剪至 1.80s，尾部 250ms 淡出，不变速不变调",
-        url: "audio/clear-x14-Upper01-short-1.80s.wav",
-        gain: .46,
-        seconds: 1.8
+        id: "clear-x15",
+        label: "CLEAR-010 · mixkit-unlock-game-notification-253",
+        detail: "Mixkit 免费音效 / 0.75s 裁切（原 1.397s，尾部 0.70s 为静音）",
+        url: "audio/clear-x15-mixkit-unlock-253.wav",
+        gain: .50,
+        seconds: .75
       })
     ]),
-    maxDuration: 3.44,
+    maxDuration: .9,
     cooldown: 1500,
     maxVoices: 1,
     priority: 5
@@ -98,11 +82,11 @@ const EVENTS = Object.freeze({
     hint: "砖阵触及警戒线",
     variants: Object.freeze([
       Object.freeze({
-        id: "fail-02",
-        label: "fail-02 · 02 错误提示中音",
-        detail: "interface-sounds / CC0-1.0",
-        url: "audio/fail-02-error_005.ogg",
-        gain: .52
+        id: "fail-03",
+        label: "FAIL-003 · lose_1",
+        detail: "Arcade Sound FX Previews / 0.94s / 未裁剪，仅转单声道",
+        url: "audio/fail-03-lose-1.wav",
+        gain: .54
       })
     ]),
     maxDuration: 1.2,

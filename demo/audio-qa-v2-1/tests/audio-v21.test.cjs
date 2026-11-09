@@ -22,7 +22,12 @@ const AUDIO_SECONDS = {
   "audio/clear-x14-Upper01.wav": 3.436553,
   "audio/clear-x14-Upper01-short-1.35s.wav": 1.35,
   "audio/clear-x14-Upper01-short-1.80s.wav": 1.8,
-  "audio/fail-02-error_005.ogg": 0.500045
+  "audio/fail-02-error_005.ogg": 0.500045,
+  "audio/clear-x15-mixkit-unlock-253.wav": 0.75,
+  "audio/fail-03-lose-1.wav": 0.941587,
+  "audio/ui-start-click1.wav": 0.09093,
+  "audio/ui-click-rollover2.wav": 0.054422,
+  "audio/wall-bounce-wood-light-000.wav": 0.1
 };
 
 let pass = 0;
@@ -168,24 +173,19 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
     assert.deepEqual(plain(hit.variants.map((v) => v.label)), ["V5 木质轻敲", "V5 木板闷响"]);
   });
 
-  test("清屏升级恰好三个候选 A/B/C，时长在标签里写明", () => {
+  test("清屏升级收敛为单一固定素材 CLEAR-010，不再提供 A/B/C", () => {
     const clear = api.describe().find((x) => x.id === "clear_upgrade");
-    assert.equal(clear.variants.length, 3);
-    assert.deepEqual(plain(clear.variants.map((v) => v.id)),
-      ["clear-x14", "clear-x14-short-135", "clear-x14-short-180"]);
-    assert.deepEqual(plain(clear.variants.map((v) => v.seconds)), [3.437, 1.35, 1.8]);
-    assert.ok(clear.variants[0].label.includes("3.44s"), "A 未标时长");
-    assert.ok(clear.variants[1].label.includes("1.35s"), "B 未标时长");
-    assert.ok(clear.variants[2].label.includes("1.80s"), "C 未标时长");
-    assert.ok(clear.variants[0].label.includes("原版"));
-    assert.ok(clear.variants[1].label.includes("短版"));
-    assert.ok(clear.variants[2].label.includes("中短版"));
+    assert.equal(clear.variants.length, 1);
+    assert.deepEqual(plain(clear.variants.map((v) => v.id)), ["clear-x15"]);
+    assert.ok(clear.variants[0].label.includes("CLEAR-010"));
+    assert.ok(clear.variants[0].label.includes("mixkit-unlock-game-notification-253"));
+    assert.equal(api.EVENTS.clear_upgrade.variants[0].url, "audio/clear-x15-mixkit-unlock-253.wav");
   });
 
   test("砖块击破与触线失败仍各只有一个固定候选", () => {
     const map = Object.fromEntries(api.describe().map((x) => [x.id, x]));
     assert.deepEqual(plain(map.brick_break.variants.map((v) => v.id)), ["break-x11"]);
-    assert.deepEqual(plain(map.fail.variants.map((v) => v.id)), ["fail-02"]);
+    assert.deepEqual(plain(map.fail.variants.map((v) => v.id)), ["fail-03"]);
   });
 
   test("事件表里不存在旧版九个分组", () => {
@@ -195,7 +195,7 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
     }
   });
 
-  console.log("\n【3】素材文件：六个自托管文件齐全，原版未被覆盖");
+  console.log("\n【3】素材文件：自托管文件齐全，原版未被覆盖");
   test("全部素材存在且大小合理", () => {
     const files = [
       "audio/break-x11-impactGlass_heavy_000.ogg",
@@ -203,6 +203,8 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
       "audio/clear-x14-Upper01-short-1.35s.wav",
       "audio/clear-x14-Upper01-short-1.80s.wav",
       "audio/fail-02-error_005.ogg",
+      "audio/clear-x15-mixkit-unlock-253.wav",
+      "audio/fail-03-lose-1.wav",
       "audio/ui-start-click1.wav",
       "audio/ui-click-rollover2.wav",
       "audio/wall-bounce-wood-light-000.wav",
@@ -238,43 +240,33 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
     return { ...fmt, frames: dataSize / (fmt.channels * fmt.bits / 8), seconds: dataSize / (fmt.channels * fmt.bits / 8) / fmt.rate, bytes: buf.length };
   }
 
-  test("A 原版 3.437s / B 1.350s / C 1.800s，格式与采样率完全一致", () => {
-    const a = wavInfo("audio/clear-x14-Upper01.wav");
-    const b = wavInfo("audio/clear-x14-Upper01-short-1.35s.wav");
-    const c = wavInfo("audio/clear-x14-Upper01-short-1.80s.wav");
-    assert.equal(a.seconds.toFixed(6), "3.436553");
-    assert.equal(b.seconds.toFixed(3), "1.350");
-    assert.equal(c.seconds.toFixed(3), "1.800");
-    for (const x of [a, b, c]) {
-      assert.equal(x.format, 1, "不是 PCM");
-      assert.equal(x.rate, 44100, "采样率被改");
-      assert.equal(x.channels, 2, "声道布局被改");
-      assert.equal(x.bits, 16, "位深被改");
-    }
+  test("清屏新素材 0.750s / 单声道 / 44.1k / 尾部淡尽", () => {
+    const x = wavInfo("audio/clear-x15-mixkit-unlock-253.wav");
+    assert.equal(x.seconds.toFixed(3), "0.750");
+    assert.equal(x.format, 1, "不是 PCM");
+    assert.equal(x.rate, 44100);
+    assert.equal(x.channels, 1, "应为单声道");
+    assert.equal(x.bits, 16);
+    const buf = fs.readFileSync(path.resolve(ROOT, "audio/clear-x15-mixkit-unlock-253.wav"));
+    const pcm = buf.subarray(buf.length - 20 * 44.1 * 2);
+    let peak = 0;
+    for (let i = 0; i + 1 < pcm.length; i += 2) peak = Math.max(peak, Math.abs(pcm.readInt16LE(i)) / 32768);
+    assert.ok(20 * Math.log10(Math.max(peak, 1e-9)) < -40, "清屏尾部未淡尽");
   });
 
-  test("B/C 尾部真正淡到静音（末 20ms 峰值 < -40dBFS）", () => {
-    for (const file of ["audio/clear-x14-Upper01-short-1.35s.wav", "audio/clear-x14-Upper01-short-1.80s.wav"]) {
+  test("新增素材格式统一为 PCM 16bit / 44.1k / 单声道，且无削波", () => {
+    for (const file of ["audio/fail-03-lose-1.wav", "audio/wall-bounce-wood-light-000.wav",
+      "audio/ui-start-click1.wav", "audio/ui-click-rollover2.wav"]) {
+      const x = wavInfo(file);
+      assert.equal(x.format, 1, file + " 不是 PCM");
+      assert.equal(x.rate, 44100, file + " 采样率不对");
+      assert.equal(x.channels, 1, file + " 不是单声道");
+      assert.equal(x.bits, 16, file + " 位深不对");
       const buf = fs.readFileSync(path.resolve(ROOT, file));
-      const pcm = buf.subarray(buf.length - 20 * 44.1 * 4);
       let peak = 0;
-      for (let i = 0; i + 1 < pcm.length; i += 2) peak = Math.max(peak, Math.abs(pcm.readInt16LE(i)) / 32768);
-      const db = 20 * Math.log10(Math.max(peak, 1e-9));
-      assert.ok(db < -40, file + " 尾部未淡尽：" + db.toFixed(1) + "dB");
+      for (let i = 44; i + 1 < buf.length; i += 2) peak = Math.max(peak, Math.abs(buf.readInt16LE(i)));
+      assert.ok(peak < 32767, file + " 存在削波");
     }
-  });
-
-  test("A/B/C 峰值一致（只做裁剪与淡出，没有重压缩或削波）", () => {
-    const peaks = ["audio/clear-x14-Upper01.wav", "audio/clear-x14-Upper01-short-1.35s.wav", "audio/clear-x14-Upper01-short-1.80s.wav"]
-      .map((file) => {
-        const buf = fs.readFileSync(path.resolve(ROOT, file));
-        let peak = 0;
-        for (let i = 44; i + 1 < buf.length; i += 2) peak = Math.max(peak, Math.abs(buf.readInt16LE(i)));
-        return peak;
-      });
-    assert.equal(peaks[0], peaks[1]);
-    assert.equal(peaks[0], peaks[2]);
-    assert.ok(peaks[0] < 32767, "存在削波");
   });
 
   console.log("\n【2】路由：四类事件全部被接管，删除的事件不再发声");
@@ -297,9 +289,9 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
     api.play("break");
     assert.equal(base.started.at(-1).buffer.duration, AUDIO_SECONDS["audio/break-x11-impactGlass_heavy_000.ogg"]);
     api.play("clear");
-    assert.equal(base.started.at(-1).buffer.duration, AUDIO_SECONDS["audio/clear-x14-Upper01.wav"], "清屏默认应播 A 原版");
+    assert.equal(base.started.at(-1).buffer.duration, AUDIO_SECONDS["audio/clear-x15-mixkit-unlock-253.wav"], "清屏应播 CLEAR-010");
     api.play("fail");
-    assert.equal(base.started.at(-1).buffer.duration, AUDIO_SECONDS["audio/fail-02-error_005.ogg"]);
+    assert.equal(base.started.at(-1).buffer.duration, AUDIO_SECONDS["audio/fail-03-lose-1.wav"]);
     assert.equal(api.getState().voices, before + 4);
   });
 
@@ -311,32 +303,19 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
     assert.ok(api.getState().drops.brick_hit >= 5);
   });
 
-  console.log("\n【4】清屏 A/B/C：选择即改变实际路由");
-  test("切到 B：清屏实际播 1.35s 版本", () => {
+  console.log("\n【4】清屏候选已收敛为单一素材");
+  test("清屏实际播放 CLEAR-010（0.75s）", () => {
     api.stopAll(); base.clock.advance(4000);
-    assert.equal(api.setVariant("clear_upgrade", "clear-x14-short-135"), true);
     api.play("clear");
-    assert.equal(base.started.at(-1).buffer.duration, 1.35);
+    assert.equal(base.started.at(-1).buffer.duration, 0.75);
   });
 
-  test("切到 C：清屏实际播 1.80s 版本", () => {
-    api.stopAll(); base.clock.advance(4000);
-    assert.equal(api.setVariant("clear_upgrade", "clear-x14-short-180"), true);
-    api.play("clear");
-    assert.equal(base.started.at(-1).buffer.duration, 1.8);
-  });
-
-  test("切回 A：清屏恢复 3.437s 原版", () => {
-    api.stopAll(); base.clock.advance(4000);
-    api.setVariant("clear_upgrade", "clear-x14");
-    api.play("clear");
-    assert.equal(base.started.at(-1).buffer.duration, AUDIO_SECONDS["audio/clear-x14-Upper01.wav"]);
-  });
-
-  test("非法候选被拒绝，不会污染状态", () => {
-    assert.equal(api.setVariant("clear_upgrade", "clear-x14-short-1.35s"), false);
-    assert.equal(api.setVariant("brick_hit", "clear-x14"), false);
-    assert.equal(api.getState().selected.clear_upgrade, "clear-x14");
+  test("旧 A/B/C 候选被拒绝，选择不会被污染", () => {
+    for (const legacy of ["clear-x14", "clear-x14-short-135", "clear-x14-short-180", "clear-x14-short-1.35s"]) {
+      assert.equal(api.setVariant("clear_upgrade", legacy), false, legacy + " 不该被接受");
+    }
+    assert.equal(api.setVariant("brick_hit", "clear-x15"), false);
+    assert.equal(api.getState().selected.clear_upgrade, "clear-x15");
   });
 
   test("清屏音 1.5 秒内重复请求被丢弃（清屏与升级共用一个事件，只播一次）", () => {
@@ -351,7 +330,7 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
   console.log("\n【7】试听：不叠加、不改选择、不动游戏内声音");
   await testAsync("连续试听同一事件只保留一路试听声", async () => {
     api.stopAll(); base.clock.advance(4000);
-    api.setVariant("clear_upgrade", "clear-x14-short-135");
+    api.setVariant("clear_upgrade", "clear-x15");
     await api.preview("clear_upgrade", false);
     const one = api.getState().voices;
     await api.preview("clear_upgrade", false);
@@ -360,7 +339,7 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
 
   await testAsync("试听不改变已选版本", async () => {
     await api.preview("clear_upgrade", false);
-    assert.equal(api.getState().selected.clear_upgrade, "clear-x14-short-135");
+    assert.equal(api.getState().selected.clear_upgrade, "clear-x15");
   });
 
   test("试听只停试听声，不打断正在进行的游戏触发", () => {
@@ -371,7 +350,7 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
     assert.equal(api.getState().voices, 0);
     // preview 内部只清理 preview 声：这里用砖甲受击与清屏互不影响来验证事件隔离
     api.play("brick_hit");
-    api.setVariant("clear_upgrade", "clear-x14");
+    api.setVariant("clear_upgrade", "clear-x15");
     assert.equal(api.getState().voices >= 1, true, "切换候选误停了其他事件");
   });
 
@@ -411,9 +390,9 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
     assert.equal(config.version, "pinball-audio-qa-v2.1");
     assert.equal(config.items.length, 7);
     const clear = config.items.find((x) => x.event === "clear_upgrade");
-    assert.deepEqual(plain(clear.candidateIds), ["clear-x14", "clear-x14-short-135", "clear-x14-short-180"]);
-    assert.equal(clear.file, "audio/clear-x14-Upper01.wav");
-    assert.equal(clear.label, "A · Upper01 原版（3.44s）");
+    assert.deepEqual(plain(clear.candidateIds), ["clear-x15"]);
+    assert.equal(clear.file, "audio/clear-x15-mixkit-unlock-253.wav");
+    assert.ok(clear.label.includes("CLEAR-010"));
     for (const item of config.items) {
       for (const key of ["event", "name", "selectedId", "label", "muted", "file", "candidateIds", "groupVolume"]) {
         assert.ok(key in item, item.event + " 缺少字段 " + key);
@@ -440,8 +419,8 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
     assert.equal(state.volumes.clear_upgrade, 1);
   });
 
-  await testAsync("刷新页面后保留 A/B/C 选择、无音效与音量", async () => {
-    api.setVariant("clear_upgrade", "clear-x14-short-180");
+  await testAsync("刷新页面后保留候选选择、无音效与音量", async () => {
+    api.setVariant("brick_hit", "v5-wood-thud");
     api.setMuted("fail", true);
     api.setGroupVolume("brick_hit", .8);
     const saved = Object.fromEntries(base.storage);
@@ -449,13 +428,13 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
     reloaded.api.prime();
     await flush();
     const state = reloaded.api.getState();
-    assert.equal(state.selected.clear_upgrade, "clear-x14-short-180", "清屏候选未保留");
+    assert.equal(state.selected.brick_hit, "v5-wood-thud", "砖甲受击候选未保留");
     assert.equal(state.muted.fail, true, "无音效未保留");
-    assert.equal(state.muted.clear_upgrade, false);
+    assert.equal(state.muted.brick_hit, false);
     assert.equal(state.volumes.brick_hit, .8, "音量未保留");
-    const item = reloaded.api.exportConfig().items.find((x) => x.event === "clear_upgrade");
-    assert.equal(item.selectedId, "clear-x14-short-180");
-    assert.equal(item.file, "audio/clear-x14-Upper01-short-1.80s.wav");
+    const item = reloaded.api.exportConfig().items.find((x) => x.event === "brick_hit");
+    assert.equal(item.selectedId, "v5-wood-thud");
+    assert.equal(item.file, "../audio-qa/audio/hit.ogg");
   });
 
   console.log("\n【1】旧合成提示音：默认关闭，但代码与触发点全部保留");
@@ -551,10 +530,10 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
 
   test("页面用新版本参数，旧版本参数不残留", () => {
     for (const asset of ["sound-pack.js", "game.js", "qa-studio.js", "qa-studio.css"]) {
-      assert.ok(html.includes(asset + "?v=v21d"), asset + " 未升版");
+      assert.ok(html.includes(asset + "?v=v21f"), asset + " 未升版");
     }
     assert.ok(!html.includes("v21a"));
-    assert.ok(!html.includes("?v=v21b") && !html.includes("?v=v21c"), "旧版本参数残留");
+    assert.ok(!html.includes("?v=v21b") && !html.includes("?v=v21c") && !html.includes("?v=v21d"), "旧版本参数残留");
     assert.ok(!html.includes("audioqa2"));
   });
 

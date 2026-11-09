@@ -87,9 +87,7 @@ for (const info of api.describe()) {
   detail.className = "aq-detail";
   detail.textContent = info.variants.length === 1
     ? info.variants[0].label + " · " + info.variants[0].detail + " · 不提供其他候选"
-    : info.variants.map(v => v.label).join(" / ") + (info.id === "brick_hit"
-      ? " · 二选一 · 不提供其他候选"
-      : " · 三段为同一波形，只改裁剪与尾部淡出，不变速不变调");
+    : info.variants.map(v => v.label).join(" / ") + " · 二选一 · 不提供其他候选";
 
   const actions = document.createElement("div");
   actions.className = "aq-pick-actions";
