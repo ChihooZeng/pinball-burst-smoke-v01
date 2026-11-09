@@ -34,3 +34,7 @@
 ## 代码边界
 
 新增 `demo/audio-qa-v2/` 中的 `index.html`、`game.js`、`sound-pack.js`、`sound-choice-layer.js`、`qa-studio.js`、`qa-studio.css`。复用 `demo/audio-qa/audio/` 中原本自托管的二进制录音，以及 `demo/v1` 的物理构筑和画面资源。没有重写游戏。
+
+### 发布检查
+
+V2页面属于独立验证入口；GitHub Pages部署成功后必须再做真实浏览器的外部候选试听、Boss10升级按钮、窗口大小调整和卡住诊断。线上未测通过前不可称最终修复。
