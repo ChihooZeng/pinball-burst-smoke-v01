@@ -1797,6 +1797,7 @@
   window.__pinballState = snapshot;
   window.__pinballAudioQaFix = {
     getStatus(){return {wave,phase,elapsed,pausedFrom,choiceSet:[...choiceSet],choiceQueue,emptyLatch,replenishClock,bossHp:boss?.hp??null,bossVictoryActive:!!bossVictory,frameErrors:audioQaRuntimeErrors,lastError:audioQaLastRuntimeError};},
+    startBoss10(route="gun"){if(!["split","arc","gun"].includes(route))return false;$("bossRoute").value=route;return jumpToBoss10();},
     continueUpgrade(){if(phase!=="choosing"||!choiceSet.length)return false;return chooseUpgrade(choiceSet[0]);},
     resumePaused(){if(phase!=="paused")return false;resume();return phase!=="paused";},
     exportDiagnostics(){
