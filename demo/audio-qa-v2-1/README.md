@@ -1,68 +1,114 @@
-# 《弹珠超载》音效调试台 V2.1
+# 《弹珠超载》音效调试台 V2.1b
 
-独立验收路径：`/demo/audio-qa-v2-1/`（线上 `https://chihoozeng.github.io/pinball-burst-smoke-v01/demo/audio-qa-v2-1/`）。
-V2（`/demo/audio-qa-v2/`）与正式游戏（`/demo/v1/`）**保留不动，本版不覆盖**。
+独立验收路径：`/demo/audio-qa-v2-1/`。V2（`/demo/audio-qa-v2/`）与正式游戏（`/demo/v1/`）**保留不动，本版不覆盖**。
+本轮**未推送、未部署**，只做本地验收。
 
-## 这一版只做一件事：把 9 个音效分组收敛成 4 类实际结果
+## 一、四类实际音效事件
 
-旧版是「按动作配声音」：机枪、普通命中、砖块击碎、装甲命中、爆雷、技能选择、清屏、失败、升级提示。
-V2.1 改成「按砖块的结果配声音」，球打到砖块只有两种互斥结果，另加两个全局节点。
+球击中砖块只有两种互斥结果，另加两个全局节点。
 
-| 音效事件 | 素材 | 是否可选 |
+| 音效事件 | 可选内容 | 文件 |
 |---|---|---|
-| 砖甲受击（击中但砖块存活） | V5 木质轻敲 / V5 木板闷响 | 二选一，另加「无音效」 |
-| 砖块击破（HP 归零、实际摧毁） | break-x11 · impactGlass heavy 000 | 固定，另加「无音效」 |
-| 清屏升级（清屏与升级同一节点） | clear-x14 · Upper01 | 固定，另加「无音效」 |
-| 触线失败 | fail-02 · 02 错误提示中音 | 固定，另加「无音效」 |
+| 砖甲受击（击中但砖块存活） | V5 木质轻敲 / V5 木板闷响 / 无音效 | `demo/audio-qa/audio/mg.ogg`、`hit.ogg` |
+| 砖块击破（HP 归零、实际摧毁） | break-x11 · impactGlass heavy 000 / 无音效 | `audio/break-x11-impactGlass_heavy_000.ogg` |
+| 清屏升级（清屏与升级同一节点） | **A 原版 3.44s / B 短版 1.35s / C 中短版 1.80s / 无音效** | `audio/clear-x14-Upper01*.wav` |
+| 触线失败 | fail-02 · 02 错误提示中音 / 无音效 | `audio/fail-02-error_005.ogg` |
 
-**击破不是第三种声音，而是同一次碰撞的第二种结果。** 代码上由 `hitBrick()` 的
-`if(b.hp>0){...playSfx("armor");return false;}` 保证：砖块存活时提前返回，走不到击破分支；
+**击破不是第三种声音，而是同一次碰撞的第二种结果。** `hitBrick()` 里
+`if(b.hp>0){...playSfx("armor");return false;}` 保证砖块存活时提前返回、走不到击破分支；
 被击穿时直接走到底部的 `playSfx("break")`。二者不可能在同一次碰撞里都触发。
 
-## 删除的独立事件
+## 二、Upper01 A/B/C
 
-机枪射击（每发开火）、砖块击碎作为独立分组、爆雷/连锁爆破（含 Boss 终结爆炸与撞墙反馈）、
-独立技能选择、独立升级提示。以上都不再发声，也不再出现在调试台。
+三段是**同一段波形**，只改裁剪长度与尾部淡出，不变速、不变调、不重编码音色。
 
-保留的是游戏原有的合成提示音（裂变、追击、钻头、电弧、超载、Boss 预警），它们不属于这次音效分组，
-继续由 `game.js` 的 `beep()` 播放，不受本调试台四个开关影响。
+| 版本 | 文件 | 时长 | 淡出 |
+|---|---|---|---|
+| A 原版 | `audio/clear-x14-Upper01.wav` | 3.436553s | 原始自带 |
+| B 短版 | `audio/clear-x14-Upper01-short-1.35s.wav` | 1.350000s | 1.15s 起，200ms raised-cosine |
+| C 中短版 | `audio/clear-x14-Upper01-short-1.80s.wav` | 1.800000s | 1.55s 起，250ms raised-cosine |
 
-## 素材全部自托管
+三段均为 44100Hz / 16bit / 立体声 / PCM，峰值相同（-5.51 dBFS），无削波。
+**A 原文件未被覆盖**（MD5 不变），B/C 是新增文件。
+
+波形分析结论（见交付报告）：主峰在 0.90s，之后是持续衰减的释放段；2.21–2.40s 有 190ms 的 -47dB 间隙，
+2.42s 到结尾 1.02 秒基本是 -45 → -74dB 的静音尾。所以 B/C 并不损失任何独立乐句，差别只在释放段长度；
+原版后 1 秒其实是听不见的静音，却让下一次清屏要等更久。
+
+## 三、原合成提示音本轮默认关闭（可一键恢复）
+
+`game.js` 顶部有一个开关：
+
+```js
+const LEGACY_SYNTH_CUES_ENABLED = false; // 改 true 即整体恢复
+```
+
+关闭的是 `playSfx()` 里由 `beep()` 生成振荡器的五个提示音：`split`（裂变）、`hunt`（追击）、
+`drill`（钻头）、`arc`（电弧）、`giant`（超载冲锋 **与 Boss 降临共用**）。
+
+- 只关播放，`beep()` 函数、五个 `playSfx("…")` 触发点全部保留，改回 `true` 即恢复，无需其它改动。
+- **不会**误关四类素材音效：开关在 `PinballGameAudio.play()` 与合成音白名单之后才生效。
+- 不影响 `tapHaptic()` 振动反馈。
+- 审计结论：全工程只有 `playSfx → beep` 一个合成音入口；`juice-fx.js`、`builds.js`、页面均无 `<audio>` 或第二个 `AudioContext`。
+- **README 旧版写的「Boss 预警」不是一个独立事件**，它就是 `bossSpawn()` 里复用的 `playSfx("giant")`，与超载冲锋同一个 beep。
+
+## 四、素材全部自托管
 
 ```
-demo/audio-qa/audio/mg.ogg                       V5 木质轻敲（原机枪组 bundled）
-demo/audio-qa/audio/hit.ogg                      V5 木板闷响（原普通命中组 bundled）
-demo/audio-qa-v2-1/audio/break-x11-...ogg        break-x11  impactGlass heavy 000
-demo/audio-qa-v2-1/audio/clear-x14-Upper01.wav   clear-x14  Upper01
-demo/audio-qa-v2-1/audio/fail-02-error_005.ogg   fail-02    error 005
+demo/audio-qa/audio/mg.ogg / hit.ogg                     V5 木质轻敲 / 木板闷响
+demo/audio-qa-v2-1/audio/break-x11-...ogg                break-x11  impactGlass heavy 000
+demo/audio-qa-v2-1/audio/clear-x14-Upper01.wav           A 原版
+demo/audio-qa-v2-1/audio/clear-x14-Upper01-short-1.35s.wav   B 短版
+demo/audio-qa-v2-1/audio/clear-x14-Upper01-short-1.80s.wav   C 中短版
+demo/audio-qa-v2-1/audio/fail-02-error_005.ogg           fail-02  error 005
 ```
 
-原素材来自 `Mcamento8/open-game-sfx-index`（CC0-1.0）。V2 选择外部 URL 现取现播，
-V2.1 把三个最终确定的文件下载进仓库，页面不再依赖 `raw.githubusercontent.com`，断网也能用，
-也不再需要「加载失败回退」这条路径。
+原素材来自 `Mcamento8/open-game-sfx-index`（CC0-1.0）。页面不依赖 `raw.githubusercontent.com`，断网可用。
 
-## 调试台保留的功能
+## 五、调试台功能
 
-- 实时试听：单次 / 连播 3 秒，试听不改变游戏内路由。
+- 实时试听：单次 / 连播 3 秒；试听只停同一事件的上一段试听，不打断游戏内触发，也不改变已选版本。
 - 每类独立音量（0–150%）。
 - 停止所有声音。
-- A/B 对照：只给仍有候选的砖甲受击，A = 原版合成音（旧 beep），B = 已选素材。
-- 无音效开关 + 下拉里的「无音效」选项，两者同步，刷新后保留。
-- 音效配置 JSON 导出（`selectedId: "none"` 即该类关闭）。
+- A/B 对照：只给砖甲受击（A = 原版合成音，B = 已选素材）。清屏 A/B/C 是版本对照，不占用这个按钮。
+- 「无音效」开关 + 下拉里的「无音效」，两者同步，刷新后保留；静音时绝不回退到 beep。
+- 音效配置 JSON 导出（`selectedId: "none"` 即该类关闭；清屏导出实际选中 ID、标签与文件路径）。
 - 游戏实时状态、Boss HP、帧异常、素材解码数、触发计数。
 - 第10关直达 / 应用首张升级卡继续 / 恢复暂停 / 导出卡住诊断。
 
-## 测试
+## 六、测试
 
 ```bash
 node demo/audio-qa-v2-1/tests/audio-v21.test.cjs
 ```
 
-36 条断言，覆盖事件表、路由、互斥、无音效、持久化、JSON 导出、静态边界。
-真实浏览器验证另外执行（Chrome headless + CDP），结果见交付报告。
+47 条断言，覆盖：旧合成音默认关闭、四类战斗音路由、A/B/C 三候选与真实时长、A/B/C 切换后清屏实际播放的素材、
+三类系统音（开始游戏 / 其他按钮 / 墙面反弹）标记与文件路径、`wall`/`bounce` 别名、
+无音效不回退、试听不叠加不改选择、持久化与 JSON、第10关能力未受影响、静态边界。
 
-## 代码边界
+## 七、代码边界
 
-新增 `demo/audio-qa-v2-1/`：`index.html`、`game.js`、`sound-pack.js`、`qa-studio.js`、`qa-studio.css`、
-`audio/`、`tests/`。`game.js` 只改了音效触发点与 `playSfx` 的分流，玩法、技能、数值、关卡、
-弹道、打击感未改。没有新增音效，没有改正式游戏。
+新增/修改仅限 `demo/audio-qa-v2-1/`：`index.html`、`game.js`、`sound-pack.js`、`qa-studio.js`、
+`qa-studio.css`、`audio/`、`tests/`、`README.md`。`game.js` 只改音效触发与 `playSfx` 分流，
+玩法、技能、数值、关卡、弹道、打击感未改。没有新增音效素材，没有改正式游戏。
+
+## 八、V2.1c 追加：菜单音与撞墙音（2026-11-09 17:20）
+
+用户 11-09 拍板，新增三类固定系统音，不提供候选：
+
+| 事件 | 素材 | 触发点 | 参数 |
+|---|---|---|---|
+| `ui_start` 开始游戏 | `interface-sounds / click1` | `#start`、`#again`、`#reset` | 0.091s，cooldown 120ms |
+| `ui_click` 其他按钮 | `ui-audio / rollover2` | 其余所有 `button`（委托监听） | 0.054s，cooldown 40ms |
+| `wall_bounce` 墙面反弹 | `impact-sounds / impactWood light 000` | `updateBall` 撞左右墙与顶墙 | 裁到 0.10s + 20ms 淡出，cooldown 55ms，maxVoices 3，priority 1 |
+
+实现要点：
+
+- **撞墙只加声音，不动 `wall` 标记**。`wall` 同时驱动充能与 `retargetBall`，改它会改玩法；
+  声音用独立的 `bounced` 局部变量，只在 `playSfx` 处消费。
+- **按钮音走 document 上的委托监听**（capture 阶段），并排除 `#audioQaPanel`，避免调试台试听时被点击音污染。
+- **首屏预热**：`load` 后先解码三条系统音，否则「开始游戏」的第一次点击会因为缓冲区还没解码而静音。
+  实测未预热时 `plays.ui_start === 0`，预热后为 1。
+- 三条素材全部自托管为 16bit / 44.1kHz / 单声道 WAV，共 21KB，不依赖外部 CDN。
+
+砖块击破仍为 `break-x11 / impactGlass heavy 000`（用户 11-09 暂定，等实机后可能更换）。

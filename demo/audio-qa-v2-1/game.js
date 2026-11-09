@@ -153,6 +153,9 @@
   let finaleStage=0,finaleWaveSpawns=[0,0,0,0],finaleDamageCheckpoints=[];
   let phase, charge, hunterLevel, ricochetLevel, splitLevel, shockLevel, drillLevel, arcLevel, shootClock, elapsed;
   let skillsUsed, ricochetTriggers, lastFrame, soundContext, masterGain, soundLimiter, soundVolume=.78;
+  // V2.1 临时开关：原有合成提示音（裂变/追击/钻头/电弧/超载+Boss降临）默认全部关闭。
+  // 只关闭播放，不删 beep()、不删任何触发点；改成 true 即整体恢复，无需其它改动。
+  const LEGACY_SYNTH_CUES_ENABLED=false;
   let accumulator=0,uiClock=0,metricsClock=0,frameSamples=0,fpsNow=0,slowFrames=0,renderQuality="full",drawMs=0;
   let sfxLast=Object.create(null), bonusVolleyBalls=0, homingTurns=0, shockWaves=0, directBreaks=0;
   let shotsFired, brickContacts, shotMaxContacts, splitBursts, chainBursts, giantRebounds, giantBrickRebounds, giantWallRebounds, giantTotalHits;
@@ -234,8 +237,10 @@
     // V2.1: 砖甲受击(hit/armor)、砖块击破(break)、清屏升级(clear)、触线失败(fail)
     // 全部由 sound-pack.js 接管；被设为「无音效」时同样由它吞掉，绝不回退成合成音。
     if(window.PinballGameAudio?.play(kind,soundVolume))return;
-    // 走到这里的只剩游戏原有合成提示音：裂变/追击/钻头/电弧/超载/Boss预警。
+    // 走到这里的只剩游戏原有合成提示音：裂变/追击/钻头/电弧/超载+Boss降临。
     if(kind!=="split"&&kind!=="hunt"&&kind!=="drill"&&kind!=="arc"&&kind!=="giant")return;
+    // 单一可逆开关，默认关闭这组旧提示音。改 true 即恢复，beep() 与触发点都保留。
+    if(!LEGACY_SYNTH_CUES_ENABLED)return;
     if(!soundContext||soundVolume<=0)return;
     const now=soundContext.currentTime;
     if(now-(sfxLast[kind]??-999)<.12)return;
@@ -905,15 +910,17 @@
     for(let i=0;i<steps;i++){
       const prevX=ball.x,prevY=ball.y;
       ball.x+=ball.vx*step;ball.y+=ball.vy*step;
-      let wall=false;
-      if(ball.x<ball.r){ball.x=ball.r;ball.vx=Math.abs(ball.vx);wall=true;}
-      if(ball.x>W-ball.r){ball.x=W-ball.r;ball.vx=-Math.abs(ball.vx);wall=true;}
-      if(ball.y<ball.r+4){ball.y=ball.r+4;ball.vy=Math.abs(ball.vy);}
+      let wall=false,bounced=false;
+      if(ball.x<ball.r){ball.x=ball.r;ball.vx=Math.abs(ball.vx);wall=true;bounced=true;}
+      if(ball.x>W-ball.r){ball.x=W-ball.r;ball.vx=-Math.abs(ball.vx);wall=true;bounced=true;}
+      if(ball.y<ball.r+4){ball.y=ball.r+4;ball.vy=Math.abs(ball.vy);bounced=true;}
       if(wall){
         counters.wallBounces++;
         if(ricochetLevel){ball.chargeStacks=Math.min(ricochetLevel===1?2:4,ball.chargeStacks+ricochetLevel);ricochetTriggers++;}
         retargetBall(ball);
       }
+      // V2.1c: 墙面反弹独立发声（只加声音，不改 wall 标记，避免影响弹射与充能逻辑）。
+      if(bounced)playSfx("wall_bounce");
       for(const block of bricks){
         collisionChecks++;
         if(!block.alive||(block.summonAge!==undefined&&block.summonAge<.20)||ball.x+ball.r<block.x||ball.x-ball.r>block.x+block.w||
@@ -1696,6 +1703,15 @@
   $("skillSide").addEventListener("change",e=>{skillSide=e.target.value==="left"?"left":"right";store(SIDE_KEY,skillSide);applySkillSide();});
   $("autoSkill").addEventListener("change",e=>{autoSkill=!!e.target.checked;store(AUTO_KEY,autoSkill?"yes":"no");});
   $("start").addEventListener("click",begin);
+  /* V2.1c: 菜单按钮音。开始/再来一次/重开走 click1，其余按钮统一 rollover2。
+     只挂在游戏内的 button 上，调试台面板（#audioQaPanel）的按钮不出声，以免污染试听。 */
+  document.addEventListener("click",e=>{
+    const btn=e.target instanceof Element?e.target.closest("button"):null;
+    if(!btn||btn.closest("#audioQaPanel"))return;
+    unlockSound();
+    const main=btn.id==="start"||btn.id==="again"||btn.id==="reset";
+    playSfx(main?"ui_start":"ui_click");
+  },true);
   $("jumpBoss").addEventListener("click",jumpToBoss10);
   $("jumpFinalBoss").addEventListener("click",jumpToFinalBoss);
   for(let i=0;i<3;i++)$("choice"+i).addEventListener("click",()=>{unlockSound();chooseUpgrade(choiceSet[i]);});
@@ -1794,7 +1810,7 @@
   // In production only a read-only diagnostics snapshot is available.
   window.__pinballState = snapshot;
   window.__pinballAudioQaFix = {
-    getStatus(){return {wave,phase,elapsed,pausedFrom,choiceSet:[...choiceSet],choiceQueue,emptyLatch,replenishClock,bossHp:boss?.hp??null,bossVictoryActive:!!bossVictory,frameErrors:audioQaRuntimeErrors,lastError:audioQaLastRuntimeError};},
+    getStatus(){return {wave,phase,elapsed,pausedFrom,choiceSet:[...choiceSet],choiceQueue,emptyLatch,replenishClock,bossHp:boss?.hp??null,bossVictoryActive:!!bossVictory,frameErrors:audioQaRuntimeErrors,lastError:audioQaLastRuntimeError,legacySynthCues:LEGACY_SYNTH_CUES_ENABLED};},
     startBoss10(route="gun"){if(!["split","arc","gun"].includes(route))return false;$("bossRoute").value=route;return jumpToBoss10();},
     continueUpgrade(){if(phase!=="choosing"||!choiceSet.length)return false;return chooseUpgrade(choiceSet[0]);},
     resumePaused(){if(phase!=="paused")return false;resume();return phase!=="paused";},

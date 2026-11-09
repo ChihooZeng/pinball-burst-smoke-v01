@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#08182b"/>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%2212%22 fill=%22%2308192a%22 stroke=%22%2366ebf2%22 stroke-width=%223%22/%3E%3C/svg%3E"/>
   <title>弹珠超载 · 音效调试台 V2.1</title>
-  <link rel="stylesheet" href="../v1/style.css?v=demo1"/><link rel="stylesheet" href="../audio-qa/qa-panel.css?v=audioqa1"/><link rel="stylesheet" href="./qa-studio.css?v=v21a"/>
+  <link rel="stylesheet" href="../v1/style.css?v=demo1"/><link rel="stylesheet" href="../audio-qa/qa-panel.css?v=audioqa1"/><link rel="stylesheet" href="./qa-studio.css?v=v21d"/>
 </head>
 <body class="audio-qa">
   <main class="shell">
@@ -69,15 +69,15 @@
     </div>
   </main>
   <script src="../v1/juice-fx.js?v=demo1" defer></script><script src="../v1/builds.js?v=demo1" defer></script>
-<script src="./sound-pack.js?v=v21a" defer></script>
-<script src="./game.js?v=v21a" defer></script>
-<script src="./qa-studio.js?v=v21a" defer></script>
+<script src="./sound-pack.js?v=v21d" defer></script>
+<script src="./game.js?v=v21d" defer></script>
+<script src="./qa-studio.js?v=v21d" defer></script>
 <script>if(new URLSearchParams(location.search).get("qa")==="1"){document.getElementById("qaBossPreview")?.removeAttribute("hidden");}</script>
 <button id="aq-open" type="button" aria-label="打开音效调试面板">音效调试</button>
 <aside id="audioQaPanel" aria-label="音效真实战斗调试">
-  <div class="aq-top"><div><h2>音效调试台 V2.1</h2><small>四类实际音效事件 · 只有砖甲受击有两个候选</small></div><button type="button" id="aq-close" class="aq-hide" aria-label="关闭音效调试">×</button></div>
-  <p>左侧是真实20波战斗。右侧只有四类事件：砖甲受击（砖块被打但没破）、砖块击破、清屏升级、触线失败。每类都能单独关闭成「无音效」，改动立即生效，刷新后保留。旧版 9 个独立分组已移除。</p>
-  <div class="aq-subtitle">四类事件 · 选择后立即生效</div>
+  <div class="aq-top"><div><h2>音效调试台 V2.1c</h2><small>四类战斗音 + 三类系统音 · 清屏升级提供 A/B/C 三种时长</small></div><button type="button" id="aq-close" class="aq-hide" aria-label="关闭音效调试">×</button></div>
+  <p>左侧是真实20波战斗。右侧前四张是战斗音：砖甲受击、砖块击破、清屏升级、触线失败；后三张是系统音：开始游戏、其他按钮、墙面反弹。每类都能单独关闭成「无音效」，改动立即生效，刷新后保留。旧版 9 个独立分组与原合成提示音仍然关闭。</p>
+  <div class="aq-subtitle">七类事件 · 选择后立即生效</div>
   <div id="aq-flow" role="status">正在读取关卡状态…</div>
 <div class="aq-tools">
 <select id="aq-route" aria-label="第10关Boss测试流派"><option value="gun">机枪Build</option><option value="split">裂变Build</option><option value="arc">电弧Build</option></select>
@@ -94,7 +94,7 @@
       <button class="aq-primary" id="aq-download" type="button">导出音效选择 JSON</button>
     </div>
     <div id="aq-action-status" role="status"></div>
-    <div class="aq-note">四个音频文件全部随页面自托管，不依赖外部 CDN，断网可用。砖块击破不是叠加的第三种声音，而是球击中砖块后的第二种结果：没破只播砖甲受击，破了只播击破音。</div>
+    <div class="aq-note">六个音频文件全部随页面自托管，不依赖外部 CDN，断网可用。清屏升级的 A/B/C 是同一段 Wave 的三种长度（3.44s / 1.35s / 1.80s），只改裁剪与尾部淡出，不变速不变调。砖块击破不是叠加的第三种声音：没破只播砖甲受击，破了只播击破音。</div>
     <div class="aq-subtitle">阶段与错误状态</div>
     <div id="aq-state" role="status">正在读取音效引擎…</div>
     <p>该页只改音效触发与调试台选项，不改玩法、技能、数值、关卡与打击感。第10关的暂停可能是选卡阶段，本版保留显式提示、异常捕获和恢复按钮。</p>

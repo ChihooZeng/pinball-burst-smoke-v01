@@ -1,14 +1,15 @@
-/* 《弹珠超载》音效调试台 V2.1 —— 四类实际音效事件
+/* 《弹珠超载》音效调试台 V2.1 —— 四类战斗音 + 三类系统音
    - 砖甲受击（砖块存活）：V5 木质轻敲 / V5 木板闷响，二选一，同一时刻只播当前选中项。
-   - 砖块击破：固定 break-x11 · impactGlass heavy 000。
+   - 砖块击破：固定 break-x11 · impactGlass heavy 000（用户 11-09 暂定，待最终更换）。
    - 清屏升级：固定 clear-x14 · Upper01（清屏与升级合并，只播一次）。
    - 触线失败：固定 fail-02 · 02 错误提示中音。
+   - 系统音（固定）：开始游戏 click1 / 其他按钮 rollover2 / 墙面反弹 impactWood light 000。
    每类都可单独设为「无音效」；设为无音效时完全静音，绝不回退旧合成音。
    全部素材自托管（demo/audio-qa/audio 与 demo/audio-qa-v2-1/audio），不依赖外部 CDN。 */
 (() => {
 "use strict";
 
-const REVISION = "audio-qa-v21-20261109";
+const REVISION = "audio-qa-v21c-20261109";
 const STORAGE = "pinball-audio-qa-v21-20261109";
 
 /* 事件表：唯一事实来源。调试台、JSON 导出、游戏路由都读这一份。 */
@@ -63,10 +64,27 @@ const EVENTS = Object.freeze({
     variants: Object.freeze([
       Object.freeze({
         id: "clear-x14",
-        label: "clear-x14 · Upper01",
-        detail: "oga-levelup-powerup / CC0-1.0",
+        label: "A · Upper01 原版（3.44s）",
+        detail: "clear-x14 · Upper01 完整版 3.437s / 保留原样，未重编码",
         url: "audio/clear-x14-Upper01.wav",
-        gain: .46
+        gain: .46,
+        seconds: 3.437
+      }),
+      Object.freeze({
+        id: "clear-x14-short-135",
+        label: "B · Upper01 短版（1.35s）",
+        detail: "同一波形裁剪至 1.35s，尾部 200ms 淡出，不变速不变调",
+        url: "audio/clear-x14-Upper01-short-1.35s.wav",
+        gain: .46,
+        seconds: 1.35
+      }),
+      Object.freeze({
+        id: "clear-x14-short-180",
+        label: "C · Upper01 中短版（1.80s）",
+        detail: "同一波形裁剪至 1.80s，尾部 250ms 淡出，不变速不变调",
+        url: "audio/clear-x14-Upper01-short-1.80s.wav",
+        gain: .46,
+        seconds: 1.8
       })
     ]),
     maxDuration: 3.44,
@@ -91,6 +109,65 @@ const EVENTS = Object.freeze({
     cooldown: 1100,
     maxVoices: 1,
     priority: 5
+  },
+
+  /* ---- 以下三类为 2026-11-09 用户拍板的系统音，固定素材，不提供候选 ---- */
+  ui_start: {
+    id: "ui_start",
+    name: "开始游戏",
+    hint: "主按钮：开始 20 关挑战 / 再来一次",
+    system: true,
+    variants: Object.freeze([
+      Object.freeze({
+        id: "ui-start-click1",
+        label: "click1 · 主按钮",
+        detail: "interface-sounds / Kenney / CC0-1.0",
+        url: "audio/ui-start-click1.wav",
+        gain: .58
+      })
+    ]),
+    maxDuration: .3,
+    cooldown: 120,
+    maxVoices: 1,
+    priority: 4
+  },
+  ui_click: {
+    id: "ui_click",
+    name: "其他按钮",
+    hint: "暂停 / 继续 / 选卡 / 返回 / 开关，统一一条",
+    system: true,
+    variants: Object.freeze([
+      Object.freeze({
+        id: "ui-click-rollover2",
+        label: "rollover2 · 其余全部按钮",
+        detail: "ui-audio / Kenney / CC0-1.0",
+        url: "audio/ui-click-rollover2.wav",
+        gain: .44
+      })
+    ]),
+    maxDuration: .15,
+    cooldown: 40,
+    maxVoices: 2,
+    priority: 3
+  },
+  wall_bounce: {
+    id: "wall_bounce",
+    name: "墙面反弹",
+    hint: "球撞左右墙与顶墙（已裁到 0.10s）",
+    system: true,
+    variants: Object.freeze([
+      Object.freeze({
+        id: "wall-wood-light-000",
+        label: "impactWood light 000 · 0.10s 裁切",
+        detail: "impact-sounds / Kenney / CC0-1.0",
+        url: "audio/wall-bounce-wood-light-000.wav",
+        gain: .26
+      })
+    ]),
+    maxDuration: .2,
+    cooldown: 55,
+    maxVoices: 3,
+    priority: 1
   }
 });
 
@@ -100,7 +177,9 @@ const ALIAS = Object.freeze({
   hit: "brick_hit",
   armor: "brick_hit",
   break: "brick_break",
-  clear: "clear_upgrade"
+  clear: "clear_upgrade",
+  wall: "wall_bounce",
+  bounce: "wall_bounce"
 });
 const NONE_ID = "none";
 
@@ -360,6 +439,15 @@ function clearPreviewTimers() {
   previewTimers = [];
 }
 
+/* 只停试听声音，不碰正在进行的游戏内触发，避免试听误改实战音。 */
+function stopPreviewVoices(eventId = null) {
+  for (const v of [...voices]) {
+    if (!v.preview) continue;
+    if (eventId && v.event !== eventId) continue;
+    cut(v);
+  }
+}
+
 /* 试听：单次或连播约 3 秒。试听不改变游戏内的实际路由。 */
 function preview(eventId, loop = false) {
   const event = EVENTS[eventId];
@@ -371,7 +459,7 @@ function preview(eventId, loop = false) {
   if (!context) throw new Error("浏览器不支持 Web Audio");
   const record = buffers.get(bufferKey(eventId, variant.id));
   clearPreviewTimers();
-  stop(eventId);
+  stopPreviewVoices(eventId);
   if (!record) return load(eventId, variant.id).then(() => preview(eventId, loop));
   const fire = () => {
     const c = setup();
@@ -384,7 +472,7 @@ function preview(eventId, loop = false) {
   const step = Math.max(.2, Math.min(2.9, span + .12));
   const count = Math.max(1, Math.ceil(3 / step));
   for (let i = 1; i < count; i++) previewTimers.push(setTimeout(fire, Math.round(i * step * 1000)));
-  previewTimers.push(setTimeout(() => stop(eventId), 3400));
+  previewTimers.push(setTimeout(() => stopPreviewVoices(eventId), 3400));
   return Promise.resolve(true);
 }
 
@@ -440,7 +528,7 @@ function exportConfig() {
         suppressed: suppressed[id] || 0
       };
     }),
-    note: "四类实际音效事件；brick_hit 有两个候选，其余三类为固定素材。selectedId 为 none 表示该类已关闭。",
+    note: "四类战斗音 + 三类系统音（开始游戏 / 其他按钮 / 墙面反弹）。仅 brick_hit 有两个候选，其余为固定素材。selectedId 为 none 表示该类已关闭。",
     diagnostic: status
   };
 }
@@ -451,13 +539,33 @@ function describe() {
     return {
       id, name: event.name, hint: event.hint,
       fixed: event.variants.length === 1,
-      variants: event.variants.map(v => ({ id: v.id, label: v.label, detail: v.detail }))
+      system: !!event.system,
+      variants: event.variants.map(v => ({ id: v.id, label: v.label, detail: v.detail, seconds: v.seconds || null }))
     };
   });
 }
 
 document.addEventListener("pointerdown", prime, { once: true, capture: true, passive: true });
 document.addEventListener("visibilitychange", () => { if (document.hidden) stopAll(); });
+
+/* 首屏预热（V2.1c）：先解码三条系统音，保证「开始游戏」第一次点击就出声，
+   而不是等到第一次点击才开始 fetch。上下文保持 suspended，等用户手势再 resume。
+   其余素材延后 1.2s 再解码，避免首屏同时拉 400KB。 */
+function warmSystem() {
+  try {
+    setup();
+    for (const id of ["ui_start", "ui_click", "wall_bounce"]) load(id, EVENTS[id].variants[0].id).catch(() => {});
+  } catch (e) {}
+  setTimeout(() => { try { loadAll(); } catch (e) {} }, 1200);
+}
+/* 只在真实文档环境预热；无 readyState 的宿主（如 Node 测试桩）直接跳过。 */
+try {
+  const readyState = typeof document !== "undefined" ? document.readyState : null;
+  if (typeof readyState === "string") {
+    if (readyState === "complete") setTimeout(warmSystem, 120);
+    else if (typeof window.addEventListener === "function") window.addEventListener("load", () => setTimeout(warmSystem, 120), { once: true });
+  }
+} catch (e) {}
 
 window.PinballGameAudio = {
   revision: REVISION,

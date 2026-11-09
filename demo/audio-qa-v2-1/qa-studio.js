@@ -24,7 +24,7 @@ function syncCard(eventId) {
   ui.mute.checked = muted;
   ui.select.value = muted ? api.NONE_ID : selected;
   ui.card.classList.toggle("is-muted", muted);
-  ui.tag.textContent = muted ? "无音效" : (ui.fixed ? "固定素材" : "2 候选 · 二选一");
+  ui.tag.textContent = muted ? "无音效" : (ui.variantCount === 1 ? "固定素材" : ui.variantCount + " 候选 · 选一");
   ui.tag.classList.toggle("is-muted", muted);
   ui.select.disabled = false;
   ui.volume.value = String(Math.round((state.volumes[eventId] ?? 1) * 100));
@@ -85,9 +85,11 @@ for (const info of api.describe()) {
 
   const detail = document.createElement("p");
   detail.className = "aq-detail";
-  detail.textContent = info.fixed
+  detail.textContent = info.variants.length === 1
     ? info.variants[0].label + " · " + info.variants[0].detail + " · 不提供其他候选"
-    : info.variants.map(v => v.label).join(" / ") + " · 二选一 · 不提供其他候选";
+    : info.variants.map(v => v.label).join(" / ") + (info.id === "brick_hit"
+      ? " · 二选一 · 不提供其他候选"
+      : " · 三段为同一波形，只改裁剪与尾部淡出，不变速不变调");
 
   const actions = document.createElement("div");
   actions.className = "aq-pick-actions";
@@ -113,7 +115,8 @@ for (const info of api.describe()) {
   actions.append(one, repeat);
 
   let abGroup = null;
-  if (!info.fixed) {
+  // A/B 只给仍有候选音效的事件（砖甲受击）：A = 原版合成音，B = 已选素材。
+  if (info.id === "brick_hit") {
     abGroup = document.createElement("div");
     abGroup.className = "aq-ab";
     const legA = document.createElement("button");
@@ -157,7 +160,7 @@ for (const info of api.describe()) {
   if (abGroup) card.append(abGroup);
   card.append(level);
   root.appendChild(card);
-  blocks.set(info.id, { card, tag, select, mute, volume, percent, abGroup, fixed: info.fixed });
+  blocks.set(info.id, { card, tag, select, mute, volume, percent, abGroup, fixed: info.fixed, variantCount: info.variants.length });
   syncCard(info.id);
 }
 
@@ -212,7 +215,7 @@ document.getElementById("aq-resume")?.addEventListener("click", () => {
   note(out ? "已恢复暂停的游戏" : "无法继续：请查看错误诊断或使用游戏重开功能");
 });
 
-const NAMES = { brick_hit: "砖甲受击", brick_break: "砖块击破", clear_upgrade: "清屏升级", fail: "触线失败" };
+const NAMES = { brick_hit: "砖甲受击", brick_break: "砖块击破", clear_upgrade: "清屏升级", fail: "触线失败", ui_start: "开始游戏", ui_click: "其他按钮", wall_bounce: "墙面反弹" };
 
 function renderLive() {
   if (!live) return;
@@ -223,7 +226,7 @@ function renderLive() {
   const mutedList = api.EVENT_IDS.filter(id => state.muted[id]).map(id => NAMES[id]);
   live.textContent =
     "试听/触发计数：" + played +
-    "\n无音效已开启：" + (mutedList.length ? mutedList.join("、") : "无（四类全部发声）") +
+    "\n无音效已开启：" + (mutedList.length ? mutedList.join("、") : "无（七类全部发声）") +
     "\n素材已解码 " + state.loaded.length + "/" + state.variants + " · 加载错误 " + state.errors + " · 当前发声 " + state.voices;
 }
 
