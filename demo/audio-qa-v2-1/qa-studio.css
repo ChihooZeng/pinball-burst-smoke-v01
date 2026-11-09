@@ -1,0 +1,52 @@
+/* 音效调试台 V2.1 —— 四类事件卡片。深色面板，PC 侧栏不遮挡实战画面。 */
+#audioQaPanel{scrollbar-color:#3b6073 #0e1c2a;scrollbar-width:thin}
+#audioQaPanel .aq-pick{background:#10273a;border:1px solid #34536a;border-radius:10px;padding:9px 10px;margin:0;transition:border-color .15s,opacity .15s}
+#audioQaPanel .aq-pick.is-muted{border-color:#6b4a33;background:#1b2130;opacity:.86}
+#audioQaPanel .aq-pick-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px}
+#audioQaPanel .aq-pick-title{display:flex;flex-direction:column;gap:2px;min-width:0}
+#audioQaPanel .aq-pick-title strong{color:#e6f9ff;font-size:13px;line-height:1.25}
+#audioQaPanel .aq-pick-title small{font-size:10px;color:#7eafc5;line-height:1.3}
+#audioQaPanel .aq-tag{flex:0 0 auto;font-size:10px;color:#9df0c8;background:#174437;border:1px solid #2c6d58;border-radius:999px;padding:3px 8px;white-space:nowrap}
+#audioQaPanel .aq-tag.is-muted{color:#ffd9a8;background:#4a3320;border-color:#8a6038}
+#audioQaPanel .aq-mute{display:flex;align-items:center;gap:7px;font-size:11px;color:#c6dcea;margin:0 0 7px;padding:6px 8px;background:#0d1f2e;border:1px solid #2b4a5f;border-radius:8px;cursor:pointer}
+#audioQaPanel .aq-pick.is-muted .aq-mute{color:#ffd9a8;border-color:#8a6038;background:#2a1f16}
+#audioQaPanel .aq-mute input{accent-color:#f0a05a;width:16px;height:16px;margin:0;cursor:pointer}
+#audioQaPanel .aq-select{display:block;width:100%;min-height:38px;color:#effaff;background:#1a3549;border:1px solid #46657c;border-radius:8px;padding:7px 9px;font-size:12px}
+#audioQaPanel .aq-pick.is-muted .aq-select{border-color:#6b4a33;color:#d8c7b6}
+#audioQaPanel .aq-detail{margin:6px 0 0;font-size:10px;line-height:1.45;color:#7e9db3;overflow-wrap:anywhere}
+#audioQaPanel .aq-pick-actions{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 4px}
+#audioQaPanel .aq-pick-actions button,#audioQaPanel .aq-ab button{
+ color:#ddf7ff;background:#1b4358;border:1px solid #3d6b82;border-radius:8px;font-size:11px;
+ padding:7px 9px;min-height:34px;white-space:nowrap;display:flex;align-items:center;justify-content:center;cursor:pointer
+}
+#audioQaPanel .aq-pick-actions button:hover,#audioQaPanel .aq-ab button:hover{background:#28617b}
+#audioQaPanel .aq-pick-actions button:disabled{opacity:.55;cursor:progress}
+#audioQaPanel .aq-ab{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 4px;padding-top:6px;border-top:1px dashed #2b4a5f}
+#audioQaPanel .aq-ab[hidden]{display:none!important}
+#audioQaPanel .aq-ab button{flex:1;min-width:104px;color:#bfe6ff;border-color:#33586f;background:#152f42}
+#audioQaPanel .aq-level{display:flex;align-items:center;gap:9px;margin-top:6px}
+#audioQaPanel .aq-level small{font-size:10px;color:#92b5cb;white-space:nowrap}
+#audioQaPanel .aq-level input{accent-color:#6fdadb;flex:1;min-width:60px}
+#audioQaPanel .aq-percent{font-size:11px;color:#d1f2fc;width:38px;text-align:right}
+#audioQaPanel .aq-list{gap:10px}
+#audioQaPanel #aq-flow{font-size:12px;color:#b3f6db;margin:10px 0 7px;line-height:1.5;border:1px solid #276254;border-radius:10px;padding:10px;background:#143d34}
+#audioQaPanel #aq-flow.warning{border-color:#b48449;background:#40301e;color:#ffe1ae}
+#audioQaPanel #aq-live{font-size:10px;line-height:1.6;color:#8db6c7;white-space:pre-line;overflow-wrap:anywhere;margin-bottom:9px}
+#audioQaPanel .aq-tools{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0}
+#audioQaPanel .aq-tools button{border-radius:8px;border:1px solid #416d81;background:#1e4556;color:#e0f4ff;padding:8px 9px;font-size:11px}
+#audioQaPanel .aq-tools .aq-primary{background:#48bdc9;color:#07303a;border:0;font-weight:750}
+#audioQaPanel .aq-tools button[hidden]{display:none!important}
+#audioQaPanel #aq-action-status{font-size:11px;color:#91edc5;line-height:1.5;min-height:20px;margin-bottom:10px;overflow-wrap:anywhere}
+#audioQaPanel .aq-note{padding:9px;background:#162b3b;border-left:2px solid #ab855b;color:#9cb8c8;font-size:11px;line-height:1.5;margin:10px 0}
+@media(min-width:1180px){
+ body.audio-qa>.shell{width:calc(100vw - min(530px,45vw))!important}
+ #audioQaPanel{width:min(530px,45vw)!important;padding:16px 15px 24px!important}
+ body.audio-qa>.shell .arena{width:min(100%,calc(100dvh * .78))!important}
+}
+@media(min-width:980px) and (max-width:1179px){
+ body.audio-qa>.shell{width:calc(100vw - 420px)!important}
+ #audioQaPanel{width:420px!important}
+}
+@media(max-width:979px){
+ #audioQaPanel{max-width:450px!important}
+}
