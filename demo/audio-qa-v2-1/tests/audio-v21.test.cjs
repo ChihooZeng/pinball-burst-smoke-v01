@@ -27,7 +27,12 @@ const AUDIO_SECONDS = {
   "audio/fail-03-lose-1.wav": 0.941587,
   "audio/ui-start-click1.wav": 0.09093,
   "audio/ui-click-rollover2.wav": 0.054422,
-  "audio/wall-bounce-wood-light-000.wav": 0.1
+  "audio/wall-bounce-wood-light-000.wav": 0.1,
+  "audio/break-brick-e-neutral.wav": 0.16,
+  "audio/break-brick-d-deep.wav": 0.18,
+  "audio/clear-r02-piano-chime.wav": 0.978617,
+  "audio/fail-power-down.wav": 0.517778,
+  "audio/fail-undesired.wav": 0.480544
 };
 
 let pass = 0;
@@ -173,19 +178,22 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
     assert.deepEqual(plain(hit.variants.map((v) => v.label)), ["V5 木质轻敲", "V5 木板闷响"]);
   });
 
-  test("清屏升级收敛为单一固定素材 CLEAR-010，不再提供 A/B/C", () => {
+  test("清屏升级为单一固定素材 CLEAR-R02 钢琴短句", () => {
     const clear = api.describe().find((x) => x.id === "clear_upgrade");
     assert.equal(clear.variants.length, 1);
-    assert.deepEqual(plain(clear.variants.map((v) => v.id)), ["clear-x15"]);
-    assert.ok(clear.variants[0].label.includes("CLEAR-010"));
-    assert.ok(clear.variants[0].label.includes("mixkit-unlock-game-notification-253"));
-    assert.equal(api.EVENTS.clear_upgrade.variants[0].url, "audio/clear-x15-mixkit-unlock-253.wav");
+    assert.deepEqual(plain(clear.variants.map((v) => v.id)), ["clear-r02-piano-chime"]);
+    assert.ok(clear.variants[0].label.includes("CLEAR-R02"));
+    assert.equal(api.EVENTS.clear_upgrade.variants[0].url, "audio/clear-r02-piano-chime.wav");
   });
 
-  test("砖块击破与触线失败仍各只有一个固定候选", () => {
+  test("砖块击破与触线失败各两个候选，均来自第二轮选型", () => {
     const map = Object.fromEntries(api.describe().map((x) => [x.id, x]));
-    assert.deepEqual(plain(map.brick_break.variants.map((v) => v.id)), ["break-x11"]);
-    assert.deepEqual(plain(map.fail.variants.map((v) => v.id)), ["fail-03"]);
+    assert.deepEqual(plain(map.brick_break.variants.map((v) => v.id)),
+      ["break-brick-e-neutral", "break-brick-d-deep"]);
+    assert.deepEqual(plain(map.fail.variants.map((v) => v.id)),
+      ["fail-power-down", "fail-undesired"]);
+    assert.equal(api.EVENTS.brick_break.variants[0].url, "audio/break-brick-e-neutral.wav");
+    assert.equal(api.EVENTS.fail.variants[0].url, "audio/fail-power-down.wav");
   });
 
   test("事件表里不存在旧版九个分组", () => {
@@ -205,6 +213,11 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
       "audio/fail-02-error_005.ogg",
       "audio/clear-x15-mixkit-unlock-253.wav",
       "audio/fail-03-lose-1.wav",
+      "audio/break-brick-e-neutral.wav",
+      "audio/break-brick-d-deep.wav",
+      "audio/clear-r02-piano-chime.wav",
+      "audio/fail-power-down.wav",
+      "audio/fail-undesired.wav",
       "audio/ui-start-click1.wav",
       "audio/ui-click-rollover2.wav",
       "audio/wall-bounce-wood-light-000.wav",
@@ -287,11 +300,11 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
     api.play("armor");
     assert.equal(base.started.at(-1).buffer.duration, AUDIO_SECONDS["../audio-qa/audio/mg.ogg"]);
     api.play("break");
-    assert.equal(base.started.at(-1).buffer.duration, AUDIO_SECONDS["audio/break-x11-impactGlass_heavy_000.ogg"]);
+    assert.equal(base.started.at(-1).buffer.duration, AUDIO_SECONDS["audio/break-brick-e-neutral.wav"], "击破默认应播 BREAK-R02");
     api.play("clear");
-    assert.equal(base.started.at(-1).buffer.duration, AUDIO_SECONDS["audio/clear-x15-mixkit-unlock-253.wav"], "清屏应播 CLEAR-010");
+    assert.equal(base.started.at(-1).buffer.duration, AUDIO_SECONDS["audio/clear-r02-piano-chime.wav"], "清屏应播 CLEAR-R02");
     api.play("fail");
-    assert.equal(base.started.at(-1).buffer.duration, AUDIO_SECONDS["audio/fail-03-lose-1.wav"]);
+    assert.equal(base.started.at(-1).buffer.duration, AUDIO_SECONDS["audio/fail-power-down.wav"], "失败默认应播 FAIL-R01");
     assert.equal(api.getState().voices, before + 4);
   });
 
@@ -304,18 +317,26 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
   });
 
   console.log("\n【4】清屏候选已收敛为单一素材");
-  test("清屏实际播放 CLEAR-010（0.75s）", () => {
+  test("清屏实际播放 CLEAR-R02（0.979s 全长）", () => {
     api.stopAll(); base.clock.advance(4000);
     api.play("clear");
-    assert.equal(base.started.at(-1).buffer.duration, 0.75);
+    assert.equal(+base.started.at(-1).buffer.duration.toFixed(6), 0.978617);
+  });
+
+  test("击破两条都能播，切到 BREAK-R06 后实际播 0.18s", () => {
+    api.stopAll(); base.clock.advance(4000);
+    assert.equal(api.setVariant("brick_break", "break-brick-d-deep"), true);
+    api.play("break");
+    assert.equal(+base.started.at(-1).buffer.duration.toFixed(3), 0.18);
+    api.setVariant("brick_break", "break-brick-e-neutral");
   });
 
   test("旧 A/B/C 候选被拒绝，选择不会被污染", () => {
     for (const legacy of ["clear-x14", "clear-x14-short-135", "clear-x14-short-180", "clear-x14-short-1.35s"]) {
       assert.equal(api.setVariant("clear_upgrade", legacy), false, legacy + " 不该被接受");
     }
-    assert.equal(api.setVariant("brick_hit", "clear-x15"), false);
-    assert.equal(api.getState().selected.clear_upgrade, "clear-x15");
+    assert.equal(api.setVariant("brick_hit", "clear-r02-piano-chime"), false);
+    assert.equal(api.getState().selected.clear_upgrade, "clear-r02-piano-chime");
   });
 
   test("清屏音 1.5 秒内重复请求被丢弃（清屏与升级共用一个事件，只播一次）", () => {
@@ -330,7 +351,7 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
   console.log("\n【7】试听：不叠加、不改选择、不动游戏内声音");
   await testAsync("连续试听同一事件只保留一路试听声", async () => {
     api.stopAll(); base.clock.advance(4000);
-    api.setVariant("clear_upgrade", "clear-x15");
+    api.setVariant("clear_upgrade", "clear-r02-piano-chime");
     await api.preview("clear_upgrade", false);
     const one = api.getState().voices;
     await api.preview("clear_upgrade", false);
@@ -339,7 +360,7 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
 
   await testAsync("试听不改变已选版本", async () => {
     await api.preview("clear_upgrade", false);
-    assert.equal(api.getState().selected.clear_upgrade, "clear-x15");
+    assert.equal(api.getState().selected.clear_upgrade, "clear-r02-piano-chime");
   });
 
   test("试听只停试听声，不打断正在进行的游戏触发", () => {
@@ -350,7 +371,7 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
     assert.equal(api.getState().voices, 0);
     // preview 内部只清理 preview 声：这里用砖甲受击与清屏互不影响来验证事件隔离
     api.play("brick_hit");
-    api.setVariant("clear_upgrade", "clear-x15");
+    api.setVariant("clear_upgrade", "clear-r02-piano-chime");
     assert.equal(api.getState().voices >= 1, true, "切换候选误停了其他事件");
   });
 
@@ -390,9 +411,9 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
     assert.equal(config.version, "pinball-audio-qa-v2.1");
     assert.equal(config.items.length, 7);
     const clear = config.items.find((x) => x.event === "clear_upgrade");
-    assert.deepEqual(plain(clear.candidateIds), ["clear-x15"]);
-    assert.equal(clear.file, "audio/clear-x15-mixkit-unlock-253.wav");
-    assert.ok(clear.label.includes("CLEAR-010"));
+    assert.deepEqual(plain(clear.candidateIds), ["clear-r02-piano-chime"]);
+    assert.equal(clear.file, "audio/clear-r02-piano-chime.wav");
+    assert.ok(clear.label.includes("CLEAR-R02"));
     for (const item of config.items) {
       for (const key of ["event", "name", "selectedId", "label", "muted", "file", "candidateIds", "groupVolume"]) {
         assert.ok(key in item, item.event + " 缺少字段 " + key);
@@ -530,10 +551,10 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
 
   test("页面用新版本参数，旧版本参数不残留", () => {
     for (const asset of ["sound-pack.js", "game.js", "qa-studio.js", "qa-studio.css"]) {
-      assert.ok(html.includes(asset + "?v=v21f"), asset + " 未升版");
+      assert.ok(html.includes(asset + "?v=v21g"), asset + " 未升版");
     }
     assert.ok(!html.includes("v21a"));
-    assert.ok(!html.includes("?v=v21b") && !html.includes("?v=v21c") && !html.includes("?v=v21d"), "旧版本参数残留");
+    assert.ok(!html.includes("?v=v21b") && !html.includes("?v=v21c") && !html.includes("?v=v21d") && !html.includes("?v=v21f"), "旧版本参数残留");
     assert.ok(!html.includes("audioqa2"));
   });
 

@@ -1,15 +1,15 @@
 /* 《弹珠超载》音效调试台 V2.1 —— 四类战斗音 + 三类系统音
    - 砖甲受击（砖块存活）：V5 木质轻敲 / V5 木板闷响，二选一，同一时刻只播当前选中项。
-   - 砖块击破：固定 break-x11 · impactGlass heavy 000（用户 11-09 暂定，待最终更换）。
-   - 清屏升级：固定 clear-x14 · Upper01（清屏与升级合并，只播一次）。
-   - 触线失败：固定 fail-02 · 02 错误提示中音。
+   - 砖块击破：BREAK-R02 砖石中性 / BREAK-R06 最重最闷，二选一（11-09 用户选定，合成音）。
+   - 清屏升级：CLEAR-R02 钢琴短句（清屏与升级合并，只播一次）。
+   - 触线失败：FAIL-R01 power_down / FAIL-R02 undesired，二选一。
    - 系统音（固定）：开始游戏 click1 / 其他按钮 rollover2 / 墙面反弹 impactWood light 000。
    每类都可单独设为「无音效」；设为无音效时完全静音，绝不回退旧合成音。
    全部素材自托管（demo/audio-qa/audio 与 demo/audio-qa-v2-1/audio），不依赖外部 CDN。 */
 (() => {
 "use strict";
 
-const REVISION = "audio-qa-v21f-20261109";
+const REVISION = "audio-qa-v21g-20261109";
 const STORAGE = "pinball-audio-qa-v21-20261109";
 
 /* 事件表：唯一事实来源。调试台、JSON 导出、游戏路由都读这一份。 */
@@ -45,14 +45,21 @@ const EVENTS = Object.freeze({
     hint: "砖块 HP 归零、实际被摧毁",
     variants: Object.freeze([
       Object.freeze({
-        id: "break-x11",
-        label: "break-x11 · impactGlass heavy 000",
-        detail: "impact-sounds / CC0-1.0",
-        url: "audio/break-x11-impactGlass_heavy_000.ogg",
-        gain: .48
+        id: "break-brick-e-neutral",
+        label: "BREAK-R02 · 砖石中性（0.16s）",
+        detail: "石块+中性撞击+木裂三层合成 / CC0 采样 / 质心 194Hz",
+        url: "audio/break-brick-e-neutral.wav",
+        gain: .58
+      }),
+      Object.freeze({
+        id: "break-brick-d-deep",
+        label: "BREAK-R06 · 最重最闷（0.18s）",
+        detail: "石块+木板两层，低通 900Hz / 质心 78Hz / 只适合作低频层",
+        url: "audio/break-brick-d-deep.wav",
+        gain: .62
       })
     ]),
-    maxDuration: .5,
+    maxDuration: .3,
     cooldown: 46,
     maxVoices: 2,
     priority: 3
@@ -63,15 +70,15 @@ const EVENTS = Object.freeze({
     hint: "清屏过关与升级选择同一节点，只播一次",
     variants: Object.freeze([
       Object.freeze({
-        id: "clear-x15",
-        label: "CLEAR-010 · mixkit-unlock-game-notification-253",
-        detail: "Mixkit 免费音效 / 0.75s 裁切（原 1.397s，尾部 0.70s 为静音）",
-        url: "audio/clear-x15-mixkit-unlock-253.wav",
-        gain: .50,
-        seconds: .75
+        id: "clear-r02-piano-chime",
+        label: "CLEAR-R02 · 钢琴短句（0.49s 可听）",
+        detail: "grand_piano_chime_positive / 原声钢琴 / 质心 853Hz / 4k 以上 0.2%",
+        url: "audio/clear-r02-piano-chime.wav",
+        gain: .54,
+        seconds: .979
       })
     ]),
-    maxDuration: .9,
+    maxDuration: 1.1,
     cooldown: 1500,
     maxVoices: 1,
     priority: 5
@@ -82,14 +89,21 @@ const EVENTS = Object.freeze({
     hint: "砖阵触及警戒线",
     variants: Object.freeze([
       Object.freeze({
-        id: "fail-03",
-        label: "FAIL-003 · lose_1",
-        detail: "Arcade Sound FX Previews / 0.94s / 未裁剪，仅转单声道",
-        url: "audio/fail-03-lose-1.wav",
-        gain: .54
+        id: "fail-power-down",
+        label: "FAIL-R01 · power_down（0.52s）",
+        detail: "关机音 / 下坠收尾 / 质心 750Hz / 结束感最明确",
+        url: "audio/fail-power-down.wav",
+        gain: .56
+      }),
+      Object.freeze({
+        id: "fail-undesired",
+        label: "FAIL-R02 · undesired_effect（0.48s）",
+        detail: "闷的否定音 / 质心 358Hz / 最不刺耳，但偏轻",
+        url: "audio/fail-undesired.wav",
+        gain: .60
       })
     ]),
-    maxDuration: 1.2,
+    maxDuration: .9,
     cooldown: 1100,
     maxVoices: 1,
     priority: 5
