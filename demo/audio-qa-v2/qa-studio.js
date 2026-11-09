@@ -89,6 +89,11 @@ document.getElementById("aq-diagnostics")?.addEventListener("click",()=>{
  a.href=url;a.download="pinball-wave10-diagnostic.json";document.body.appendChild(a);a.click();a.remove();
  setTimeout(()=>URL.revokeObjectURL(url),1500);note("游戏诊断已导出（含当前波数、升级阶段、最近120条事件）。");
 });
+document.getElementById("aq-jump10")?.addEventListener("click",()=>{
+ const route=document.getElementById("aq-route")?.value||"gun";
+ const ok=window.__pinballAudioQaFix?.startBoss10?.(route);
+ note(ok?"已进入第10关Boss，请观察Boss击败后的升级选卡与第11关衔接":"第10关测试启动失败，请导出诊断");
+});
 document.getElementById("aq-continue")?.addEventListener("click",()=>{
  const out=window.__pinballAudioQaFix?.continueUpgrade?.();
  note(out?"已应用第一张有效升级卡，正在进入下一关":"当前不是等待升级状态，请查看诊断信息。");
