@@ -39,6 +39,8 @@ const AUDIO_SECONDS = {
   "audio/arc-laser-4.wav": 0.18,
   "audio/split-wood-flick.wav": 0.130159,
   "audio/split-soft-pop.wav": 0.092857,
+  "audio/split-double-grain.wav": 0.120,
+  "audio/split-low-thump.wav": 0.090,
   "audio/arc-soft-crackle.wav": 0.124989,
   "audio/arc-dry-tick.wav": 0.074989
 };
@@ -161,10 +163,10 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
   test("裂变与连锁闪电：重做后可 A/B、默认项与限流参数正确", () => {
     const map = Object.fromEntries(api.describe().map((x) => [x.id, x]));
     /* 11-10 试听否掉旧版（玻璃脆响 / 街机激光），重做成同族音色并各留两版候选 */
-    assert.deepEqual(plain(map.split.variants.map((v) => v.id)), ["split-wood-flick", "split-soft-pop"]);
+    assert.deepEqual(plain(map.split.variants.map((v) => v.id)), ["split-wood-flick", "split-double-grain", "split-low-thump"]);
     assert.equal(api.EVENTS.split.defaultVariant, "split-wood-flick");
     assert.deepEqual(plain(api.EVENTS.split.variants.map((v) => v.url)),
-      ["audio/split-wood-flick.wav", "audio/split-soft-pop.wav"]);
+      ["audio/split-wood-flick.wav", "audio/split-double-grain.wav", "audio/split-low-thump.wav"]);
     assert.equal(api.EVENTS.split.cooldown, 220, "裂变每次命中都触发，必须限流");
     assert.equal(api.EVENTS.split.maxVoices, 1);
     assert.equal(api.EVENTS.split.duck, .7);
@@ -280,7 +282,8 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
       "audio/break-mid-wood.wav",
       "audio/break-mid-dry.wav",
       "audio/split-wood-flick.wav",
-      "audio/split-soft-pop.wav",
+      "audio/split-double-grain.wav",
+      "audio/split-low-thump.wav",
       "audio/arc-soft-crackle.wav",
       "audio/arc-dry-tick.wav",
       "audio/break-brick-d-deep.wav",
@@ -626,10 +629,10 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
 
   test("页面用新版本参数，旧版本参数不残留", () => {
     for (const asset of ["sound-pack.js", "game.js", "qa-studio.js", "qa-studio.css"]) {
-      assert.ok(html.includes(asset + "?v=v21s"), asset + " 未升版");
+      assert.ok(html.includes(asset + "?v=v21t"), asset + " 未升版");
     }
     assert.ok(!html.includes("v21a"));
-    assert.ok(!html.includes("?v=v21b") && !html.includes("?v=v21c") && !html.includes("?v=v21d") && !html.includes("?v=v21f") && !html.includes("?v=v21g") && !html.includes("?v=v21h") && !html.includes("?v=v21i") && !html.includes("?v=v21j") && !html.includes("?v=v21k") && !html.includes("?v=v21l") && !html.includes("?v=v21m") && !html.includes("?v=v21n") && !html.includes("?v=v21o") && !html.includes("?v=v21p") && !html.includes("?v=v21q") && !html.includes("?v=v21r"), "旧版本参数残留");
+    assert.ok(!html.includes("?v=v21b") && !html.includes("?v=v21c") && !html.includes("?v=v21d") && !html.includes("?v=v21f") && !html.includes("?v=v21g") && !html.includes("?v=v21h") && !html.includes("?v=v21i") && !html.includes("?v=v21j") && !html.includes("?v=v21k") && !html.includes("?v=v21l") && !html.includes("?v=v21m") && !html.includes("?v=v21n") && !html.includes("?v=v21o") && !html.includes("?v=v21p") && !html.includes("?v=v21q") && !html.includes("?v=v21r") && !html.includes("?v=v21s"), "旧版本参数残留");
     assert.ok(!html.includes("audioqa2"));
   });
 

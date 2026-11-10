@@ -11,7 +11,7 @@
 (() => {
 "use strict";
 
-const REVISION = "audio-qa-v21s-20261110";
+const REVISION = "audio-qa-v21t-20261110";
 const STORAGE = "pinball-audio-qa-v21-20261109";
 
 /* 事件表：唯一事实来源。调试台、JSON 导出、游戏路由都读这一份。 */
@@ -124,17 +124,24 @@ const EVENTS = Object.freeze({
     variants: Object.freeze([
       Object.freeze({
         id: "split-wood-flick",
-        label: "SPLIT-A · 木质裂开上扬（0.13s）",
-        detail: "break-mid-wood 三层升调散射 / 质心 432Hz / 4kHz 以上 0% / 首尾已对齐",
+        label: "SPLIT-A · 木质上扬散射（0.13s）",
+        detail: "break-mid-wood 三层升调（0.94→1.30→1.62→2.10）/ 质心 489Hz / 4kHz 以上 0%",
         url: "audio/split-wood-flick.wav",
         gain: .26
       }),
       Object.freeze({
-        id: "split-soft-pop",
-        label: "SPLIT-B · 单层小爆点（0.09s）",
-        detail: "同源单层 / 质心 428Hz / 最短最不抢戏",
-        url: "audio/split-soft-pop.wav",
-        gain: .27
+        id: "split-double-grain",
+        label: "SPLIT-B · 木质双击颗粒（0.12s）",
+        detail: "同音高两声隔 55ms / 质心 348Hz / 颗粒感最明显",
+        url: "audio/split-double-grain.wav",
+        gain: .26
+      }),
+      Object.freeze({
+        id: "split-low-thump",
+        label: "SPLIT-C · 低闷噗加尾（0.09s）",
+        detail: "140Hz 身体 + 木质散射 / 质心 148Hz / 最有重量",
+        url: "audio/split-low-thump.wav",
+        gain: .26
       })
     ]),
     defaultVariant: "split-wood-flick",
