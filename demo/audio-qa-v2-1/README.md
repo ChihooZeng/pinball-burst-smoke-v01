@@ -355,3 +355,65 @@ const response = await fetch(versioned, { cache: "default" });
   避免同一手势里媒体元素先播、把手势消耗掉导致 WebAudio 整条挂起。
 
 测试 56/56。
+
+## 十五、V2.1o：BGM 换成 Cut and Run（2026-11-10 15:55）
+
+用户从第二批候选里选定 **N-07 Cut and Run**（Kevin MacLeod / Incompetech）。
+
+| 项 | 值 |
+|---|---|
+| 原曲 | 3:34.77，320kbps mp3 |
+| 使用版本 | **206.07s**，AAC 160k，4.1 MB |
+| 响度 | -18 dBFS RMS（衰减 8.4dB） |
+| 峰值 | 0.381（未削波） |
+| 授权 | **CC BY 4.0 — 必须署名** |
+
+### 处理：尾部 8.7 秒淡出段要裁掉
+
+原曲从 **206 秒**开始淡出，到结尾只剩 -42 dBFS（几乎静音），最后 0.65 秒完全无声。
+如果整曲循环，接点会是「安静 5 秒 + 突然炸响」，实测跳变 **28 dB**。
+
+处理方式：
+- 用 100ms 窗口 RMS 找出「最后一次仍满能量」的位置（阈值取全曲中位的一半），得到 **206.07s**
+- 裁掉 8.7 秒淡出段，尾部加 150ms 淡出、头部 12ms 微淡
+- 结果：尾部 -19.0 dBFS、头部 -14.3 dBFS，跳变从 **28 dB 降到 4.7 dB**
+
+### 结构改动：支持无前奏的单曲
+
+原来的 BGM 是「前奏 30.2s → 主循环 120.9s」两段式。Cut and Run 是单曲，没有前奏。
+
+改动：
+- `BGM.intro = null`，`bgmElements()` 只在 `intro` 非空时才创建前奏元素
+- `startBgm()` 新增分支：无前奏时直接 `phase="loop"` + 播放 loop 元素
+- `stopBgm()` 的 `finish()` 改成逐个元素判空 —— 否则 `intro` 为 null 时
+  `els.intro.pause()` 抛错会跳过 `els.loop.pause()`，音乐停不掉
+
+### 署名
+
+CC BY 4.0 要求可见署名。当前放在**开始界面按钮下方**一行小字（10.5px，不抢视觉）：
+
+```
+音乐："Cut and Run" by Kevin MacLeod (incompetech.com) · Licensed under CC BY 4.0
+```
+
+调试台 BGM 卡片里也同步显示完整署名。**正式位置后续迁到「设置 · 说明」**，
+迁移时把这行文本一起搬过去即可，不要删。
+
+### 实测
+
+| 检查 | 结果 |
+|---|---|
+| 点击开始 | 直接进 loop（无前奏），只创建 1 个 audio 元素 |
+| 时长 | 206.07s，与 API `loopSeconds` 一致 |
+| 循环回卷 | 跳到 204.87s → 2.2 秒后 currentTime = 2.16s，成功回到开头 |
+| 让位 | 连破时 0.36 → 0.198，停火回 0.360 |
+| 暂停/继续 | 停在 4.18s，继续从 4.80s 接上 |
+| 请求 | 只有 `bgm-cut-and-run.m4a?v=audio-qa-v21o-20261110`，200 |
+| 控制台 | 0 错误 |
+
+测试 58/58。
+
+### 保留的旧素材
+
+`bgm-futurepower-intro.m4a` / `bgm-futurepower-loop.m4a` 仍在 `audio/` 里，
+需要回滚时把 `BGM.intro` / `BGM.loop` 改回去即可，逻辑同时支持两种结构。

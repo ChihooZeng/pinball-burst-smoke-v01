@@ -50,3 +50,14 @@
 @media(max-width:979px){
  #audioQaPanel{max-width:450px!important}
 }
+
+/* BGM 署名（CC BY 4.0 要求可见），放在开始界面按钮下方，字号压低不抢视觉 */
+.bgm-credit {
+  margin: 10px 0 0;
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: #6d8a9e;
+  opacity: .85;
+  max-width: 34em;
+}
+.bgm-credit::before { content: "♪ "; color: #4fd1a5; }

@@ -10,7 +10,7 @@
 (() => {
 "use strict";
 
-const REVISION = "audio-qa-v21n-20261110";
+const REVISION = "audio-qa-v21o-20261110";
 const STORAGE = "pinball-audio-qa-v21-20261109";
 
 /* 事件表：唯一事实来源。调试台、JSON 导出、游戏路由都读这一份。 */
@@ -548,12 +548,15 @@ function prime() {
 const BGM = Object.freeze({
   id: "bgm",
   name: "背景音乐",
-  hint: "A 组：前奏 30.2s → 主循环 120.9s，循环播放",
-  label: "A · Future Power 前奏 + 主循环",
-  detail: "OpenGameArt / 作者 request / CC0-1.0 / 免署名 / 已归一到 -18 dBFS RMS",
-  intro: "audio/bgm-futurepower-intro.m4a",
-  loop: "audio/bgm-futurepower-loop.m4a",
-  fadeIn: 1800,
+  hint: "单曲循环 3:26，没有独立前奏段",
+  label: "Cut and Run · Kevin MacLeod",
+  detail: "Incompetech / CC BY 4.0（需署名）/ 已归一 -18 dBFS RMS / 裁掉尾部 8.7s 淡出段",
+  credit: "\"Cut and Run\" by Kevin MacLeod (incompetech.com) · Licensed under CC BY 4.0",
+  license: "CC BY 4.0（需署名）",
+  intro: null,
+  loop: "audio/bgm-cut-and-run.m4a",
+  loopSeconds: 206.07,
+  fadeIn: 1600,
   fadeOut: 1200,
   defaultVolume: .8,
   /* 内部配平系数：滑杆 100% 对应元素音量 0.45。
@@ -606,11 +609,15 @@ function bgmElements() {
   if (bgmEls) return bgmEls;
   if (!bgmSupported()) return null;
   try {
-    const intro = new window.Audio();
-    intro.src = versionedUrl(BGM.intro);
-    intro.preload = "auto";
-    intro.loop = false;
-    intro.volume = 0;
+    /* 前奏是可选的：Cut and Run 是单曲，没有独立前奏段，intro 为 null 时只建 loop。 */
+    let intro = null;
+    if (BGM.intro) {
+      intro = new window.Audio();
+      intro.src = versionedUrl(BGM.intro);
+      intro.preload = "auto";
+      intro.loop = false;
+      intro.volume = 0;
+    }
 
     const loop = new window.Audio();
     loop.src = versionedUrl(BGM.loop);
@@ -618,22 +625,25 @@ function bgmElements() {
     loop.loop = true;
     loop.volume = 0;
 
-    intro.addEventListener("ended", () => {
-      if (bgmPhase !== "intro") return;
-      bgmPhase = "loop";
-      try { loop.currentTime = 0; } catch (e) {}
-      const p = loop.play();
-      if (p && p.catch) p.catch(() => {});
-      rampBgm(loop, bgmTargetVolume(), 600); /* 接点轻微淡入，避免硬起 */
-      try { intro.volume = 0; } catch (e) {}
-    });
-    intro.addEventListener("error", () => { bgmErrors++; bgmLastError = "前奏加载失败：" + BGM.intro; });
+    if (intro) {
+      intro.addEventListener("ended", () => {
+        if (bgmPhase !== "intro") return;
+        bgmPhase = "loop";
+        try { loop.currentTime = 0; } catch (e) {}
+        const p = loop.play();
+        if (p && p.catch) p.catch(() => {});
+        rampBgm(loop, bgmTargetVolume(), 600); /* 接点轻微淡入，避免硬起 */
+        try { intro.volume = 0; } catch (e) {}
+      });
+      intro.addEventListener("error", () => { bgmErrors++; bgmLastError = "前奏加载失败：" + BGM.intro; });
+    }
     loop.addEventListener("error", () => { bgmErrors++; bgmLastError = "主循环加载失败：" + BGM.loop; });
 
-    /* 挂进 DOM：不挂也能播，但挂上后调试台、devtools 和自动化都能直接 inspect 两个元素。 */
+    /* 挂进 DOM：不挂也能播，但挂上后调试台、devtools 和自动化都能直接 inspect。 */
     try {
       if (document.body) {
         for (const el of [intro, loop]) {
+          if (!el) continue;
           el.style.display = "none";
           el.setAttribute("data-bgm", el === intro ? "intro" : "loop");
           document.body.appendChild(el);
@@ -663,10 +673,23 @@ function startBgm() {
   const els = bgmElements();
   if (!els) return false;
   if (bgmPhase === "intro" || bgmPhase === "loop") return true;
-  bgmPhase = "intro";
   bgmPlays++;
   bgmDuck = 1;
   if (bgmDuckTimer) { clearTimeout(bgmDuckTimer); bgmDuckTimer = null; }
+
+  /* 没有前奏的单曲：直接从 0 开始循环播放。 */
+  if (!els.intro) {
+    bgmPhase = "loop";
+    try { els.loop.currentTime = 0; els.loop.volume = 0; } catch (e) {}
+    const pl = els.loop.play();
+    if (pl && pl.catch) pl.catch(e => {
+      bgmErrors++; bgmLastError = String(e && e.message || e); bgmPhase = "idle";
+    });
+    rampBgm(els.loop, bgmTargetVolume(), BGM.fadeIn);
+    return true;
+  }
+
+  bgmPhase = "intro";
   try { els.loop.pause(); els.loop.currentTime = 0; } catch (e) {}
   try { els.intro.currentTime = 0; els.intro.volume = 0; } catch (e) {}
   const p = els.intro.play();
@@ -687,9 +710,12 @@ function stopBgm(fadeMs) {
   stopBgmRamp();
   if (!els) return true;
   const finish = () => {
-    try { els.intro.pause(); els.loop.pause(); } catch (e) {}
-    try { els.intro.currentTime = 0; els.loop.currentTime = 0; } catch (e) {}
-    try { els.intro.volume = 0; els.loop.volume = 0; } catch (e) {}
+    for (const el of [els.intro, els.loop]) {
+      if (!el) continue;
+      try { el.pause(); } catch (e) {}
+      try { el.currentTime = 0; } catch (e) {}
+      try { el.volume = 0; } catch (e) {}
+    }
   };
   if (!active || ms <= 0) { finish(); return true; }
   rampBgm(active, 0, ms);
@@ -764,8 +790,8 @@ function getBgmState() {
     errors: bgmErrors,
     lastError: bgmLastError,
     track: BGM.label,
-    loopSeconds: 120.945,
-    introSeconds: 30.236,
+    loopSeconds: BGM.loopSeconds || 0,
+    introSeconds: BGM.intro ? 30.236 : 0,
     elements: bgmEls ? { intro: inspect(bgmEls.intro), loop: inspect(bgmEls.loop) } : null
   };
 }
@@ -820,8 +846,9 @@ function exportConfig() {
       volume: bgmVolume,
       state: bgmPhase,
       track: BGM.label,
-      files: { intro: BGM.intro, loop: BGM.loop },
-      license: "CC0-1.0 / 免署名"
+      files: { intro: BGM.intro || null, loop: BGM.loop },
+      credit: BGM.credit,
+      license: BGM.license
     },
     note: "四类战斗音 + 三类系统音（开始游戏 / 其他按钮 / 墙面反弹）+ 一条 BGM。仅 brick_hit 有两个候选，其余为固定素材。selectedId 为 none 表示该类已关闭。",
     diagnostic: status

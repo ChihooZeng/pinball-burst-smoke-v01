@@ -191,8 +191,12 @@ if (api.BGM && typeof api.getBgmState === "function") {
 
   const detail = document.createElement("p");
   detail.className = "aq-detail";
-  detail.textContent = api.BGM.label + " · " + api.BGM.detail
-    + " · 前奏 30.2s 播完自动接主循环 120.9s，循环播放";
+  detail.textContent = api.BGM.label + " · " + api.BGM.hint + " · " + api.BGM.detail;
+
+  /* CC BY 4.0 要求可见署名：这里同步显示，正式位置后续迁到「设置 · 说明」 */
+  const credit = document.createElement("p");
+  credit.className = "aq-detail";
+  credit.textContent = api.BGM.credit || "";
 
   const actions = document.createElement("div");
   actions.className = "aq-pick-actions";
@@ -233,7 +237,7 @@ if (api.BGM && typeof api.getBgmState === "function") {
   playBtn.addEventListener("click", () => {
     if (!api.getBgmState().enabled) { note("背景音乐已关闭，先勾选「开启背景音乐」"); return; }
     api.startBgm();
-    note("背景音乐：从 30.2s 前奏开始，播完自动接 120.9s 主循环并循环。");
+    note("背景音乐：" + api.BGM.hint + "。");
     syncBgm();
   });
   stopBtn.addEventListener("click", () => {
@@ -247,7 +251,7 @@ if (api.BGM && typeof api.getBgmState === "function") {
     syncBgm();
   });
 
-  card.append(head, toggleRow, detail, actions, level);
+  card.append(head, toggleRow, detail, credit, actions, level);
   root.appendChild(card);
   syncBgm();
 }

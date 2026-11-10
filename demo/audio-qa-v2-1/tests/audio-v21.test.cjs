@@ -227,6 +227,7 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
       "audio/ui-start-click1.wav",
       "audio/ui-click-rollover2.wav",
       "audio/wall-bounce-wood-light-000.wav",
+      "audio/bgm-cut-and-run.m4a",
       "audio/bgm-futurepower-intro.m4a",
       "audio/bgm-futurepower-loop.m4a",
       "../audio-qa/audio/mg.ogg",
@@ -562,10 +563,10 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
 
   test("页面用新版本参数，旧版本参数不残留", () => {
     for (const asset of ["sound-pack.js", "game.js", "qa-studio.js", "qa-studio.css"]) {
-      assert.ok(html.includes(asset + "?v=v21n"), asset + " 未升版");
+      assert.ok(html.includes(asset + "?v=v21o"), asset + " 未升版");
     }
     assert.ok(!html.includes("v21a"));
-    assert.ok(!html.includes("?v=v21b") && !html.includes("?v=v21c") && !html.includes("?v=v21d") && !html.includes("?v=v21f") && !html.includes("?v=v21g") && !html.includes("?v=v21h") && !html.includes("?v=v21i") && !html.includes("?v=v21j") && !html.includes("?v=v21k") && !html.includes("?v=v21l") && !html.includes("?v=v21m"), "旧版本参数残留");
+    assert.ok(!html.includes("?v=v21b") && !html.includes("?v=v21c") && !html.includes("?v=v21d") && !html.includes("?v=v21f") && !html.includes("?v=v21g") && !html.includes("?v=v21h") && !html.includes("?v=v21i") && !html.includes("?v=v21j") && !html.includes("?v=v21k") && !html.includes("?v=v21l") && !html.includes("?v=v21m") && !html.includes("?v=v21n"), "旧版本参数残留");
     assert.ok(!html.includes("audioqa2"));
   });
 
@@ -577,16 +578,30 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
     assert.ok(/encodeURIComponent\(REVISION\)/.test(src), "版本号未取 REVISION");
   });
 
-  test("BGM 常量指向自托管的两条 A 组素材，且带授权说明", () => {
+  test("BGM 是单曲 Cut and Run：无前奏，带 CC BY 4.0 署名信息", () => {
     assert.ok(api.BGM, "缺少 BGM 定义");
-    assert.equal(api.BGM.intro, "audio/bgm-futurepower-intro.m4a");
-    assert.equal(api.BGM.loop, "audio/bgm-futurepower-loop.m4a");
-    assert.ok(/CC0/.test(api.BGM.detail), "缺少授权说明");
-    for (const file of [api.BGM.intro, api.BGM.loop]) {
-      const full = path.resolve(ROOT, file);
-      assert.ok(fs.existsSync(full), "缺少 BGM 素材：" + file);
-      assert.ok(fs.statSync(full).size > 100000, "BGM 素材过小：" + file);
-    }
+    assert.equal(api.BGM.intro, null, "Cut and Run 没有独立前奏，intro 应为 null");
+    assert.equal(api.BGM.loop, "audio/bgm-cut-and-run.m4a");
+    assert.ok(/CC BY 4\.0/.test(api.BGM.detail), "缺少授权说明");
+    assert.ok(/Kevin MacLeod/.test(api.BGM.credit), "缺少署名文本");
+    assert.ok(/incompetech\.com/.test(api.BGM.credit), "署名里缺少来源站点");
+    const full = path.resolve(ROOT, api.BGM.loop);
+    assert.ok(fs.existsSync(full), "缺少 BGM 素材：" + api.BGM.loop);
+    assert.ok(fs.statSync(full).size > 100000, "BGM 素材过小");
+  });
+
+  test("无前奏时走单曲循环分支，不会因 intro 为 null 崩溃", () => {
+    assert.ok(/if \(!els\.intro\) \{/.test(packSrc), "缺少无前奏分支");
+    assert.ok(/for \(const el of \[els\.intro, els\.loop\]\) \{\s*\n\s*if \(!el\) continue;/.test(packSrc),
+      "stopBgm 未逐个判空，intro 为 null 时会跳过 loop 的暂停");
+    assert.equal(api.getBgmState().introSeconds, 0, "无前奏时 introSeconds 应为 0");
+  });
+
+  test("开始界面有可见的 CC BY 4.0 署名行", () => {
+    assert.ok(/class="bgm-credit"/.test(html), "开始界面缺少署名元素");
+    const m = html.match(/<p class="bgm-credit">([\s\S]*?)<\/p>/);
+    assert.ok(m, "署名行结构异常");
+    assert.ok(/Kevin MacLeod/.test(m[1]) && /CC BY 4\.0/.test(m[1]), "署名行内容不完整");
   });
 
   test("BGM 在无 <audio> 支持的宿主里优雅降级，不抛异常", () => {
@@ -619,9 +634,10 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
     assert.ok(config.bgm, "导出缺少 bgm 段");
     assert.equal(config.bgm.enabled, true);
     assert.equal(config.bgm.volume, .8);
-    assert.equal(config.bgm.files.intro, "audio/bgm-futurepower-intro.m4a");
-    assert.equal(config.bgm.files.loop, "audio/bgm-futurepower-loop.m4a");
-    assert.ok(/CC0/.test(config.bgm.license));
+    assert.equal(config.bgm.files.intro, null, "单曲模式不应有前奏文件");
+    assert.equal(config.bgm.files.loop, "audio/bgm-cut-and-run.m4a");
+    assert.ok(/CC BY 4\.0/.test(config.bgm.license), "导出缺少 CC BY 4.0 授权标注");
+    assert.ok(/Kevin MacLeod/.test(config.bgm.credit), "导出缺少署名");
   });
 
   test("game.js 在开始/失败/暂停/重开四处驱动 BGM", () => {
