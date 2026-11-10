@@ -562,10 +562,10 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
 
   test("页面用新版本参数，旧版本参数不残留", () => {
     for (const asset of ["sound-pack.js", "game.js", "qa-studio.js", "qa-studio.css"]) {
-      assert.ok(html.includes(asset + "?v=v21m"), asset + " 未升版");
+      assert.ok(html.includes(asset + "?v=v21n"), asset + " 未升版");
     }
     assert.ok(!html.includes("v21a"));
-    assert.ok(!html.includes("?v=v21b") && !html.includes("?v=v21c") && !html.includes("?v=v21d") && !html.includes("?v=v21f") && !html.includes("?v=v21g") && !html.includes("?v=v21h") && !html.includes("?v=v21i") && !html.includes("?v=v21j") && !html.includes("?v=v21k") && !html.includes("?v=v21l"), "旧版本参数残留");
+    assert.ok(!html.includes("?v=v21b") && !html.includes("?v=v21c") && !html.includes("?v=v21d") && !html.includes("?v=v21f") && !html.includes("?v=v21g") && !html.includes("?v=v21h") && !html.includes("?v=v21i") && !html.includes("?v=v21j") && !html.includes("?v=v21k") && !html.includes("?v=v21l") && !html.includes("?v=v21m"), "旧版本参数残留");
     assert.ok(!html.includes("audioqa2"));
   });
 
@@ -631,6 +631,29 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
     assert.ok(/pauseBgm\?\.\(\)/.test(src), "暂停未暂停 BGM");
     assert.ok(/resumeBgm\?\.\(\)/.test(src), "继续未恢复 BGM");
     assert.ok(/stopBgm\?\.\(0\)/.test(src), "重开未重置 BGM");
+  });
+
+  test("BGM 配平：滑杆乘内部系数，避免音乐盖住音效", () => {
+    assert.equal(api.BGM.trim, .45, "缺少内部配平系数");
+    assert.ok(/bgmVolume \* \(BGM\.trim \|\| 1\) \* bgmDuck/.test(packSrc), "目标音量没有乘配平系数与让位系数");
+    const state = api.getBgmState();
+    assert.ok(state.effectiveVolume <= state.volume, "实际音量不应高于滑杆值");
+  });
+
+  test("音效触发时音乐让位：战斗音触发，系统音不触发", () => {
+    assert.ok(/if \(!event\.system\) duckBgm\(\)/.test(packSrc), "play() 没有按事件类型让位");
+    assert.equal(typeof api.duckBgm, "function", "duckBgm 未导出");
+    assert.equal(api.duckBgm(), false, "无音频元素时应安全返回 false");
+    assert.ok(/bgmDuckTimer = setTimeout/.test(packSrc), "缺少让位恢复定时器");
+    assert.ok(/if \(bgmTimer && bgmRampTarget !== null && Math\.abs\(bgmRampTarget - target\) < \.004\) return;/.test(packSrc),
+      "缺少「同一目标不重启淡入」的保护，连发时音量会卡住不动");
+  });
+
+  test("上下文被挂起导致的静默丢弃会计数，不再无声消失", () => {
+    assert.ok(/silentDrops\+\+/.test(packSrc), "静默丢弃没有计数");
+    const state = api.getState();
+    assert.equal(typeof state.silentDrops, "number");
+    assert.ok("contextState" in state, "getState 未暴露音频上下文状态");
   });
 
   test("防叠音三件套：淡出切声 / ±6% 变调 / 叠音高通 / 击破冷却 62ms", () => {

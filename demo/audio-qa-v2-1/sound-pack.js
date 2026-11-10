@@ -10,7 +10,7 @@
 (() => {
 "use strict";
 
-const REVISION = "audio-qa-v21m-20261110";
+const REVISION = "audio-qa-v21n-20261110";
 const STORAGE = "pinball-audio-qa-v21-20261109";
 
 /* 事件表：唯一事实来源。调试台、JSON 导出、游戏路由都读这一份。 */
@@ -231,7 +231,7 @@ let ctx = null, bus = null, limiter = null;
 const buffers = new Map(), loading = new Map();
 const voices = [], last = Object.create(null);
 const plays = Object.create(null), suppressed = Object.create(null), drops = Object.create(null);
-let errors = 0, lastError = null;
+let errors = 0, lastError = null, silentDrops = 0;
 
 function setup() {
   if (!ctx) {
@@ -397,9 +397,13 @@ function play(kind, master) {
   if (!context) return true;
   const record = buffers.get(bufferKey(eventId, variant.id));
   if (!record) { load(eventId, variant.id).catch(() => {}); return true; }
-  if (document.hidden || context.state !== "running") return true;
+  /* 计数「因为上下文没在跑 / 页面隐藏而被丢弃」的触发：
+     这类丢弃以前是静默的，用户只会看到"音效没了"，排查时没有任何线索。 */
+  if (document.hidden || context.state !== "running") { silentDrops++; return true; }
   emit(context, event, variant, record, context.currentTime + .006, volumes[eventId], false);
   plays[eventId] = (plays[eventId] || 0) + 1;
+  /* 战斗音触发时给音乐让位；系统音（按钮/撞墙）不触发，避免菜单里音乐一直抖。 */
+  if (!event.system) duckBgm();
   return true;
 }
 
@@ -551,27 +555,41 @@ const BGM = Object.freeze({
   loop: "audio/bgm-futurepower-loop.m4a",
   fadeIn: 1800,
   fadeOut: 1200,
-  defaultVolume: .8
+  defaultVolume: .8,
+  /* 内部配平系数：滑杆 100% 对应元素音量 0.45。
+     素材已归一到 -18 dBFS RMS，满格 0.8 时 RMS 约 -20 dBFS，
+     和击破音（峰值 0.2、时长 0.11s）几乎同一量级，音乐会把音效整体盖住。
+     乘 0.45 后音乐 RMS 约 -27 dBFS，比音效低 15dB，滑杆仍保留 0–100% 的自由度。 */
+  trim: .45
 });
 
 let bgmEls = null;          // { intro, loop }
 let bgmPhase = "idle";      // idle | intro | loop
 let bgmTimer = null;
+let bgmDuck = 1;            // 音效触发时的临时压低系数
+let bgmDuckTimer = null;
 let bgmPlays = 0, bgmErrors = 0, bgmLastError = null;
 
-function bgmTargetVolume() { return clamp(bgmVolume, 0, 1); }
+function bgmTargetVolume() { return clamp(bgmVolume * (BGM.trim || 1) * bgmDuck, 0, 1); }
+
+let bgmRampTarget = null;
 
 function stopBgmRamp() {
   if (bgmTimer) { clearInterval(bgmTimer); bgmTimer = null; }
+  bgmRampTarget = null;
 }
 
 function rampBgm(el, to, ms) {
   if (!el) return;
+  const target = clamp(to, 0, 1);
+  /* 已经在朝同一个目标走就别重启：连破时每 62–90ms 调一次 duckBgm，
+     重启淡入会把进度反复清零，音量等于永远不动。 */
+  if (bgmTimer && bgmRampTarget !== null && Math.abs(bgmRampTarget - target) < .004) return;
   stopBgmRamp();
   const from = Number(el.volume) || 0;
-  const target = clamp(to, 0, 1);
   if (!(ms > 0)) { try { el.volume = target; } catch (e) {} return; }
   const t0 = performance.now();
+  bgmRampTarget = target;
   bgmTimer = setInterval(() => {
     const p = Math.min(1, (performance.now() - t0) / ms);
     try { el.volume = clamp(from + (target - from) * p, 0, 1); } catch (e) {}
@@ -638,11 +656,17 @@ function bgmActiveElement() {
 
 function startBgm() {
   if (!bgmEnabled || bgmVolume <= 0) return false;
+  /* 先把音频上下文恢复起来，再启动媒体元素：
+     同一手势里如果媒体元素先播，Chrome 有可能把手势消耗掉，
+     导致上下文一直挂起 —— 那会让所有 WebAudio 音效静音而音乐照常响。 */
+  setup();
   const els = bgmElements();
   if (!els) return false;
   if (bgmPhase === "intro" || bgmPhase === "loop") return true;
   bgmPhase = "intro";
   bgmPlays++;
+  bgmDuck = 1;
+  if (bgmDuckTimer) { clearTimeout(bgmDuckTimer); bgmDuckTimer = null; }
   try { els.loop.pause(); els.loop.currentTime = 0; } catch (e) {}
   try { els.intro.currentTime = 0; els.intro.volume = 0; } catch (e) {}
   const p = els.intro.play();
@@ -658,6 +682,8 @@ function stopBgm(fadeMs) {
   const ms = Math.max(0, fadeMs === undefined ? BGM.fadeOut : Number(fadeMs) || 0);
   const active = bgmActiveElement();
   bgmPhase = "idle";
+  bgmDuck = 1;
+  if (bgmDuckTimer) { clearTimeout(bgmDuckTimer); bgmDuckTimer = null; }
   stopBgmRamp();
   if (!els) return true;
   const finish = () => {
@@ -668,6 +694,22 @@ function stopBgm(fadeMs) {
   if (!active || ms <= 0) { finish(); return true; }
   rampBgm(active, 0, ms);
   setTimeout(() => { if (bgmPhase === "idle") finish(); }, ms + 80);
+  return true;
+}
+
+/* 音效触发时把音乐临时压低：连发时持续压低，停火 420ms 后 500ms 恢复。
+   这是游戏混音的常规做法——音乐不必永久调到很小，但战斗时必须给音效让位。 */
+function duckBgm(depth = .55, holdMs = 420) {
+  if (!bgmEls || bgmPhase === "idle") return false;
+  bgmDuck = depth;
+  const el = bgmActiveElement();
+  if (el) rampBgm(el, bgmTargetVolume(), 90);
+  if (bgmDuckTimer) clearTimeout(bgmDuckTimer);
+  bgmDuckTimer = setTimeout(() => {
+    bgmDuck = 1;
+    const e2 = bgmActiveElement();
+    if (e2) rampBgm(e2, bgmTargetVolume(), 500);
+  }, holdMs);
   return true;
 }
 
@@ -715,6 +757,8 @@ function getBgmState() {
   return {
     enabled: bgmEnabled,
     volume: bgmVolume,
+    duck: bgmDuck,
+    effectiveVolume: Math.round(bgmTargetVolume() * 100) / 100,
     state: bgmPhase,
     plays: bgmPlays,
     errors: bgmErrors,
@@ -739,6 +783,9 @@ function getState() {
     drops: { ...drops },
     errors,
     lastError,
+    contextState: ctx ? ctx.state : "none",
+    hidden: typeof document !== "undefined" ? !!document.hidden : false,
+    silentDrops,
     loaded: [...buffers.keys()],
     voices: voices.length,
     events: EVENT_IDS.length,
@@ -824,7 +871,7 @@ window.PinballGameAudio = {
   play, prime, stop, stopAll,
   setVolume, setGroupVolume, setMuted, setVariant, setEnabled,
   preview, previewLegacy, clearPreviewTimers,
-  startBgm, stopBgm, pauseBgm, resumeBgm,
+  startBgm, stopBgm, pauseBgm, resumeBgm, duckBgm,
   setBgmVolume, setBgmEnabled, getBgmState,
   describe, getState, exportConfig,
   hasBuffer: (eventId) => !!buffers.get(bufferKey(eventId, chosen[eventId]))

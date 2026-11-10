@@ -316,7 +316,8 @@ function renderLive() {
   live.textContent =
     "试听/触发计数：" + played +
     "\n无音效已开启：" + (mutedList.length ? mutedList.join("、") : "无（七类全部发声）") +
-    "\n素材已解码 " + state.loaded.length + "/" + state.variants + " · 加载错误 " + state.errors + " · 当前发声 " + state.voices;
+    "\n素材已解码 " + state.loaded.length + "/" + state.variants + " · 加载错误 " + state.errors + " · 当前发声 " + state.voices +
+    "\n音频上下文 " + (state.contextState || "?") + " · 因上下文未运行丢弃 " + (state.silentDrops || 0) + " 次";
 }
 
 let lastElapsed = null, lastTime = performance.now();
