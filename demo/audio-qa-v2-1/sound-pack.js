@@ -4,12 +4,13 @@
    - 清屏升级：CLEAR-R02 钢琴短句（清屏与升级合并，只播一次）。
    - 触线失败：FAIL-R01 power_down / FAIL-R02 undesired，二选一。
    - 系统音（固定）：开始游戏 click1 / 其他按钮 rollover2 / 墙面反弹 impactWood light 000。
+   - 背景音乐：A 组 Future Power，前奏 30.2s → 主循环 120.9s，CC0，可单独开关与调音量。
    每类都可单独设为「无音效」；设为无音效时完全静音，绝不回退旧合成音。
    全部素材自托管（demo/audio-qa/audio 与 demo/audio-qa-v2-1/audio），不依赖外部 CDN。 */
 (() => {
 "use strict";
 
-const REVISION = "audio-qa-v21l-20261110";
+const REVISION = "audio-qa-v21m-20261110";
 const STORAGE = "pinball-audio-qa-v21-20261109";
 
 /* 事件表：唯一事实来源。调试台、JSON 导出、游戏路由都读这一份。 */
@@ -177,6 +178,8 @@ const ALIAS = Object.freeze({
 const NONE_ID = "none";
 
 let enabled = true, volume = .78, muted = Object.create(null);
+/* BGM 的两项设置要和事件表一起持久化，所以声明必须早于下面的 localStorage 还原。 */
+let bgmEnabled = true, bgmVolume = .8;
 const chosen = Object.create(null), volumes = Object.create(null);
 for (const id of EVENT_IDS) {
   muted[id] = false;
@@ -200,6 +203,11 @@ try {
       const v = Number(saved.volumes[id]);
       if (Number.isFinite(v)) volumes[id] = clamp(v, 0, 1.5);
     }
+    if (saved.bgm && typeof saved.bgm === "object") {
+      if (typeof saved.bgm.enabled === "boolean") bgmEnabled = saved.bgm.enabled;
+      const v = Number(saved.bgm.volume);
+      if (Number.isFinite(v)) bgmVolume = clamp(v, 0, 1);
+    }
   }
 } catch (e) {}
 
@@ -207,8 +215,16 @@ function persist() {
   try {
     const selected = {};
     for (const id of EVENT_IDS) selected[id] = muted[id] ? NONE_ID : chosen[id];
-    localStorage.setItem(STORAGE, JSON.stringify({ enabled, selected, muted, volumes }));
+    localStorage.setItem(STORAGE, JSON.stringify({
+      enabled, selected, muted, volumes,
+      bgm: { enabled: bgmEnabled, volume: bgmVolume }
+    }));
   } catch (e) {}
+}
+
+/* 素材 URL 统一带版本号：升版后必然重新下载，不会被 HTTP 缓存钉死。 */
+function versionedUrl(url) {
+  return url + (url.includes("?") ? "&" : "?") + "v=" + encodeURIComponent(REVISION);
 }
 
 let ctx = null, bus = null, limiter = null;
@@ -251,10 +267,7 @@ function load(eventId, variantId) {
   const job = (async () => {
     const audio = setup();
     if (!audio) throw new Error("Web Audio unsupported");
-    /* 2026-11-10：原来用 cache:"force-cache"，只要缓存里有旧字节就永远不重新取，
-       改了同名素材也听不到变化。改成带版本号的 URL + 默认缓存策略，
-       每次升版 REVISION 就强制重新下载。 */
-    const versioned = variant.url + (variant.url.includes("?") ? "&" : "?") + "v=" + encodeURIComponent(REVISION);
+    const versioned = versionedUrl(variant.url);
     const response = await fetch(versioned, { cache: "default" });
     if (!response.ok) throw new Error("音频返回 HTTP " + response.status + "：" + variant.url);
     const buffer = await audio.decodeAudioData((await response.arrayBuffer()).slice(0));
@@ -362,7 +375,7 @@ function setVariant(eventId, variantId) {
 function setEnabled(on) {
   enabled = !!on;
   persist();
-  if (!enabled) stop();
+  if (!enabled) { stop(); stopBgm(300); }
 }
 
 /* 播放一次事件。返回 true 表示该事件已被本层接管（含「无音效」静音），
@@ -523,6 +536,196 @@ function prime() {
   loadAll();
 }
 
+/* ===== BGM（V2.1m）：A 组 Future Power =====
+   前奏 30.2s 播完自动接主循环 120.9s 并无限循环。
+   用 <audio> 流式播放而不是 decodeAudioData：两分半立体声解成 float32 要 42MB，
+   手机上容易被系统回收；元素播放只缓冲流，音量用原生 volume 渐变。
+   两条都已归一到 -18 dBFS RMS、峰值封顶 0.85、接点只留 12ms 微淡。 */
+const BGM = Object.freeze({
+  id: "bgm",
+  name: "背景音乐",
+  hint: "A 组：前奏 30.2s → 主循环 120.9s，循环播放",
+  label: "A · Future Power 前奏 + 主循环",
+  detail: "OpenGameArt / 作者 request / CC0-1.0 / 免署名 / 已归一到 -18 dBFS RMS",
+  intro: "audio/bgm-futurepower-intro.m4a",
+  loop: "audio/bgm-futurepower-loop.m4a",
+  fadeIn: 1800,
+  fadeOut: 1200,
+  defaultVolume: .8
+});
+
+let bgmEls = null;          // { intro, loop }
+let bgmPhase = "idle";      // idle | intro | loop
+let bgmTimer = null;
+let bgmPlays = 0, bgmErrors = 0, bgmLastError = null;
+
+function bgmTargetVolume() { return clamp(bgmVolume, 0, 1); }
+
+function stopBgmRamp() {
+  if (bgmTimer) { clearInterval(bgmTimer); bgmTimer = null; }
+}
+
+function rampBgm(el, to, ms) {
+  if (!el) return;
+  stopBgmRamp();
+  const from = Number(el.volume) || 0;
+  const target = clamp(to, 0, 1);
+  if (!(ms > 0)) { try { el.volume = target; } catch (e) {} return; }
+  const t0 = performance.now();
+  bgmTimer = setInterval(() => {
+    const p = Math.min(1, (performance.now() - t0) / ms);
+    try { el.volume = clamp(from + (target - from) * p, 0, 1); } catch (e) {}
+    if (p >= 1) stopBgmRamp();
+  }, 40);
+}
+
+function bgmSupported() {
+  return typeof document !== "undefined" && typeof document.createElement === "function"
+    && typeof window !== "undefined" && typeof window.Audio === "function";
+}
+
+function bgmElements() {
+  if (bgmEls) return bgmEls;
+  if (!bgmSupported()) return null;
+  try {
+    const intro = new window.Audio();
+    intro.src = versionedUrl(BGM.intro);
+    intro.preload = "auto";
+    intro.loop = false;
+    intro.volume = 0;
+
+    const loop = new window.Audio();
+    loop.src = versionedUrl(BGM.loop);
+    loop.preload = "auto";
+    loop.loop = true;
+    loop.volume = 0;
+
+    intro.addEventListener("ended", () => {
+      if (bgmPhase !== "intro") return;
+      bgmPhase = "loop";
+      try { loop.currentTime = 0; } catch (e) {}
+      const p = loop.play();
+      if (p && p.catch) p.catch(() => {});
+      rampBgm(loop, bgmTargetVolume(), 600); /* 接点轻微淡入，避免硬起 */
+      try { intro.volume = 0; } catch (e) {}
+    });
+    intro.addEventListener("error", () => { bgmErrors++; bgmLastError = "前奏加载失败：" + BGM.intro; });
+    loop.addEventListener("error", () => { bgmErrors++; bgmLastError = "主循环加载失败：" + BGM.loop; });
+
+    /* 挂进 DOM：不挂也能播，但挂上后调试台、devtools 和自动化都能直接 inspect 两个元素。 */
+    try {
+      if (document.body) {
+        for (const el of [intro, loop]) {
+          el.style.display = "none";
+          el.setAttribute("data-bgm", el === intro ? "intro" : "loop");
+          document.body.appendChild(el);
+        }
+      }
+    } catch (e) {}
+
+    bgmEls = { intro, loop };
+  } catch (e) {
+    bgmErrors++; bgmLastError = String(e && e.message || e);
+    return null;
+  }
+  return bgmEls;
+}
+
+function bgmActiveElement() {
+  if (!bgmEls) return null;
+  return bgmPhase === "intro" ? bgmEls.intro : bgmPhase === "loop" ? bgmEls.loop : null;
+}
+
+function startBgm() {
+  if (!bgmEnabled || bgmVolume <= 0) return false;
+  const els = bgmElements();
+  if (!els) return false;
+  if (bgmPhase === "intro" || bgmPhase === "loop") return true;
+  bgmPhase = "intro";
+  bgmPlays++;
+  try { els.loop.pause(); els.loop.currentTime = 0; } catch (e) {}
+  try { els.intro.currentTime = 0; els.intro.volume = 0; } catch (e) {}
+  const p = els.intro.play();
+  if (p && p.catch) p.catch(e => {
+    bgmErrors++; bgmLastError = String(e && e.message || e); bgmPhase = "idle";
+  });
+  rampBgm(els.intro, bgmTargetVolume(), BGM.fadeIn);
+  return true;
+}
+
+function stopBgm(fadeMs) {
+  const els = bgmEls;
+  const ms = Math.max(0, fadeMs === undefined ? BGM.fadeOut : Number(fadeMs) || 0);
+  const active = bgmActiveElement();
+  bgmPhase = "idle";
+  stopBgmRamp();
+  if (!els) return true;
+  const finish = () => {
+    try { els.intro.pause(); els.loop.pause(); } catch (e) {}
+    try { els.intro.currentTime = 0; els.loop.currentTime = 0; } catch (e) {}
+    try { els.intro.volume = 0; els.loop.volume = 0; } catch (e) {}
+  };
+  if (!active || ms <= 0) { finish(); return true; }
+  rampBgm(active, 0, ms);
+  setTimeout(() => { if (bgmPhase === "idle") finish(); }, ms + 80);
+  return true;
+}
+
+function pauseBgm() {
+  const el = bgmActiveElement();
+  if (!el) return false;
+  try { el.pause(); } catch (e) {}
+  return true;
+}
+
+function resumeBgm() {
+  if (!bgmEnabled || bgmVolume <= 0) return false;
+  const el = bgmActiveElement();
+  if (!el) return false;
+  const p = el.play();
+  if (p && p.catch) p.catch(() => {});
+  return true;
+}
+
+function setBgmVolume(value) {
+  bgmVolume = clamp(value, 0, 1);
+  persist();
+  if (bgmVolume <= 0) return stopBgm(300);
+  const el = bgmActiveElement();
+  if (el) rampBgm(el, bgmTargetVolume(), 200);
+  return true;
+}
+
+function setBgmEnabled(on) {
+  bgmEnabled = !!on;
+  persist();
+  if (!bgmEnabled) stopBgm(400);
+  return true;
+}
+
+function getBgmState() {
+  const inspect = (el) => el ? {
+    src: String(el.currentSrc || el.src || "").split("/").pop().split("?")[0],
+    paused: !!el.paused,
+    currentTime: Math.round((Number(el.currentTime) || 0) * 100) / 100,
+    duration: Math.round((Number(el.duration) || 0) * 100) / 100,
+    volume: Math.round((Number(el.volume) || 0) * 100) / 100,
+    loop: !!el.loop
+  } : null;
+  return {
+    enabled: bgmEnabled,
+    volume: bgmVolume,
+    state: bgmPhase,
+    plays: bgmPlays,
+    errors: bgmErrors,
+    lastError: bgmLastError,
+    track: BGM.label,
+    loopSeconds: 120.945,
+    introSeconds: 30.236,
+    elements: bgmEls ? { intro: inspect(bgmEls.intro), loop: inspect(bgmEls.loop) } : null
+  };
+}
+
 function getState() {
   return {
     revision: REVISION,
@@ -565,7 +768,15 @@ function exportConfig() {
         suppressed: suppressed[id] || 0
       };
     }),
-    note: "四类战斗音 + 三类系统音（开始游戏 / 其他按钮 / 墙面反弹）。仅 brick_hit 有两个候选，其余为固定素材。selectedId 为 none 表示该类已关闭。",
+    bgm: {
+      enabled: bgmEnabled,
+      volume: bgmVolume,
+      state: bgmPhase,
+      track: BGM.label,
+      files: { intro: BGM.intro, loop: BGM.loop },
+      license: "CC0-1.0 / 免署名"
+    },
+    note: "四类战斗音 + 三类系统音（开始游戏 / 其他按钮 / 墙面反弹）+ 一条 BGM。仅 brick_hit 有两个候选，其余为固定素材。selectedId 为 none 表示该类已关闭。",
     diagnostic: status
   };
 }
@@ -583,7 +794,10 @@ function describe() {
 }
 
 document.addEventListener("pointerdown", prime, { once: true, capture: true, passive: true });
-document.addEventListener("visibilitychange", () => { if (document.hidden) stopAll(); });
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) { stopAll(); pauseBgm(); }
+  else resumeBgm();
+});
 
 /* 首屏预热（V2.1c）：先解码三条系统音，保证「开始游戏」第一次点击就出声，
    而不是等到第一次点击才开始 fetch。上下文保持 suspended，等用户手势再 resume。
@@ -606,10 +820,12 @@ try {
 
 window.PinballGameAudio = {
   revision: REVISION,
-  EVENTS, EVENT_IDS, NONE_ID,
+  EVENTS, EVENT_IDS, NONE_ID, BGM,
   play, prime, stop, stopAll,
   setVolume, setGroupVolume, setMuted, setVariant, setEnabled,
   preview, previewLegacy, clearPreviewTimers,
+  startBgm, stopBgm, pauseBgm, resumeBgm,
+  setBgmVolume, setBgmEnabled, getBgmState,
   describe, getState, exportConfig,
   hasBuffer: (eventId) => !!buffers.get(bufferKey(eventId, chosen[eventId]))
 };

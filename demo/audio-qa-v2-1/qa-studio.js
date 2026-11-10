@@ -162,12 +162,103 @@ for (const info of api.describe()) {
   syncCard(info.id);
 }
 
+/* ===== 背景音乐（V2.1m）：不属于七类事件，单独一张卡 ===== */
+if (api.BGM && typeof api.getBgmState === "function") {
+  const card = document.createElement("section");
+  card.className = "aq-pick";
+  card.dataset.event = "bgm";
+
+  const head = document.createElement("div");
+  head.className = "aq-pick-head";
+  const titleWrap = document.createElement("div");
+  titleWrap.className = "aq-pick-title";
+  const title = document.createElement("strong");
+  title.textContent = api.BGM.name;
+  const hint = document.createElement("small");
+  hint.textContent = api.BGM.hint;
+  titleWrap.append(title, hint);
+  const tag = document.createElement("span");
+  tag.className = "aq-tag";
+  head.append(titleWrap, tag);
+
+  const toggleRow = document.createElement("label");
+  toggleRow.className = "aq-mute";
+  const toggle = document.createElement("input");
+  toggle.type = "checkbox";
+  const toggleText = document.createElement("span");
+  toggleText.textContent = "开启背景音乐";
+  toggleRow.append(toggle, toggleText);
+
+  const detail = document.createElement("p");
+  detail.className = "aq-detail";
+  detail.textContent = api.BGM.label + " · " + api.BGM.detail
+    + " · 前奏 30.2s 播完自动接主循环 120.9s，循环播放";
+
+  const actions = document.createElement("div");
+  actions.className = "aq-pick-actions";
+  const playBtn = document.createElement("button");
+  playBtn.type = "button"; playBtn.textContent = "▶ 从头试听";
+  const stopBtn = document.createElement("button");
+  stopBtn.type = "button"; stopBtn.textContent = "■ 停止";
+  actions.append(playBtn, stopBtn);
+
+  const level = document.createElement("div");
+  level.className = "aq-level";
+  const levelLabel = document.createElement("small");
+  levelLabel.textContent = "音乐音量";
+  const volume = document.createElement("input");
+  volume.type = "range"; volume.min = "0"; volume.max = "100"; volume.step = "5";
+  volume.setAttribute("aria-label", "背景音乐音量");
+  const percent = document.createElement("span");
+  percent.className = "aq-percent";
+  level.append(levelLabel, volume, percent);
+
+  function syncBgm() {
+    const state = api.getBgmState();
+    toggle.checked = state.enabled;
+    volume.value = String(Math.round(state.volume * 100));
+    percent.textContent = Math.round(state.volume * 100) + "%";
+    tag.textContent = !state.enabled ? "已关闭" : state.state !== "idle" ? "播放中" : "待机";
+    tag.classList.toggle("is-muted", !state.enabled);
+    card.classList.toggle("is-muted", !state.enabled);
+  }
+
+  toggle.addEventListener("change", () => {
+    api.setBgmEnabled(toggle.checked);
+    note(toggle.checked
+      ? "背景音乐已开启；进游戏或点「从头试听」即开始播放。"
+      : "背景音乐已关闭：只关闭音乐，七类音效不受影响。刷新后保留。");
+    syncBgm();
+  });
+  playBtn.addEventListener("click", () => {
+    if (!api.getBgmState().enabled) { note("背景音乐已关闭，先勾选「开启背景音乐」"); return; }
+    api.startBgm();
+    note("背景音乐：从 30.2s 前奏开始，播完自动接 120.9s 主循环并循环。");
+    syncBgm();
+  });
+  stopBtn.addEventListener("click", () => {
+    api.stopBgm(600);
+    note("背景音乐已停止（600ms 淡出）。");
+    syncBgm();
+  });
+  volume.addEventListener("input", () => {
+    api.setBgmVolume(Number(volume.value) / 100);
+    percent.textContent = volume.value + "%";
+    syncBgm();
+  });
+
+  card.append(head, toggleRow, detail, actions, level);
+  root.appendChild(card);
+  syncBgm();
+}
+
 document.getElementById("aq-open")?.addEventListener("click", () => document.body.classList.add("aq-open"));
 document.getElementById("aq-close")?.addEventListener("click", () => document.body.classList.remove("aq-open"));
 
 document.getElementById("aq-stop")?.addEventListener("click", () => {
   api.stopAll();
-  note("已停止所有正在播放的声音（含试听）");
+  api.stopBgm?.(400);
+  note("已停止所有正在播放的声音（含试听与背景音乐）");
   renderLive();
 });
 

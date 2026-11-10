@@ -455,6 +455,7 @@
     DANGER_Y=H-105;SUMMON_SAFE_BOTTOM=DANGER_Y-88;canvas.height=H;shooter.y=H-37;
     WAVE_START_Y=window.innerWidth?Math.max(84,Math.ceil((document.querySelector(".topbar").getBoundingClientRect().height+28)*W/window.innerWidth)):84;
     pausedFrom=null;battleTime=0;waveReports=[];bankDamage=0;lockBackground(false);$("pauseOverlay").classList.add("hidden");
+    window.PinballGameAudio?.stopBgm?.(0);
     gunTarget=null;gunStreak=0;gunLast=-99;precisionTurns=focusDamage=gunBonusDamage=weakpointDamage=weakpointCharge=damageDealt=shotsWithContact=0;build=Build.createState(initialSeed===null?Math.floor(Math.random()*4294967296):initialSeed);events=[];arcCharge=0;lastArcRelease=-99;fanClock=0;gunFlash=0;
     counters={splitChildren:0,arcReleases:0,arcSingleDamage:0,budgetReclaims:0,suppressedShots:0,suppressedChildren:0,maxBallsAlive:0,wallBounces:0,shotsByBuild:{base:0,split:0,arc:0,gun:0}};
     collisionChecks=0;physicsCostMs=0;physicsSteps=0;maxPhysicsMs=0;
@@ -484,6 +485,7 @@
   function begin(){
     if(phase!=="ready")return false;
     unlockSound();phase="playing";$("startOverlay").classList.add("hidden");choiceSet=[];
+    window.PinballGameAudio?.startBgm?.();
     shootClock=Build.tuning(build).interval-CFG.firstShot;
     record("intro_start");setState("第1波 · 滑动瞄准，普通炮台开始破坏");updateUI();return true;
   }
@@ -506,6 +508,7 @@
     balls=[];giant=null;emptyLatch=false;choiceSet=[];choiceQueue=0;
     phase="playing";$("startOverlay").classList.add("hidden");ui.choice.classList.add("hidden");
     unlockSound();spawnWave(10);shootClock=Build.tuning(build).interval-CFG.firstShot;
+    window.PinballGameAudio?.startBgm?.();
     record("debug_jump",{targetWave:10,route,simulatedUpgrades:picks});
     setState("第10关 · BOSS弹射阵型 · 调试直达（已配成长Build）");
     updateUI();return true;
@@ -1354,7 +1357,7 @@
           "秒 · 击碎 "+score+" 块 · 到达第 "+wave+" 波 · LV."+level+
           " · 清屏 "+screenClears+" 次 · Boss "+bossDefeats+" 个 · 触线："+dangerSource+"("+danger.hp+"HP)";
         setState("砖阵触线 · 第 "+wave+" 波失败");
-        playSfx("fail");updateUI();return;
+        playSfx("fail");window.PinballGameAudio?.stopBgm?.(1500);updateUI();return;
       }
       if(boss&&boss.alive){
         if(isFinaleWave(wave))updateFinaleStages();
@@ -1668,11 +1671,11 @@
   function pause(){
     if(!["ready","seeding","playing","choosing","lost","complete"].includes(phase))return false;
     pausedFrom=phase;phase="paused";activePointer=null;accumulator=0;
-    focusBeforePause=document.activeElement;lockBackground(true);renderBuildPanel();$("pauseOverlay").classList.remove("hidden");$("resume").focus?.();updateUI();return true;
+    focusBeforePause=document.activeElement;lockBackground(true);renderBuildPanel();$("pauseOverlay").classList.remove("hidden");$("resume").focus?.();window.PinballGameAudio?.pauseBgm?.();updateUI();return true;
   }
   function resume(){
     if(phase!=="paused")return false;phase=pausedFrom;pausedFrom=null;accumulator=0;lastFrame=performance.now();
-    $("pauseOverlay").classList.add("hidden");lockBackground(false);focusBeforePause?.focus?.();updateUI();return true;
+    $("pauseOverlay").classList.add("hidden");lockBackground(false);focusBeforePause?.focus?.();window.PinballGameAudio?.resumeBgm?.();updateUI();return true;
   }
   $("pause").addEventListener("click",()=>phase==="paused"?resume():pause());
   $("resume").addEventListener("click",resume);

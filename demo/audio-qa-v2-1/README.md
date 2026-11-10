@@ -240,3 +240,56 @@ const response = await fetch(versioned, { cache: "default" });
 
 浏览器内缓冲时长 0.1096s，磁盘文件 9710 字节（裁剪后大小），确认拿到的是新文件。
 新增测试：禁止 `force-cache`、要求素材 URL 带版本号。
+
+## 十三、V2.1m：接入背景音乐 A 组（2026-11-10 11:20）
+
+用户听完 8 条候选后选定 A 组：**A-1 主循环 + A-2 前奏**（Future Power，作者 request）。
+
+| 文件 | 时长 | 体积 | 用途 |
+|---|---|---|---|
+| `audio/bgm-futurepower-intro.m4a` | 30.24s | 590 KB | 每次开局播一次 |
+| `audio/bgm-futurepower-loop.m4a` | 120.94s | 2.2 MB | 前奏结束后无限循环 |
+
+### 处理方式（和试听版不同）
+
+试听版给所有曲目加了 1.5s 首尾淡入淡出，对**循环曲是错的**——每轮接点会静音 3 秒。
+游戏内这版重新处理：
+
+| 项 | 循环 | 前奏 |
+|---|---|---|
+| 淡入 | 12ms（只防爆音） | 12ms |
+| 淡出 | 12ms | **不做**（要直接接循环） |
+| 响度 | -18 dBFS RMS（衰减 8.13dB） | -18 dBFS RMS（衰减 6.0dB） |
+| 峰值 | 0.392 | 0.501（封顶 0.85，未削波） |
+| 编码 | AAC 160k / 44.1k / 立体声 | 同 |
+
+### 实现要点
+
+- 用 `<audio>` **流式播放**，不走 `decodeAudioData`：两分半立体声解成 float32 要 42MB，
+  手机上容易被系统回收。元素播放只缓冲流，音量走原生 `volume` 渐变（40ms 步进）。
+- 元素创建后挂进 `document.body` 并设 `data-bgm="intro|loop"`，方便调试台、devtools 与自动化 inspect。
+- 前奏 `ended` → 主循环 `loop=true` + 600ms 淡入接管。
+- 触发点：开始游戏 `startBgm()`、触线失败 `stopBgm(1500)` 淡出、暂停 `pauseBgm()`、继续 `resumeBgm()`、重开 `stopBgm(0)`。
+- 调试台新增第 8 张卡：开关、从头试听、停止、音乐音量，全部写进同一份 localStorage（`bgm: {enabled, volume}`），导出 JSON 带 `bgm` 段。
+- 页面切到后台暂停、切回来恢复（不重置播放位置）。
+
+### 实测（Chrome headless，真实鼠标点击）
+
+| 时刻 | 状态 |
+|---|---|
+| 2s | intro 播放 1.97s，音量已升到 0.80 |
+| 暂停 | intro 停在 4.99s |
+| 继续 | 从 5.39s 接上 |
+| 31s | intro 29.39s，仍在播 |
+| 35s | **phase=loop，loop 播到 3.09s，intro 已 ended** |
+
+两条 m4a 请求均 200 且带 `?v=audio-qa-v21m-20261110`，控制台 0 错误。测试 53/53。
+
+### 已知限制
+
+- **iOS Safari 不支持 `<audio>.volume`**（只读）。iPhone 上音乐音量滑块与淡入淡出会失效，
+  音乐按元素默认音量播放。要彻底解决需改成 `createMediaElementSource` + GainNode，
+  但那条路在上下文被挂起时会整条静音，风险更高，本轮未做。
+- `<audio>` 循环接点在部分浏览器有几十毫秒空隙，不是采样级无缝。若听出接点问题，
+  下一步改成 WebAudio 双缓冲调度。
+- 技能音仍为静音（用户决定暂缓）。

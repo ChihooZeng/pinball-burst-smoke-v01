@@ -227,6 +227,8 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
       "audio/ui-start-click1.wav",
       "audio/ui-click-rollover2.wav",
       "audio/wall-bounce-wood-light-000.wav",
+      "audio/bgm-futurepower-intro.m4a",
+      "audio/bgm-futurepower-loop.m4a",
       "../audio-qa/audio/mg.ogg",
       "../audio-qa/audio/hit.ogg"
     ];
@@ -560,18 +562,75 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
 
   test("页面用新版本参数，旧版本参数不残留", () => {
     for (const asset of ["sound-pack.js", "game.js", "qa-studio.js", "qa-studio.css"]) {
-      assert.ok(html.includes(asset + "?v=v21l"), asset + " 未升版");
+      assert.ok(html.includes(asset + "?v=v21m"), asset + " 未升版");
     }
     assert.ok(!html.includes("v21a"));
-    assert.ok(!html.includes("?v=v21b") && !html.includes("?v=v21c") && !html.includes("?v=v21d") && !html.includes("?v=v21f") && !html.includes("?v=v21g") && !html.includes("?v=v21h") && !html.includes("?v=v21i") && !html.includes("?v=v21j") && !html.includes("?v=v21k"), "旧版本参数残留");
+    assert.ok(!html.includes("?v=v21b") && !html.includes("?v=v21c") && !html.includes("?v=v21d") && !html.includes("?v=v21f") && !html.includes("?v=v21g") && !html.includes("?v=v21h") && !html.includes("?v=v21i") && !html.includes("?v=v21j") && !html.includes("?v=v21k") && !html.includes("?v=v21l"), "旧版本参数残留");
     assert.ok(!html.includes("audioqa2"));
   });
 
   test("素材请求带版本号且不再用 force-cache，改素材后能真正生效", () => {
     const src = read("sound-pack.js");
     assert.ok(!/cache: "force-cache"/.test(src), "仍在用 force-cache，改同名素材不会生效");
-    assert.ok(/const versioned = variant\.url \+ \(variant\.url\.includes\("\?"\)/.test(src), "素材 URL 未带版本号");
+    assert.ok(/function versionedUrl\(url\)/.test(src), "缺少 versionedUrl 辅助函数");
+    assert.ok(/const versioned = versionedUrl\(variant\.url\)/.test(src), "素材 URL 未走 versionedUrl");
     assert.ok(/encodeURIComponent\(REVISION\)/.test(src), "版本号未取 REVISION");
+  });
+
+  test("BGM 常量指向自托管的两条 A 组素材，且带授权说明", () => {
+    assert.ok(api.BGM, "缺少 BGM 定义");
+    assert.equal(api.BGM.intro, "audio/bgm-futurepower-intro.m4a");
+    assert.equal(api.BGM.loop, "audio/bgm-futurepower-loop.m4a");
+    assert.ok(/CC0/.test(api.BGM.detail), "缺少授权说明");
+    for (const file of [api.BGM.intro, api.BGM.loop]) {
+      const full = path.resolve(ROOT, file);
+      assert.ok(fs.existsSync(full), "缺少 BGM 素材：" + file);
+      assert.ok(fs.statSync(full).size > 100000, "BGM 素材过小：" + file);
+    }
+  });
+
+  test("BGM 在无 <audio> 支持的宿主里优雅降级，不抛异常", () => {
+    assert.equal(api.startBgm(), false, "无 Audio 支持时不应声称已开始");
+    const state = api.getBgmState();
+    assert.equal(state.state, "idle");
+    assert.equal(state.plays, 0);
+    assert.equal(typeof state.volume, "number");
+    assert.equal(api.stopBgm(0), true, "stopBgm 应幂等");
+    assert.equal(api.pauseBgm(), false);
+    assert.equal(api.resumeBgm(), false);
+  });
+
+  test("BGM 开关与音量写入同一份 localStorage，刷新后可还原", () => {
+    api.setBgmVolume(.55);
+    api.setBgmEnabled(false);
+    const saved = JSON.parse(base.storage.get("pinball-audio-qa-v21-20261109"));
+    assert.equal(saved.bgm.volume, .55);
+    assert.equal(saved.bgm.enabled, false);
+    const reloaded = makeHarness(Object.fromEntries(base.storage));
+    const state = reloaded.api.getBgmState();
+    assert.equal(state.volume, .55, "音量未还原");
+    assert.equal(state.enabled, false, "开关未还原");
+    api.setBgmEnabled(true);
+    api.setBgmVolume(.8);
+  });
+
+  test("导出的 JSON 含 BGM 段：开关、音量、两条文件与授权", () => {
+    const config = api.exportConfig();
+    assert.ok(config.bgm, "导出缺少 bgm 段");
+    assert.equal(config.bgm.enabled, true);
+    assert.equal(config.bgm.volume, .8);
+    assert.equal(config.bgm.files.intro, "audio/bgm-futurepower-intro.m4a");
+    assert.equal(config.bgm.files.loop, "audio/bgm-futurepower-loop.m4a");
+    assert.ok(/CC0/.test(config.bgm.license));
+  });
+
+  test("game.js 在开始/失败/暂停/重开四处驱动 BGM", () => {
+    const src = read("game.js");
+    assert.ok(/PinballGameAudio\?\.startBgm\?\.\(\)/.test(src), "开始游戏未启动 BGM");
+    assert.ok(/stopBgm\?\.\(1500\)/.test(src), "失败未淡出 BGM");
+    assert.ok(/pauseBgm\?\.\(\)/.test(src), "暂停未暂停 BGM");
+    assert.ok(/resumeBgm\?\.\(\)/.test(src), "继续未恢复 BGM");
+    assert.ok(/stopBgm\?\.\(0\)/.test(src), "重开未重置 BGM");
   });
 
   test("防叠音三件套：淡出切声 / ±6% 变调 / 叠音高通 / 击破冷却 62ms", () => {
