@@ -11,7 +11,7 @@
 (() => {
 "use strict";
 
-const REVISION = "audio-qa-v21r-20261110";
+const REVISION = "audio-qa-v21s-20261110";
 const STORAGE = "pinball-audio-qa-v21-20261109";
 
 /* 事件表：唯一事实来源。调试台、JSON 导出、游戏路由都读这一份。 */
