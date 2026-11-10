@@ -1,16 +1,17 @@
-/* 《弹珠超载》音效调试台 V2.1 —— 四类战斗音 + 三类系统音
+/* 《弹珠超载》音效调试台 V2.1 —— 六类战斗音 + 三类系统音 + 背景音乐
    - 砖甲受击（砖块存活）：V5 木质轻敲 / V5 木板闷响，二选一，同一时刻只播当前选中项。
    - 砖块击破：固定 BREAK-M1 干木裂（11-10 用户定稿，默认增益 .30）。
    - 清屏升级：CLEAR-R02 钢琴短句（清屏与升级合并，只播一次）。
    - 触线失败：FAIL-R01 power_down / FAIL-R02 undesired，二选一。
+   - 裂变 / 连锁闪电：11-10 重做的两个技能音，音色都贴回木质中频段，各留两版候选。
    - 系统音（固定）：开始游戏 click1 / 其他按钮 rollover2 / 墙面反弹 impactWood light 000。
-   - 背景音乐：A 组 Future Power，前奏 30.2s → 主循环 120.9s，CC0，可单独开关与调音量。
+   - 背景音乐：Cut and Run（Kevin MacLeod / Incompetech，CC BY 4.0，需署名），可单独开关与调音量。
    每类都可单独设为「无音效」；设为无音效时完全静音，绝不回退旧合成音。
    全部素材自托管（demo/audio-qa/audio 与 demo/audio-qa-v2-1/audio），不依赖外部 CDN。 */
 (() => {
 "use strict";
 
-const REVISION = "audio-qa-v21q-20261110";
+const REVISION = "audio-qa-v21r-20261110";
 const STORAGE = "pinball-audio-qa-v21-20261109";
 
 /* 事件表：唯一事实来源。调试台、JSON 导出、游戏路由都读这一份。 */
@@ -108,45 +109,66 @@ const EVENTS = Object.freeze({
     priority: 5
   },
 
-  /* ---- 2026-11-10 补的两个技能音：分裂与连锁闪电 ----
-     这两类都是玩家主动技能，之前一直是静音的。频率偏高，所以冷却设得比战斗音短、
-     让位设得比战斗音浅（.7 / .8），避免音乐被压得一路发抖。 */
+  /* ---- 2026-11-10 重做的两个技能音：分裂与连锁闪电 ----
+     上一版（玻璃短点 + 街机激光）被试听否掉：两者都是音色外来户（1569Hz 玻璃脆响、
+     带音高的 "biu"），且激光素材在 130ms 处被硬切断，尾巴还挂着一块悬空碎片。
+     这一版改成同族音色：裂变直接由 break-mid-wood 叠三层升调而成（木料裂开向上散射），
+     闪电改成噪声带通下扫的噼啪声（不带音高）。两者质心落在 430 / 834Hz，
+     和击破（617Hz）、撞墙同一频段，不再从混音里"跳"出来。
+     触发也收紧了：裂变原本每次命中都喊一次、闪电每跳一次都喊一次，
+     冷却 100/120ms 等于每秒最多 8-10 声，叠起来就是机关枪——现在统一 220ms 单层。 */
   split: {
     id: "split",
     name: "裂变",
-    hint: "分裂出新球时触发，约每秒 1 次",
+    hint: "分裂出新球时触发，已限流 220ms / 单层",
     variants: Object.freeze([
       Object.freeze({
-        id: "split-glass-pop",
-        label: "SPLIT-01 · 玻璃短点（0.10s）",
-        detail: "impactGlass light 002 / 质心 1569Hz / 4kHz 以上 0% / 已做零点对齐",
-        url: "audio/split-glass-pop.wav",
-        gain: .30
+        id: "split-wood-flick",
+        label: "SPLIT-A · 木质裂开上扬（0.13s）",
+        detail: "break-mid-wood 三层升调散射 / 质心 432Hz / 4kHz 以上 0% / 首尾已对齐",
+        url: "audio/split-wood-flick.wav",
+        gain: .26
+      }),
+      Object.freeze({
+        id: "split-soft-pop",
+        label: "SPLIT-B · 单层小爆点（0.09s）",
+        detail: "同源单层 / 质心 428Hz / 最短最不抢戏",
+        url: "audio/split-soft-pop.wav",
+        gain: .27
       })
     ]),
+    defaultVariant: "split-wood-flick",
     duck: .7,
     maxDuration: .16,
-    cooldown: 100,
-    maxVoices: 2,
+    cooldown: 220,
+    maxVoices: 1,
     priority: 2
   },
   arc: {
     id: "arc",
     name: "连锁闪电",
-    hint: "电弧每跳一次都会触发，已限流 120ms / 2 层",
+    hint: "电弧每跳一次都会触发，已限流 220ms / 单层",
     variants: Object.freeze([
       Object.freeze({
-        id: "arc-laser-4",
-        label: "ARC-01 · 街机激光（0.18s）",
-        detail: "Arcade laser_4 / 质心 669Hz / 4kHz 以上 0.1% / 已裁到 0.18s",
-        url: "audio/arc-laser-4.wav",
+        id: "arc-soft-crackle",
+        label: "ARC-A · 电弧噼啪（0.13s）",
+        detail: "噪声带通 1500→520Hz 下扫 / 无音高 / 质心 834Hz / 4kHz 以上 0%",
+        url: "audio/arc-soft-crackle.wav",
+        gain: .24
+      }),
+      Object.freeze({
+        id: "arc-dry-tick",
+        label: "ARC-B · 干点（0.08s）",
+        detail: "木质短点 + 1.5ms 电流起音 / 质心 690Hz / 最不打扰",
+        url: "audio/arc-dry-tick.wav",
         gain: .26
       })
     ]),
+    defaultVariant: "arc-soft-crackle",
     duck: .8,
-    maxDuration: .24,
-    cooldown: 120,
-    maxVoices: 2,
+    maxDuration: .16,
+    cooldown: 220,
+    maxVoices: 1,
     priority: 2
   },
 
@@ -906,7 +928,7 @@ function exportConfig() {
       credit: BGM.credit,
       license: BGM.license
     },
-    note: "四类战斗音 + 三类系统音（开始游戏 / 其他按钮 / 墙面反弹）+ 一条 BGM。仅 brick_hit 有两个候选，其余为固定素材。selectedId 为 none 表示该类已关闭。",
+    note: "六类战斗音（其中砖甲受击 / 触线失败 / 裂变 / 连锁闪电各两版候选，其余固定）+ 三类系统音（开始游戏 / 其他按钮 / 墙面反弹）+ 一条 BGM。selectedId 为 none 表示该类已关闭。",
     diagnostic: status
   };
 }

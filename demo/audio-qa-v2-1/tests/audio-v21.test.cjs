@@ -36,7 +36,11 @@ const AUDIO_SECONDS = {
   "audio/break-mid-wood.wav": 0.11,
   "audio/break-mid-dry.wav": 0.1,
   "audio/split-glass-pop.wav": 0.1,
-  "audio/arc-laser-4.wav": 0.18
+  "audio/arc-laser-4.wav": 0.18,
+  "audio/split-wood-flick.wav": 0.130159,
+  "audio/split-soft-pop.wav": 0.092857,
+  "audio/arc-soft-crackle.wav": 0.124989,
+  "audio/arc-dry-tick.wav": 0.074989
 };
 
 let pass = 0;
@@ -154,21 +158,30 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
       ["砖甲受击", "砖块击破", "清屏升级", "触线失败", "裂变", "连锁闪电", "开始游戏", "其他按钮", "墙面反弹"]);
   });
 
-  test("裂变与连锁闪电：各自固定素材、限流参数与浅让位", () => {
+  test("裂变与连锁闪电：重做后可 A/B、默认项与限流参数正确", () => {
     const map = Object.fromEntries(api.describe().map((x) => [x.id, x]));
-    assert.equal(map.split.fixed, true);
-    assert.deepEqual(plain(map.split.variants.map((v) => v.id)), ["split-glass-pop"]);
-    assert.equal(api.EVENTS.split.variants[0].url, "audio/split-glass-pop.wav");
-    assert.equal(api.EVENTS.split.cooldown, 100);
-    assert.equal(api.EVENTS.split.maxVoices, 2);
+    /* 11-10 试听否掉旧版（玻璃脆响 / 街机激光），重做成同族音色并各留两版候选 */
+    assert.deepEqual(plain(map.split.variants.map((v) => v.id)), ["split-wood-flick", "split-soft-pop"]);
+    assert.equal(api.EVENTS.split.defaultVariant, "split-wood-flick");
+    assert.deepEqual(plain(api.EVENTS.split.variants.map((v) => v.url)),
+      ["audio/split-wood-flick.wav", "audio/split-soft-pop.wav"]);
+    assert.equal(api.EVENTS.split.cooldown, 220, "裂变每次命中都触发，必须限流");
+    assert.equal(api.EVENTS.split.maxVoices, 1);
     assert.equal(api.EVENTS.split.duck, .7);
-    assert.equal(map.arc.fixed, true);
-    assert.deepEqual(plain(map.arc.variants.map((v) => v.id)), ["arc-laser-4"]);
-    assert.equal(api.EVENTS.arc.variants[0].url, "audio/arc-laser-4.wav");
-    assert.equal(api.EVENTS.arc.cooldown, 120, "电弧每次跳转都触发，必须限流");
+    assert.deepEqual(plain(map.arc.variants.map((v) => v.id)), ["arc-soft-crackle", "arc-dry-tick"]);
+    assert.equal(api.EVENTS.arc.defaultVariant, "arc-soft-crackle");
+    assert.deepEqual(plain(api.EVENTS.arc.variants.map((v) => v.url)),
+      ["audio/arc-soft-crackle.wav", "audio/arc-dry-tick.wav"]);
+    assert.equal(api.EVENTS.arc.cooldown, 220, "电弧每次跳转都触发，必须限流");
+    assert.equal(api.EVENTS.arc.maxVoices, 1);
     assert.equal(api.EVENTS.arc.duck, .8);
     for (const id of ["split", "arc"]) {
       assert.notEqual(map[id].system, true, id + " 属于战斗音，不该标成系统音");
+      assert.equal(map[id].fixed, false, id + " 有两版候选，不该锁死");
+      /* 旧素材不许再出现在事件表里（文件保留，但不再被引用） */
+      for (const v of map[id].variants) {
+        assert.ok(!/glass-pop|laser-4/.test(v.id), id + " 仍在引用旧素材：" + v.id);
+      }
     }
   });
 
@@ -266,8 +279,10 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
       "audio/break-brick-e-neutral.wav",
       "audio/break-mid-wood.wav",
       "audio/break-mid-dry.wav",
-      "audio/split-glass-pop.wav",
-      "audio/arc-laser-4.wav",
+      "audio/split-wood-flick.wav",
+      "audio/split-soft-pop.wav",
+      "audio/arc-soft-crackle.wav",
+      "audio/arc-dry-tick.wav",
       "audio/break-brick-d-deep.wav",
       "audio/clear-r02-piano-chime.wav",
       "audio/fail-power-down.wav",
@@ -611,10 +626,10 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
 
   test("页面用新版本参数，旧版本参数不残留", () => {
     for (const asset of ["sound-pack.js", "game.js", "qa-studio.js", "qa-studio.css"]) {
-      assert.ok(html.includes(asset + "?v=v21q"), asset + " 未升版");
+      assert.ok(html.includes(asset + "?v=v21r"), asset + " 未升版");
     }
     assert.ok(!html.includes("v21a"));
-    assert.ok(!html.includes("?v=v21b") && !html.includes("?v=v21c") && !html.includes("?v=v21d") && !html.includes("?v=v21f") && !html.includes("?v=v21g") && !html.includes("?v=v21h") && !html.includes("?v=v21i") && !html.includes("?v=v21j") && !html.includes("?v=v21k") && !html.includes("?v=v21l") && !html.includes("?v=v21m") && !html.includes("?v=v21n") && !html.includes("?v=v21o") && !html.includes("?v=v21p"), "旧版本参数残留");
+    assert.ok(!html.includes("?v=v21b") && !html.includes("?v=v21c") && !html.includes("?v=v21d") && !html.includes("?v=v21f") && !html.includes("?v=v21g") && !html.includes("?v=v21h") && !html.includes("?v=v21i") && !html.includes("?v=v21j") && !html.includes("?v=v21k") && !html.includes("?v=v21l") && !html.includes("?v=v21m") && !html.includes("?v=v21n") && !html.includes("?v=v21o") && !html.includes("?v=v21p") && !html.includes("?v=v21q"), "旧版本参数残留");
     assert.ok(!html.includes("audioqa2"));
   });
 
