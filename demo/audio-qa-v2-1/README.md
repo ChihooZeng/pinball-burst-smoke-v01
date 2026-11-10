@@ -206,3 +206,37 @@ V2.1h 修完硬切后用户仍反馈"只要声音一多，还是会有爆破声"
 
 生成音频时，**裁剪必须从过零点开始并加短淡入**；否则峰值归一化会把起始台阶放大成爆音。
 这个问题在单次试听时几乎听不出来（就是一下"啪"），只有连续触发才暴露。
+
+## 十二、V2.1k：素材被 force-cache 钉死，之前所有音频修复都没生效（2026-11-10 09:35）
+
+用户"强制刷新后仍有爆破声"。检查加载策略发现：
+
+```js
+const response = await fetch(variant.url, { cache: "force-cache" });
+```
+
+`force-cache` 的语义是「只要缓存里有就直接用，不管是否过期」。而 V2.1h→V2.1j 三次修复改的都是**同名文件**
+（`break-mid-wood.wav`、`wall-bounce-wood-light-000.wav`），URL 没变，所以浏览器一直在放第一次加载的旧字节。
+Cmd+Shift+R 也不会绕过，因为 `fetch` 是显式读 HTTP 缓存，优先级高于强制刷新。
+
+**也就是说 V2.1h（淡出切声）、V2.1i（去低频）、V2.1j（零点对齐）三次音频修复，用户一条都没听到。**
+
+修复：
+
+```js
+const versioned = variant.url + (variant.url.includes("?") ? "&" : "?") + "v=" + encodeURIComponent(REVISION);
+const response = await fetch(versioned, { cache: "default" });
+```
+
+- 素材 URL 带上 `?v=<REVISION>`，每次升版必然重新下载
+- 缓存策略从 `force-cache` 改为 `default`
+
+验证（持久化 profile，连续两次加载）：
+
+```
+第 1 次：break-mid-wood.wav?v=audio-qa-v21k-20261110  ✅
+第 2 次：break-mid-wood.wav?v=audio-qa-v21k-20261110  ✅
+```
+
+浏览器内缓冲时长 0.1096s，磁盘文件 9710 字节（裁剪后大小），确认拿到的是新文件。
+新增测试：禁止 `force-cache`、要求素材 URL 带版本号。

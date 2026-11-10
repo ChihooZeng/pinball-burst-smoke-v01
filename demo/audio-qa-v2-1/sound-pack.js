@@ -9,7 +9,7 @@
 (() => {
 "use strict";
 
-const REVISION = "audio-qa-v21j-20261110";
+const REVISION = "audio-qa-v21k-20261110";
 const STORAGE = "pinball-audio-qa-v21-20261109";
 
 /* 事件表：唯一事实来源。调试台、JSON 导出、游戏路由都读这一份。 */
@@ -258,7 +258,11 @@ function load(eventId, variantId) {
   const job = (async () => {
     const audio = setup();
     if (!audio) throw new Error("Web Audio unsupported");
-    const response = await fetch(variant.url, { cache: "force-cache" });
+    /* 2026-11-10：原来用 cache:"force-cache"，只要缓存里有旧字节就永远不重新取，
+       改了同名素材也听不到变化。改成带版本号的 URL + 默认缓存策略，
+       每次升版 REVISION 就强制重新下载。 */
+    const versioned = variant.url + (variant.url.includes("?") ? "&" : "?") + "v=" + encodeURIComponent(REVISION);
+    const response = await fetch(versioned, { cache: "default" });
     if (!response.ok) throw new Error("音频返回 HTTP " + response.status + "：" + variant.url);
     const buffer = await audio.decodeAudioData((await response.arrayBuffer()).slice(0));
     let sum = 0, n = 0, peak = 0;

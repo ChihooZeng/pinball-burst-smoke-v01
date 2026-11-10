@@ -99,7 +99,7 @@ function makeHarness(seedStorage = null) {
     }
     /* 用 URL 反推时长，这样断言能区分 A/B/C 到底播了哪一版。 */
     decodeAudioData(arrayBuffer) {
-      const url = new TextDecoder().decode(new Uint8Array(arrayBuffer));
+      const url = new TextDecoder().decode(new Uint8Array(arrayBuffer)).split("?")[0];
       const duration = AUDIO_SECONDS[url] ?? 0.3;
       const length = Math.max(1, Math.round(duration * 44100));
       const data = new Float32Array(length);
@@ -563,11 +563,18 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
 
   test("页面用新版本参数，旧版本参数不残留", () => {
     for (const asset of ["sound-pack.js", "game.js", "qa-studio.js", "qa-studio.css"]) {
-      assert.ok(html.includes(asset + "?v=v21j"), asset + " 未升版");
+      assert.ok(html.includes(asset + "?v=v21k"), asset + " 未升版");
     }
     assert.ok(!html.includes("v21a"));
-    assert.ok(!html.includes("?v=v21b") && !html.includes("?v=v21c") && !html.includes("?v=v21d") && !html.includes("?v=v21f") && !html.includes("?v=v21g") && !html.includes("?v=v21h") && !html.includes("?v=v21i"), "旧版本参数残留");
+    assert.ok(!html.includes("?v=v21b") && !html.includes("?v=v21c") && !html.includes("?v=v21d") && !html.includes("?v=v21f") && !html.includes("?v=v21g") && !html.includes("?v=v21h") && !html.includes("?v=v21i") && !html.includes("?v=v21j"), "旧版本参数残留");
     assert.ok(!html.includes("audioqa2"));
+  });
+
+  test("素材请求带版本号且不再用 force-cache，改素材后能真正生效", () => {
+    const src = read("sound-pack.js");
+    assert.ok(!/cache: "force-cache"/.test(src), "仍在用 force-cache，改同名素材不会生效");
+    assert.ok(/const versioned = variant\.url \+ \(variant\.url\.includes\("\?"\)/.test(src), "素材 URL 未带版本号");
+    assert.ok(/encodeURIComponent\(REVISION\)/.test(src), "版本号未取 REVISION");
   });
 
   test("防叠音三件套：淡出切声 / ±6% 变调 / 叠音高通 / 击破冷却 62ms", () => {
