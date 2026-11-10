@@ -32,7 +32,9 @@ const AUDIO_SECONDS = {
   "audio/break-brick-d-deep.wav": 0.18,
   "audio/clear-r02-piano-chime.wav": 0.978617,
   "audio/fail-power-down.wav": 0.517778,
-  "audio/fail-undesired.wav": 0.480544
+  "audio/fail-undesired.wav": 0.480544,
+  "audio/break-mid-wood.wav": 0.11,
+  "audio/break-mid-dry.wav": 0.1
 };
 
 let pass = 0;
@@ -192,10 +194,10 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
   test("砖块击破与触线失败各两个候选，均来自第二轮选型", () => {
     const map = Object.fromEntries(api.describe().map((x) => [x.id, x]));
     assert.deepEqual(plain(map.brick_break.variants.map((v) => v.id)),
-      ["break-brick-e-neutral", "break-brick-d-deep"]);
+      ["break-mid-wood", "break-mid-dry"]);
     assert.deepEqual(plain(map.fail.variants.map((v) => v.id)),
       ["fail-power-down", "fail-undesired"]);
-    assert.equal(api.EVENTS.brick_break.variants[0].url, "audio/break-brick-e-neutral.wav");
+    assert.equal(api.EVENTS.brick_break.variants[0].url, "audio/break-mid-wood.wav");
     assert.equal(api.EVENTS.fail.variants[0].url, "audio/fail-power-down.wav");
   });
 
@@ -217,6 +219,8 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
       "audio/clear-x15-mixkit-unlock-253.wav",
       "audio/fail-03-lose-1.wav",
       "audio/break-brick-e-neutral.wav",
+      "audio/break-mid-wood.wav",
+      "audio/break-mid-dry.wav",
       "audio/break-brick-d-deep.wav",
       "audio/clear-r02-piano-chime.wav",
       "audio/fail-power-down.wav",
@@ -303,7 +307,7 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
     api.play("armor");
     assert.equal(base.started.at(-1).buffer.duration, AUDIO_SECONDS["../audio-qa/audio/mg.ogg"]);
     api.play("break");
-    assert.equal(base.started.at(-1).buffer.duration, AUDIO_SECONDS["audio/break-brick-e-neutral.wav"], "击破默认应播 BREAK-R02");
+    assert.equal(base.started.at(-1).buffer.duration, AUDIO_SECONDS["audio/break-mid-wood.wav"], "击破默认应播 BREAK-M1");
     api.play("clear");
     assert.equal(base.started.at(-1).buffer.duration, AUDIO_SECONDS["audio/clear-r02-piano-chime.wav"], "清屏应播 CLEAR-R02");
     api.play("fail");
@@ -326,12 +330,17 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
     assert.equal(+base.started.at(-1).buffer.duration.toFixed(6), 0.978617);
   });
 
-  test("击破两条都能播，切到 BREAK-R06 后实际播 0.18s", () => {
+  test("击破两条都能播，切到 M2 后实际播 0.10s", () => {
     api.stopAll(); base.clock.advance(4000);
-    assert.equal(api.setVariant("brick_break", "break-brick-d-deep"), true);
+    assert.equal(api.setVariant("brick_break", "break-mid-dry"), true);
     api.play("break");
-    assert.equal(+base.started.at(-1).buffer.duration.toFixed(3), 0.18);
-    api.setVariant("brick_break", "break-brick-e-neutral");
+    assert.equal(+base.started.at(-1).buffer.duration.toFixed(3), 0.1);
+    api.setVariant("brick_break", "break-mid-wood");
+  });
+
+  test("击破事件带 200Hz 保底高通，低频素材也不会叠成爆破声", () => {
+    assert.equal(api.EVENTS.brick_break.hp, 200);
+    assert.ok(/const fc = Math\.max\(base, Math\.min\(900, stack\)\)/.test(read("sound-pack.js")), "高通拐点计算缺失");
   });
 
   test("旧 A/B/C 候选被拒绝，选择不会被污染", () => {
@@ -554,10 +563,10 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
 
   test("页面用新版本参数，旧版本参数不残留", () => {
     for (const asset of ["sound-pack.js", "game.js", "qa-studio.js", "qa-studio.css"]) {
-      assert.ok(html.includes(asset + "?v=v21h"), asset + " 未升版");
+      assert.ok(html.includes(asset + "?v=v21i"), asset + " 未升版");
     }
     assert.ok(!html.includes("v21a"));
-    assert.ok(!html.includes("?v=v21b") && !html.includes("?v=v21c") && !html.includes("?v=v21d") && !html.includes("?v=v21f") && !html.includes("?v=v21g"), "旧版本参数残留");
+    assert.ok(!html.includes("?v=v21b") && !html.includes("?v=v21c") && !html.includes("?v=v21d") && !html.includes("?v=v21f") && !html.includes("?v=v21g") && !html.includes("?v=v21h"), "旧版本参数残留");
     assert.ok(!html.includes("audioqa2"));
   });
 

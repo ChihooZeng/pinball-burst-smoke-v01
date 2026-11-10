@@ -1,6 +1,6 @@
 /* 《弹珠超载》音效调试台 V2.1 —— 四类战斗音 + 三类系统音
    - 砖甲受击（砖块存活）：V5 木质轻敲 / V5 木板闷响，二选一，同一时刻只播当前选中项。
-   - 砖块击破：BREAK-R02 砖石中性 / BREAK-R06 最重最闷，二选一（11-09 用户选定，合成音）。
+   - 砖块击破：BREAK-M1 干木裂 / BREAK-M2 木裂+颗粒，二选一（11-10 去掉低频层，防爆破声）。
    - 清屏升级：CLEAR-R02 钢琴短句（清屏与升级合并，只播一次）。
    - 触线失败：FAIL-R01 power_down / FAIL-R02 undesired，二选一。
    - 系统音（固定）：开始游戏 click1 / 其他按钮 rollover2 / 墙面反弹 impactWood light 000。
@@ -9,7 +9,7 @@
 (() => {
 "use strict";
 
-const REVISION = "audio-qa-v21h-20261110";
+const REVISION = "audio-qa-v21i-20261110";
 const STORAGE = "pinball-audio-qa-v21-20261109";
 
 /* 事件表：唯一事实来源。调试台、JSON 导出、游戏路由都读这一份。 */
@@ -45,20 +45,22 @@ const EVENTS = Object.freeze({
     hint: "砖块 HP 归零、实际被摧毁",
     variants: Object.freeze([
       Object.freeze({
-        id: "break-brick-e-neutral",
-        label: "BREAK-R02 · 砖石中性（0.16s）",
-        detail: "石块+中性撞击+木裂三层合成 / CC0 采样 / 质心 194Hz",
-        url: "audio/break-brick-e-neutral.wav",
-        gain: .58
+        id: "break-mid-wood",
+        label: "BREAK-M1 · 干木裂（0.11s）",
+        detail: "impactWood light 000 单层 / 150Hz 以下仅 1% / 质心 617Hz",
+        url: "audio/break-mid-wood.wav",
+        gain: .62
       }),
       Object.freeze({
-        id: "break-brick-d-deep",
-        label: "BREAK-R06 · 最重最闷（0.18s）",
-        detail: "石块+木板两层，低通 900Hz / 质心 78Hz / 只适合作低频层",
-        url: "audio/break-brick-d-deep.wav",
+        id: "break-mid-dry",
+        label: "BREAK-M2 · 木裂+颗粒（0.10s）",
+        detail: "impactWood light 002 + Generic light 001 / 150Hz 以下 4% / 质心 670Hz",
+        url: "audio/break-mid-dry.wav",
         gain: .62
       })
     ]),
+    /* 兜底：即使换成低频素材，击破这一路也先切掉 200Hz 以下，防止叠出爆破声 */
+    hp: 200,
     maxDuration: .3,
     cooldown: 62,
     maxVoices: 3,
@@ -417,13 +419,19 @@ function emit(context, event, variant, record, at, groupGain, preview) {
   /* 叠音变薄：已经在响的时候，新来的这一条切掉低频（180Hz 起，每多一层再抬 120Hz），
      只贡献"裂"的瞬态。这样一堆砖同时破听起来是一次更重的破，而不是低频叠成轰鸣。 */
   let head = source;
-  if (!preview && live.length > 0 && typeof context.createBiquadFilter === "function") {
-    const hp = context.createBiquadFilter();
-    hp.type = "highpass";
-    hp.frequency.value = Math.min(900, 180 + 120 * live.length);
-    hp.Q.value = .7;
-    source.connect(hp);
-    head = hp;
+  if (!preview && typeof context.createBiquadFilter === "function") {
+    /* 静态高通（event.hp）保底去低频；叠加时再把拐点往上抬，越叠越薄。 */
+    const base = Number(event.hp) || 0;
+    const stack = live.length > 0 ? 180 + 120 * live.length : 0;
+    const fc = Math.max(base, Math.min(900, stack));
+    if (fc > 40) {
+      const hp = context.createBiquadFilter();
+      hp.type = "highpass";
+      hp.frequency.value = fc;
+      hp.Q.value = .7;
+      source.connect(hp);
+      head = hp;
+    }
   }
   head.connect(gain); gain.connect(bus);
   const voice = { source, head, gain, event: event.id, priority: event.priority, preview, at: performance.now() };
