@@ -1,4 +1,4 @@
-/* 音效调试台 V2.1 —— 四类事件卡片。深色面板，PC 侧栏不遮挡实战画面。 */
+/* 音效调试台 V2.1 —— 九类事件卡片。深色面板，PC 侧栏不遮挡实战画面。 */
 #audioQaPanel{scrollbar-color:#3b6073 #0e1c2a;scrollbar-width:thin}
 #audioQaPanel .aq-pick{background:#10273a;border:1px solid #34536a;border-radius:10px;padding:9px 10px;margin:0;transition:border-color .15s,opacity .15s}
 #audioQaPanel .aq-pick.is-muted{border-color:#6b4a33;background:#1b2130;opacity:.86}
