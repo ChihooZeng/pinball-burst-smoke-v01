@@ -9,7 +9,7 @@
 (() => {
 "use strict";
 
-const REVISION = "audio-qa-v21g-20261109";
+const REVISION = "audio-qa-v21h-20261110";
 const STORAGE = "pinball-audio-qa-v21-20261109";
 
 /* 事件表：唯一事实来源。调试台、JSON 导出、游戏路由都读这一份。 */
@@ -60,8 +60,8 @@ const EVENTS = Object.freeze({
       })
     ]),
     maxDuration: .3,
-    cooldown: 46,
-    maxVoices: 2,
+    cooldown: 62,
+    maxVoices: 3,
     priority: 3
   },
   clear_upgrade: {
@@ -295,8 +295,25 @@ function currentVariant(eventId) {
   return event.variants.find(v => v.id === chosen[eventId]) || event.variants[0];
 }
 
+/* 2026-11-10：原来直接 source.stop() 是硬切，连续击破时每秒二十几次断点，
+   听感就是"咋咋"的杂音。改成 12ms 淡出后再停，断点消失。 */
 function cut(voice) {
-  try { voice.source.stop(); } catch (e) {}
+  if (voice.cutting) return;
+  voice.cutting = true;
+  let ok = false;
+  try {
+    const now = ctx ? ctx.currentTime : 0;
+    const g = voice.gain.gain;
+    const current = Number(g.value);
+    const base = Number.isFinite(current) && current > 0 ? current : .0005;
+    if (typeof g.cancelAndHoldAtTime === "function") g.cancelAndHoldAtTime(now);
+    else if (typeof g.cancelScheduledValues === "function") g.cancelScheduledValues(now);
+    g.setValueAtTime(base, now);
+    g.linearRampToValueAtTime(.0001, now + .012);
+    voice.source.stop(now + .016);
+    ok = true;
+  } catch (e) { ok = false; }
+  if (!ok) { try { voice.source.stop(); } catch (e) {} }
   const i = voices.indexOf(voice);
   if (i >= 0) voices.splice(i, 1);
 }
@@ -385,19 +402,36 @@ function emit(context, event, variant, record, at, groupGain, preview) {
   }
   const source = context.createBufferSource(), gain = context.createGain();
   source.buffer = record.buffer;
-  const peak = Math.max(.0008, Math.min(.72, (variant.gain || .4) * record.level * groupGain));
+  /* 每条样本 ±6% 随机变调：同一条反复触发时不再相位对齐，避免叠出"机关枪"式的硬叠音。
+     试听不加变调，保证听到的就是素材本来的样子。 */
+  if (!preview && source.playbackRate) source.playbackRate.value = 1 + (Math.random() * .12 - .06);
+  /* 叠音保护：同一事件已经在响的越多，新来的那条越轻（1 → 2 条 -33%，3 条 -50%）。
+     多块砖同时破时听起来是"一次更大的破"，而不是几层原件硬压在一起。 */
+  const duck = 1 / (1 + .5 * live.length);
+  const peak = Math.max(.0008, Math.min(.72, (variant.gain || .4) * record.level * groupGain * duck));
   const release = Math.min(.045, duration * .22);
   gain.gain.setValueAtTime(.00001, at);
   gain.gain.linearRampToValueAtTime(peak, at + .004);
   gain.gain.setValueAtTime(peak, Math.max(at + .004, at + duration - release));
   gain.gain.linearRampToValueAtTime(.00001, at + duration);
-  source.connect(gain); gain.connect(bus);
-  const voice = { source, gain, event: event.id, priority: event.priority, preview, at: performance.now() };
+  /* 叠音变薄：已经在响的时候，新来的这一条切掉低频（180Hz 起，每多一层再抬 120Hz），
+     只贡献"裂"的瞬态。这样一堆砖同时破听起来是一次更重的破，而不是低频叠成轰鸣。 */
+  let head = source;
+  if (!preview && live.length > 0 && typeof context.createBiquadFilter === "function") {
+    const hp = context.createBiquadFilter();
+    hp.type = "highpass";
+    hp.frequency.value = Math.min(900, 180 + 120 * live.length);
+    hp.Q.value = .7;
+    source.connect(hp);
+    head = hp;
+  }
+  head.connect(gain); gain.connect(bus);
+  const voice = { source, head, gain, event: event.id, priority: event.priority, preview, at: performance.now() };
   voices.push(voice);
   source.onended = () => {
     const i = voices.indexOf(voice);
     if (i >= 0) voices.splice(i, 1);
-    try { source.disconnect(); gain.disconnect(); } catch (e) {}
+    try { source.disconnect(); if (head !== source) head.disconnect(); gain.disconnect(); } catch (e) {}
   };
   source.start(at, 0, duration);
   return voice;

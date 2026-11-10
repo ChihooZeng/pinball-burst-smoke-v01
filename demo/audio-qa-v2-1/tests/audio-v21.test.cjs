@@ -69,6 +69,9 @@ function makeHarness(seedStorage = null) {
         connect() {}, disconnect() {}
       };
     }
+    createBiquadFilter() {
+      return { type: "highpass", frequency: { value: 0 }, Q: { value: 1 }, connect() {}, disconnect() {} };
+    }
     createDynamicsCompressor() {
       return {
         threshold: { value: 0 }, knee: { value: 0 }, ratio: { value: 0 },
@@ -551,11 +554,19 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
 
   test("页面用新版本参数，旧版本参数不残留", () => {
     for (const asset of ["sound-pack.js", "game.js", "qa-studio.js", "qa-studio.css"]) {
-      assert.ok(html.includes(asset + "?v=v21g"), asset + " 未升版");
+      assert.ok(html.includes(asset + "?v=v21h"), asset + " 未升版");
     }
     assert.ok(!html.includes("v21a"));
-    assert.ok(!html.includes("?v=v21b") && !html.includes("?v=v21c") && !html.includes("?v=v21d") && !html.includes("?v=v21f"), "旧版本参数残留");
+    assert.ok(!html.includes("?v=v21b") && !html.includes("?v=v21c") && !html.includes("?v=v21d") && !html.includes("?v=v21f") && !html.includes("?v=v21g"), "旧版本参数残留");
     assert.ok(!html.includes("audioqa2"));
+  });
+
+  test("防叠音三件套：淡出切声 / ±6% 变调 / 叠音高通 / 击破冷却 62ms", () => {
+    assert.ok(/linearRampToValueAtTime\(\.0001, now \+ \.012\)/.test(packSrc), "切声没有做淡出，仍会硬切出断点");
+    assert.ok(/playbackRate\.value = 1 \+ \(Math\.random\(\) \* \.12 - \.06\)/.test(packSrc), "缺少随机变调");
+    assert.ok(/createBiquadFilter/.test(packSrc), "缺少叠音高通");
+    assert.ok(/cooldown: 62/.test(packSrc), "击破冷却未调整到 62ms");
+    assert.ok(/const duck = 1 \/ \(1 \+ \.5 \* live\.length\)/.test(packSrc), "缺少叠音衰减");
   });
 
   test("音效引擎没有任何外部 URL（断网可用）", () => {
