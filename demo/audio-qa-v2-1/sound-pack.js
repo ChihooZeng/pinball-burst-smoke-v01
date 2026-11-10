@@ -1,6 +1,6 @@
 /* 《弹珠超载》音效调试台 V2.1 —— 四类战斗音 + 三类系统音
    - 砖甲受击（砖块存活）：V5 木质轻敲 / V5 木板闷响，二选一，同一时刻只播当前选中项。
-   - 砖块击破：BREAK-M1 干木裂 / BREAK-M2 木裂+颗粒，二选一（11-10 去掉低频层，防爆破声）。
+   - 砖块击破：固定 BREAK-M1 干木裂（11-10 用户定稿，默认增益 .30）。
    - 清屏升级：CLEAR-R02 钢琴短句（清屏与升级合并，只播一次）。
    - 触线失败：FAIL-R01 power_down / FAIL-R02 undesired，二选一。
    - 系统音（固定）：开始游戏 click1 / 其他按钮 rollover2 / 墙面反弹 impactWood light 000。
@@ -9,7 +9,7 @@
 (() => {
 "use strict";
 
-const REVISION = "audio-qa-v21k-20261110";
+const REVISION = "audio-qa-v21l-20261110";
 const STORAGE = "pinball-audio-qa-v21-20261109";
 
 /* 事件表：唯一事实来源。调试台、JSON 导出、游戏路由都读这一份。 */
@@ -49,14 +49,7 @@ const EVENTS = Object.freeze({
         label: "BREAK-M1 · 干木裂（0.11s）",
         detail: "impactWood light 000 单层 / 150Hz 以下仅 1% / 质心 617Hz",
         url: "audio/break-mid-wood.wav",
-        gain: .45
-      }),
-      Object.freeze({
-        id: "break-mid-dry",
-        label: "BREAK-M2 · 木裂+颗粒（0.10s）",
-        detail: "impactWood light 002 + Generic light 001 / 150Hz 以下 4% / 质心 670Hz",
-        url: "audio/break-mid-dry.wav",
-        gain: .45
+        gain: .30
       })
     ]),
     /* 兜底：即使换成低频素材，击破这一路也先切掉 200Hz 以下，防止叠出爆破声 */

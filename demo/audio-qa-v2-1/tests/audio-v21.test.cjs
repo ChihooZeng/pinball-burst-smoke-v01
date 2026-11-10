@@ -191,10 +191,9 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
     assert.equal(api.EVENTS.clear_upgrade.variants[0].url, "audio/clear-r02-piano-chime.wav");
   });
 
-  test("砖块击破与触线失败各两个候选，均来自第二轮选型", () => {
+  test("砖块击破定稿单条 M1，触线失败仍两条", () => {
     const map = Object.fromEntries(api.describe().map((x) => [x.id, x]));
-    assert.deepEqual(plain(map.brick_break.variants.map((v) => v.id)),
-      ["break-mid-wood", "break-mid-dry"]);
+    assert.deepEqual(plain(map.brick_break.variants.map((v) => v.id)), ["break-mid-wood"]);
     assert.deepEqual(plain(map.fail.variants.map((v) => v.id)),
       ["fail-power-down", "fail-undesired"]);
     assert.equal(api.EVENTS.brick_break.variants[0].url, "audio/break-mid-wood.wav");
@@ -330,12 +329,10 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
     assert.equal(+base.started.at(-1).buffer.duration.toFixed(6), 0.978617);
   });
 
-  test("击破两条都能播，切到 M2 后实际播 0.10s", () => {
-    api.stopAll(); base.clock.advance(4000);
-    assert.equal(api.setVariant("brick_break", "break-mid-dry"), true);
-    api.play("break");
-    assert.equal(+base.started.at(-1).buffer.duration.toFixed(3), 0.1);
-    api.setVariant("brick_break", "break-mid-wood");
+  test("击破只剩 M1，旧的 M2 被拒绝；默认增益已压到 .30", () => {
+    assert.equal(api.setVariant("brick_break", "break-mid-dry"), false);
+    assert.equal(api.getState().selected.brick_break, "break-mid-wood");
+    assert.equal(api.EVENTS.brick_break.variants[0].gain, .3);
   });
 
   test("击破事件带 200Hz 保底高通，低频素材也不会叠成爆破声", () => {
@@ -563,10 +560,10 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
 
   test("页面用新版本参数，旧版本参数不残留", () => {
     for (const asset of ["sound-pack.js", "game.js", "qa-studio.js", "qa-studio.css"]) {
-      assert.ok(html.includes(asset + "?v=v21k"), asset + " 未升版");
+      assert.ok(html.includes(asset + "?v=v21l"), asset + " 未升版");
     }
     assert.ok(!html.includes("v21a"));
-    assert.ok(!html.includes("?v=v21b") && !html.includes("?v=v21c") && !html.includes("?v=v21d") && !html.includes("?v=v21f") && !html.includes("?v=v21g") && !html.includes("?v=v21h") && !html.includes("?v=v21i") && !html.includes("?v=v21j"), "旧版本参数残留");
+    assert.ok(!html.includes("?v=v21b") && !html.includes("?v=v21c") && !html.includes("?v=v21d") && !html.includes("?v=v21f") && !html.includes("?v=v21g") && !html.includes("?v=v21h") && !html.includes("?v=v21i") && !html.includes("?v=v21j") && !html.includes("?v=v21k"), "旧版本参数残留");
     assert.ok(!html.includes("audioqa2"));
   });
 
