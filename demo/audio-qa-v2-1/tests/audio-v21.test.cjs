@@ -177,6 +177,32 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
     assert.ok((state.plays.wall_bounce || 0) >= 0);
   });
 
+  test("砖甲受击默认是已认可的「木板闷响」，不是木质轻敲", () => {
+    assert.equal(api.EVENTS.brick_hit.defaultVariant, "v5-wood-thud");
+    assert.equal(api.getState().selected.brick_hit, "v5-wood-thud", "默认候选落错");
+    const thud = api.EVENTS.brick_hit.variants.find((v) => v.id === "v5-wood-thud");
+    assert.equal(thud.gain, .55, "木板闷响的增益没提上来");
+  });
+
+  test("撞墙增益提到 0.50，能压过音乐峰值", () => {
+    assert.equal(api.EVENTS.wall_bounce.variants[0].gain, .5);
+  });
+
+  test("旧存档里的「木质轻敲」会被一次性迁移到「木板闷响」", () => {
+    const legacy = makeHarness({
+      "pinball-audio-qa-v21-20261109": JSON.stringify({
+        enabled: true,
+        selected: { brick_hit: "v5-wood-light" },
+        muted: {},
+        volumes: { brick_hit: 1 }
+      })
+    });
+    assert.equal(legacy.api.getState().selected.brick_hit, "v5-wood-thud", "迁移没生效");
+    legacy.api.setMuted("brick_hit", false);
+    const saved = JSON.parse(legacy.storage.get("pinball-audio-qa-v21-20261109"));
+    assert.equal(saved.schema, 2, "persist 没写 schema 版本");
+  });
+
   test("砖甲受击恰好两个候选：V5 木质轻敲 / V5 木板闷响", () => {
     const hit = api.describe().find((x) => x.id === "brick_hit");
     assert.deepEqual(plain(hit.variants.map((v) => v.id)), ["v5-wood-light", "v5-wood-thud"]);
@@ -307,7 +333,7 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
     api.stopAll(); base.clock.advance(4000);
     const before = api.getState().voices;
     api.play("armor");
-    assert.equal(base.started.at(-1).buffer.duration, AUDIO_SECONDS["../audio-qa/audio/mg.ogg"]);
+    assert.equal(base.started.at(-1).buffer.duration, AUDIO_SECONDS["../audio-qa/audio/hit.ogg"], "受击默认应播木板闷响");
     api.play("break");
     assert.equal(base.started.at(-1).buffer.duration, AUDIO_SECONDS["audio/break-mid-wood.wav"], "击破默认应播 BREAK-M1");
     api.play("clear");
@@ -563,10 +589,10 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
 
   test("页面用新版本参数，旧版本参数不残留", () => {
     for (const asset of ["sound-pack.js", "game.js", "qa-studio.js", "qa-studio.css"]) {
-      assert.ok(html.includes(asset + "?v=v21o"), asset + " 未升版");
+      assert.ok(html.includes(asset + "?v=v21p"), asset + " 未升版");
     }
     assert.ok(!html.includes("v21a"));
-    assert.ok(!html.includes("?v=v21b") && !html.includes("?v=v21c") && !html.includes("?v=v21d") && !html.includes("?v=v21f") && !html.includes("?v=v21g") && !html.includes("?v=v21h") && !html.includes("?v=v21i") && !html.includes("?v=v21j") && !html.includes("?v=v21k") && !html.includes("?v=v21l") && !html.includes("?v=v21m") && !html.includes("?v=v21n"), "旧版本参数残留");
+    assert.ok(!html.includes("?v=v21b") && !html.includes("?v=v21c") && !html.includes("?v=v21d") && !html.includes("?v=v21f") && !html.includes("?v=v21g") && !html.includes("?v=v21h") && !html.includes("?v=v21i") && !html.includes("?v=v21j") && !html.includes("?v=v21k") && !html.includes("?v=v21l") && !html.includes("?v=v21m") && !html.includes("?v=v21n") && !html.includes("?v=v21o"), "旧版本参数残留");
     assert.ok(!html.includes("audioqa2"));
   });
 
@@ -657,7 +683,10 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
   });
 
   test("音效触发时音乐让位：战斗音触发，系统音不触发", () => {
-    assert.ok(/if \(!event\.system\) duckBgm\(\)/.test(packSrc), "play() 没有按事件类型让位");
+    assert.ok(/const duckDepth = event\.duck !== undefined \? event\.duck : \(event\.system \? 0 : \.55\)/.test(packSrc),
+      "play() 没有按事件配置让位深度");
+    assert.equal(api.EVENTS.wall_bounce.duck, .75, "撞墙没有设浅让位");
+    assert.equal(api.EVENTS.brick_break.duck, undefined, "战斗音应走默认 0.55");
     assert.equal(typeof api.duckBgm, "function", "duckBgm 未导出");
     assert.equal(api.duckBgm(), false, "无音频元素时应安全返回 false");
     assert.ok(/bgmDuckTimer = setTimeout/.test(packSrc), "缺少让位恢复定时器");

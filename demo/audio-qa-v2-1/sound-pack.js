@@ -10,7 +10,7 @@
 (() => {
 "use strict";
 
-const REVISION = "audio-qa-v21o-20261110";
+const REVISION = "audio-qa-v21p-20261110";
 const STORAGE = "pinball-audio-qa-v21-20261109";
 
 /* 事件表：唯一事实来源。调试台、JSON 导出、游戏路由都读这一份。 */
@@ -32,9 +32,12 @@ const EVENTS = Object.freeze({
         label: "V5 木板闷响",
         detail: "原普通命中组 bundled · impactWood medium 001",
         url: "../audio-qa/audio/hit.ogg",
-        gain: .40
+        gain: .55
       })
     ]),
+    /* 用户 11-09 认可的是「木板闷响」，但它排在候选第二位，
+       旧逻辑默认取 variants[0] 会落到「木质轻敲」——这里显式指定默认项。 */
+    defaultVariant: "v5-wood-thud",
     maxDuration: .5,
     cooldown: 55,
     maxVoices: 4,
@@ -155,9 +158,13 @@ const EVENTS = Object.freeze({
         label: "impactWood light 000 · 0.10s 裁切",
         detail: "impact-sounds / Kenney / CC0-1.0",
         url: "audio/wall-bounce-wood-light-000.wav",
-        gain: .26
+        gain: .50
       })
     ]),
+    /* 撞墙是全场最频繁的事件（实测 1.1 次/秒），但原来的峰值比音乐低 6dB，
+       等于白做。让它也触发音乐让位，但比战斗音浅（0.75 而不是 0.55），
+       避免音乐一直被压得忽大忽小。 */
+    duck: .75,
     maxDuration: .2,
     cooldown: 55,
     maxVoices: 3,
@@ -184,7 +191,7 @@ const chosen = Object.create(null), volumes = Object.create(null);
 for (const id of EVENT_IDS) {
   muted[id] = false;
   volumes[id] = 1;
-  chosen[id] = EVENTS[id].variants[0].id;
+  chosen[id] = EVENTS[id].defaultVariant || EVENTS[id].variants[0].id;
 }
 
 function clamp(value, lo, hi) { return Math.max(lo, Math.min(hi, Number(value) || 0)); }
@@ -203,6 +210,10 @@ try {
       const v = Number(saved.volumes[id]);
       if (Number.isFinite(v)) volumes[id] = clamp(v, 0, 1.5);
     }
+    /* 一次性迁移：旧版本默认落在「木质轻敲」，用户从没认可过它。 */
+    if ((Number(saved.schema) || 1) < 2 && !muted.brick_hit && chosen.brick_hit === "v5-wood-light") {
+      chosen.brick_hit = "v5-wood-thud";
+    }
     if (saved.bgm && typeof saved.bgm === "object") {
       if (typeof saved.bgm.enabled === "boolean") bgmEnabled = saved.bgm.enabled;
       const v = Number(saved.bgm.volume);
@@ -216,6 +227,7 @@ function persist() {
     const selected = {};
     for (const id of EVENT_IDS) selected[id] = muted[id] ? NONE_ID : chosen[id];
     localStorage.setItem(STORAGE, JSON.stringify({
+      schema: 2,
       enabled, selected, muted, volumes,
       bgm: { enabled: bgmEnabled, volume: bgmVolume }
     }));
@@ -402,8 +414,10 @@ function play(kind, master) {
   if (document.hidden || context.state !== "running") { silentDrops++; return true; }
   emit(context, event, variant, record, context.currentTime + .006, volumes[eventId], false);
   plays[eventId] = (plays[eventId] || 0) + 1;
-  /* 战斗音触发时给音乐让位；系统音（按钮/撞墙）不触发，避免菜单里音乐一直抖。 */
-  if (!event.system) duckBgm();
+  /* 让位深度按事件走：战斗音 0.55，撞墙 0.75（浅一档），按钮类不触发。
+     这样菜单里音乐不会抖，但撞墙能压过音乐。 */
+  const duckDepth = event.duck !== undefined ? event.duck : (event.system ? 0 : .55);
+  if (duckDepth > 0) duckBgm(duckDepth);
   return true;
 }
 
