@@ -10,7 +10,7 @@
 (() => {
 "use strict";
 
-const REVISION = "audio-qa-v21p-20261110";
+const REVISION = "audio-qa-v21q-20261110";
 const STORAGE = "pinball-audio-qa-v21-20261109";
 
 /* 事件表：唯一事实来源。调试台、JSON 导出、游戏路由都读这一份。 */
@@ -106,6 +106,48 @@ const EVENTS = Object.freeze({
     cooldown: 1100,
     maxVoices: 1,
     priority: 5
+  },
+
+  /* ---- 2026-11-10 补的两个技能音：分裂与连锁闪电 ----
+     这两类都是玩家主动技能，之前一直是静音的。频率偏高，所以冷却设得比战斗音短、
+     让位设得比战斗音浅（.7 / .8），避免音乐被压得一路发抖。 */
+  split: {
+    id: "split",
+    name: "裂变",
+    hint: "分裂出新球时触发，约每秒 1 次",
+    variants: Object.freeze([
+      Object.freeze({
+        id: "split-glass-pop",
+        label: "SPLIT-01 · 玻璃短点（0.10s）",
+        detail: "impactGlass light 002 / 质心 1569Hz / 4kHz 以上 0% / 已做零点对齐",
+        url: "audio/split-glass-pop.wav",
+        gain: .30
+      })
+    ]),
+    duck: .7,
+    maxDuration: .16,
+    cooldown: 100,
+    maxVoices: 2,
+    priority: 2
+  },
+  arc: {
+    id: "arc",
+    name: "连锁闪电",
+    hint: "电弧每跳一次都会触发，已限流 120ms / 2 层",
+    variants: Object.freeze([
+      Object.freeze({
+        id: "arc-laser-4",
+        label: "ARC-01 · 街机激光（0.18s）",
+        detail: "Arcade laser_4 / 质心 669Hz / 4kHz 以上 0.1% / 已裁到 0.18s",
+        url: "audio/arc-laser-4.wav",
+        gain: .26
+      })
+    ]),
+    duck: .8,
+    maxDuration: .24,
+    cooldown: 120,
+    maxVoices: 2,
+    priority: 2
   },
 
   /* ---- 以下三类为 2026-11-09 用户拍板的系统音，固定素材，不提供候选 ---- */

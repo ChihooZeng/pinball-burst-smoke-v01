@@ -34,7 +34,9 @@ const AUDIO_SECONDS = {
   "audio/fail-power-down.wav": 0.517778,
   "audio/fail-undesired.wav": 0.480544,
   "audio/break-mid-wood.wav": 0.11,
-  "audio/break-mid-dry.wav": 0.1
+  "audio/break-mid-dry.wav": 0.1,
+  "audio/split-glass-pop.wav": 0.1,
+  "audio/arc-laser-4.wav": 0.18
 };
 
 let pass = 0;
@@ -143,13 +145,31 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
   api.prime();
   await flush();
 
-  test("describe() 是四类战斗音 + 三类系统音，顺序与命名固定", () => {
+  test("describe() 是四类战斗音 + 两个技能音 + 三类系统音，顺序与命名固定", () => {
     const list = api.describe();
-    assert.equal(list.length, 7);
+    assert.equal(list.length, 9);
     assert.deepEqual(plain(list.map((x) => x.id)),
-      ["brick_hit", "brick_break", "clear_upgrade", "fail", "ui_start", "ui_click", "wall_bounce"]);
+      ["brick_hit", "brick_break", "clear_upgrade", "fail", "split", "arc", "ui_start", "ui_click", "wall_bounce"]);
     assert.deepEqual(plain(list.map((x) => x.name)),
-      ["砖甲受击", "砖块击破", "清屏升级", "触线失败", "开始游戏", "其他按钮", "墙面反弹"]);
+      ["砖甲受击", "砖块击破", "清屏升级", "触线失败", "裂变", "连锁闪电", "开始游戏", "其他按钮", "墙面反弹"]);
+  });
+
+  test("裂变与连锁闪电：各自固定素材、限流参数与浅让位", () => {
+    const map = Object.fromEntries(api.describe().map((x) => [x.id, x]));
+    assert.equal(map.split.fixed, true);
+    assert.deepEqual(plain(map.split.variants.map((v) => v.id)), ["split-glass-pop"]);
+    assert.equal(api.EVENTS.split.variants[0].url, "audio/split-glass-pop.wav");
+    assert.equal(api.EVENTS.split.cooldown, 100);
+    assert.equal(api.EVENTS.split.maxVoices, 2);
+    assert.equal(api.EVENTS.split.duck, .7);
+    assert.equal(map.arc.fixed, true);
+    assert.deepEqual(plain(map.arc.variants.map((v) => v.id)), ["arc-laser-4"]);
+    assert.equal(api.EVENTS.arc.variants[0].url, "audio/arc-laser-4.wav");
+    assert.equal(api.EVENTS.arc.cooldown, 120, "电弧每次跳转都触发，必须限流");
+    assert.equal(api.EVENTS.arc.duck, .8);
+    for (const id of ["split", "arc"]) {
+      assert.notEqual(map[id].system, true, id + " 属于战斗音，不该标成系统音");
+    }
   });
 
   test("三类系统音被标记为 system，且各只有一个固定候选", () => {
@@ -165,7 +185,7 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
       assert.deepEqual(plain(map7[id].variants.map((v) => v.id)), [variantId]);
       assert.equal(api.EVENTS[id].variants[0].url, url);
     }
-    for (const id of ["brick_hit", "brick_break", "clear_upgrade", "fail"]) {
+    for (const id of ["brick_hit", "brick_break", "clear_upgrade", "fail", "split", "arc"]) {
       assert.notEqual(map7[id].system, true, id + " 不该被标记成系统音");
     }
   });
@@ -246,6 +266,8 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
       "audio/break-brick-e-neutral.wav",
       "audio/break-mid-wood.wav",
       "audio/break-mid-dry.wav",
+      "audio/split-glass-pop.wav",
+      "audio/arc-laser-4.wav",
       "audio/break-brick-d-deep.wav",
       "audio/clear-r02-piano-chime.wav",
       "audio/fail-power-down.wav",
@@ -447,7 +469,7 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
   test("导出 JSON 含七类事件，清屏带三个候选与文件路径", () => {
     const config = api.exportConfig();
     assert.equal(config.version, "pinball-audio-qa-v2.1");
-    assert.equal(config.items.length, 7);
+    assert.equal(config.items.length, 9);
     const clear = config.items.find((x) => x.event === "clear_upgrade");
     assert.deepEqual(plain(clear.candidateIds), ["clear-r02-piano-chime"]);
     assert.equal(clear.file, "audio/clear-r02-piano-chime.wav");
@@ -589,10 +611,10 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
 
   test("页面用新版本参数，旧版本参数不残留", () => {
     for (const asset of ["sound-pack.js", "game.js", "qa-studio.js", "qa-studio.css"]) {
-      assert.ok(html.includes(asset + "?v=v21p"), asset + " 未升版");
+      assert.ok(html.includes(asset + "?v=v21q"), asset + " 未升版");
     }
     assert.ok(!html.includes("v21a"));
-    assert.ok(!html.includes("?v=v21b") && !html.includes("?v=v21c") && !html.includes("?v=v21d") && !html.includes("?v=v21f") && !html.includes("?v=v21g") && !html.includes("?v=v21h") && !html.includes("?v=v21i") && !html.includes("?v=v21j") && !html.includes("?v=v21k") && !html.includes("?v=v21l") && !html.includes("?v=v21m") && !html.includes("?v=v21n") && !html.includes("?v=v21o"), "旧版本参数残留");
+    assert.ok(!html.includes("?v=v21b") && !html.includes("?v=v21c") && !html.includes("?v=v21d") && !html.includes("?v=v21f") && !html.includes("?v=v21g") && !html.includes("?v=v21h") && !html.includes("?v=v21i") && !html.includes("?v=v21j") && !html.includes("?v=v21k") && !html.includes("?v=v21l") && !html.includes("?v=v21m") && !html.includes("?v=v21n") && !html.includes("?v=v21o") && !html.includes("?v=v21p"), "旧版本参数残留");
     assert.ok(!html.includes("audioqa2"));
   });
 

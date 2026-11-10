@@ -162,7 +162,7 @@ for (const info of api.describe()) {
   syncCard(info.id);
 }
 
-/* ===== 背景音乐（V2.1m）：不属于七类事件，单独一张卡 ===== */
+/* ===== 背景音乐（V2.1m）：不属于九类事件，单独一张卡 ===== */
 if (api.BGM && typeof api.getBgmState === "function") {
   const card = document.createElement("section");
   card.className = "aq-pick";
@@ -231,7 +231,7 @@ if (api.BGM && typeof api.getBgmState === "function") {
     api.setBgmEnabled(toggle.checked);
     note(toggle.checked
       ? "背景音乐已开启；进游戏或点「从头试听」即开始播放。"
-      : "背景音乐已关闭：只关闭音乐，七类音效不受影响。刷新后保留。");
+      : "背景音乐已关闭：只关闭音乐，九类音效不受影响。刷新后保留。");
     syncBgm();
   });
   playBtn.addEventListener("click", () => {
@@ -308,7 +308,7 @@ document.getElementById("aq-resume")?.addEventListener("click", () => {
   note(out ? "已恢复暂停的游戏" : "无法继续：请查看错误诊断或使用游戏重开功能");
 });
 
-const NAMES = { brick_hit: "砖甲受击", brick_break: "砖块击破", clear_upgrade: "清屏升级", fail: "触线失败", ui_start: "开始游戏", ui_click: "其他按钮", wall_bounce: "墙面反弹" };
+const NAMES = { brick_hit: "砖甲受击", brick_break: "砖块击破", clear_upgrade: "清屏升级", fail: "触线失败", split: "裂变", arc: "连锁闪电", ui_start: "开始游戏", ui_click: "其他按钮", wall_bounce: "墙面反弹" };
 
 function renderLive() {
   if (!live) return;
@@ -319,7 +319,7 @@ function renderLive() {
   const mutedList = api.EVENT_IDS.filter(id => state.muted[id]).map(id => NAMES[id]);
   live.textContent =
     "试听/触发计数：" + played +
-    "\n无音效已开启：" + (mutedList.length ? mutedList.join("、") : "无（七类全部发声）") +
+    "\n无音效已开启：" + (mutedList.length ? mutedList.join("、") : "无（九类全部发声）") +
     "\n素材已解码 " + state.loaded.length + "/" + state.variants + " · 加载错误 " + state.errors + " · 当前发声 " + state.voices +
     "\n音频上下文 " + (state.contextState || "?") + " · 因上下文未运行丢弃 " + (state.silentDrops || 0) + " 次";
 }
