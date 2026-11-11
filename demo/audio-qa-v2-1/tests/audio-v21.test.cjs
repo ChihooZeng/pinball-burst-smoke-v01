@@ -773,6 +773,52 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
     assert.ok(fs.readFileSync(v2, "utf8").includes("音效重选 · 实战调试 V2"));
   });
 
+  /* ---------- 【9】正式主线 demo/v1 的合并结果（11-11） ---------- */
+  console.log("\n【9】正式主线 demo/v1 已接入音效");
+  const V1 = path.resolve(ROOT, "..", "v1");
+  const v1Pack = fs.readFileSync(path.join(V1, "sound-pack.js"), "utf8");
+  const v1Game = fs.readFileSync(path.join(V1, "game.js"), "utf8");
+  const v1Html = fs.readFileSync(path.join(V1, "index.html"), "utf8");
+
+  test("主线自带音效引擎，且不依赖调试台目录", () => {
+    assert.ok(v1Pack.includes("window.PinballGameAudio"), "主线没有音效引擎");
+    assert.ok(!v1Pack.includes("../audio-qa/"), "主线仍指向调试台素材目录");
+    assert.ok(!/https?:\/\//.test(v1Pack), "主线引擎引用外部地址");
+  });
+
+  test("主线引用的每条素材都真实存在", () => {
+    const urls = [...new Set([...v1Pack.matchAll(/url: "([^"]+)"/g)].map(m => m[1])
+      .concat([...v1Pack.matchAll(/loop: "([^"]+)"/g)].map(m => m[1])))];
+    assert.ok(urls.length >= 17, "素材引用数量异常：" + urls.length);
+    for (const u of urls) {
+      const full = path.resolve(V1, u);
+      assert.ok(fs.existsSync(full), "主线缺少素材：" + u);
+      assert.ok(fs.statSync(full).size > 2000, "素材过小：" + u);
+    }
+  });
+
+  test("主线页面按顺序加载引擎，并有 CC BY 4.0 署名", () => {
+    const iPack = v1Html.indexOf("sound-pack.js");
+    const iGame = v1Html.indexOf("game.js");
+    assert.ok(iPack > 0, "页面没有加载 sound-pack.js");
+    assert.ok(iPack < iGame, "sound-pack.js 必须在 game.js 之前");
+    assert.ok(v1Html.includes("Cut and Run"), "缺少 BGM 署名文案");
+    assert.ok(v1Html.includes("CC BY 4.0"), "缺少 CC BY 4.0 标识");
+  });
+
+  test("主线触发点已接音效，且未夹带玩法改动", () => {
+    assert.ok(v1Game.includes("window.PinballGameAudio?.play(kind,soundVolume)"), "playSfx 未接路由");
+    assert.ok(v1Game.includes("const LEGACY_SYNTH_CUES_ENABLED=false"), "旧合成提示音未关闭");
+    assert.ok(v1Game.includes('playSfx("wall_bounce")'), "撞墙未接音效");
+    assert.ok(v1Game.includes('playSfx("fail")'), "失败未接音效");
+    assert.ok(v1Game.includes("startBgm"), "开局未驱动 BGM");
+    /* 明确剔除的四项：都不该出现在主线里 */
+    assert.ok(!v1Game.includes('wave===10?"第10关Boss已击败'), "夹带了选卡文案改动");
+    assert.ok(!v1Game.includes("__pinballAudioQaFix"), "夹带了调试台诊断对象");
+    assert.ok(!v1Game.includes("audioQaRuntimeErrors"), "夹带了调试台错误计数");
+    assert.ok(v1Game.includes('window.addEventListener("resize",()=>{pause();'), "夹带了 resize 行为改动");
+  });
+
   const total = pass + failures.length;
   console.log("\n" + "─".repeat(66));
   console.log("通过 " + pass + " / " + total + (failures.length ? "，失败 " + failures.length : "，全部通过"));
