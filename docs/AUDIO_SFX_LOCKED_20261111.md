@@ -9,8 +9,8 @@
 |---|---|---|---|---|---|
 | 砖甲受击 | V5 木板闷响 | `demo/audio-qa/audio/hit.ogg` | .55 | 0.33s | Kenney impact-sounds · CC0 |
 | 砖块击破 | BREAK-M1 干木裂 | `audio/break-mid-wood.wav` | .30 | 0.11s | Kenney impact-sounds · CC0 |
-| 清屏升级 | CLEAR-R02 钢琴短句 | `audio/clear-r02-piano-chime.wav` | .54 | 0.98s | ⚠️ 400 Sounds Pack · 待核实 |
-| 触线失败 | FAIL-R01 power_down | `audio/fail-power-down.wav` | .56 | 0.52s | ⚠️ 400 Sounds Pack · 待核实 |
+| 清屏升级 | CLEAR-R02 钢琴短句 | `audio/clear-r02-piano-chime.wav` | .54 | 0.98s | 400 Sounds Pack / Chequered Ink · 免费商用 |
+| 触线失败 | FAIL-R01 power_down | `audio/fail-power-down.wav` | .56 | 0.52s | 400 Sounds Pack / Chequered Ink · 免费商用 |
 | 裂变 | SPLIT-A 木质上扬散射 | `audio/split-wood-flick.wav` | .26 | 0.13s | 本项目合成（无第三方） |
 | 连锁闪电 | ARC-B2 铁皮弹击 | `audio/arc-b02-metal-snap.wav` | .27 | 0.11s | 本项目合成（无第三方） |
 | 开始游戏 | click1 | `audio/ui-start-click1.wav` | .58 | 0.09s | Kenney UI · CC0（本地无包，待补截图） |
@@ -23,25 +23,26 @@
 - 连锁闪电：ARC-B1/B3/B4/B5/B6
 - 砖甲受击：V5 木质轻敲；触线失败：FAIL-R02 undesired
 
-## 二、授权状态（发布前必须清账）
+## 二、授权状态
 
 | 来源 | 证据 | 结论 |
 |---|---|---|
 | Kenney impact-sounds | zip 内 `License.txt` 写明 CC0；`hit.ogg`/`mg.ogg` 与包内原件 **md5 逐字节一致** | 可商用，无需署名 |
-| Kenney UI（click1 / rollover2） | 本地已无原包 | CC0 通例，但需补下载页与条款截图存档 |
-| 400 Sounds Pack | 包内**无 LICENSE / README / credits**；早前的授权核查结论为「待核实」 | ⚠️ 不能假设可商用 |
+| **400 Sounds Pack** | 出处已核实：**Chequered Ink 在 itch.io 发布的免费包**（`ci.itch.io/400-sounds-pack`）。包内 14 个分类名与本包完全一致，下载来源的 Dropbox 地址也与该页「可先在 Dropbox 试听」的描述吻合 | ✅ **可商用、无需署名**；仅禁止把未改动的原件重新分发/转卖 |
+| Kenney UI（click1 / rollover2） | 本地已无原包 | CC0 通例，可商用；建议补一份下载页截图存档 |
 | 本项目合成（裂变 / 闪电默认项） | 生成脚本在本会话，纯合成 | 自有，无第三方 |
 | Cut and Run | Incompetech CC BY 4.0 | 可用，必须在游戏内署名 |
 
-**受影响的两条**：清屏升级（`grand_piano_chime_positive`）、触线失败（`power_down`）——都来自 400 包。
+400 Sounds Pack 授权原文（itch.io 商品页）：
 
-两条出路：
-1. **补证**：找到 400 Sounds Pack 的下载页 / 订单，确认许可类型并截图存档；
-2. **替换**：清屏改用 Mixkit（条款可查）或自研；失败音自研一版「下坠 + 闷响」。
+> You may use these game assets for ANY and ALL uses including commercial use, with or without giving credit,
+> except that you may not sell or redistribute the unaltered assets as your own game assets.
+
+即：清屏升级（`grand_piano_chime_positive`）与触线失败（`power_down`）**不需要重做、也不需要署名**。
 
 ## 三、接下来的顺序
 
-1. **授权清账**（阻塞发布，见上）——只有 2 条要处理。
+1. ~~**授权清账**~~ —— **已闭环**（11-11 核实 400 包为 Chequered Ink 免费商用包，两条无需改动）。
 2. **合并回主线 `demo/v1`**：把 `sound-pack.js` + 素材 + 触发点搬过去。
    实测 diff 只有 110 行，其中 **1 行与音效无关**（第 10 关选卡标题文案），合并时剔除。
 3. **玩家设置页**：音量滑杆 / 静音开关 + 「设置-说明」里的 CC BY 4.0 署名文本。
