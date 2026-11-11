@@ -29,7 +29,7 @@
 |---|---|---|
 | Kenney impact-sounds | zip 内 `License.txt` 写明 CC0；`hit.ogg`/`mg.ogg` 与包内原件 **md5 逐字节一致** | 可商用，无需署名 |
 | **400 Sounds Pack** | 出处已核实：**Chequered Ink 在 itch.io 发布的免费包**（`ci.itch.io/400-sounds-pack`）。包内 14 个分类名与本包完全一致，下载来源的 Dropbox 地址也与该页「可先在 Dropbox 试听」的描述吻合 | ✅ **可商用、无需署名**；仅禁止把未改动的原件重新分发/转卖 |
-| Kenney UI（click1 / rollover2） | 本地已无原包 | CC0 通例，可商用；建议补一份下载页截图存档 |
+| Kenney Interface Sounds（click1）/ UI Audio（rollover2） | 两个包的 `License.txt` 均为 CC0，并写明署名「非必须」 | 可商用，无需署名 |
 | 本项目合成（裂变 / 闪电默认项） | 生成脚本在本会话，纯合成 | 自有，无第三方 |
 | Cut and Run | Incompetech CC BY 4.0 | 可用，必须在游戏内署名 |
 
