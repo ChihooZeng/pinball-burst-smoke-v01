@@ -11,7 +11,7 @@
 (() => {
 "use strict";
 
-const REVISION = "audio-qa-v21t-20261110";
+const REVISION = "audio-qa-v21u-20261111";
 const STORAGE = "pinball-audio-qa-v21-20261109";
 
 /* 事件表：唯一事实来源。调试台、JSON 导出、游戏路由都读这一份。 */
@@ -155,23 +155,54 @@ const EVENTS = Object.freeze({
     id: "arc",
     name: "连锁闪电",
     hint: "电弧每跳一次都会触发，已限流 220ms / 单层",
+    /* 11-11：第一批（噪声+带通一条路线）全部被否，这批换六种不同构造，实测暂无定论。
+       增益不是拍脑袋给的，是按「播放后 30ms 短时响度对齐 0.030」倒推的，
+       比击破（0.056）低约 5dB —— 它一次连锁要连响好几声，不能按单发音量配。 */
     variants: Object.freeze([
       Object.freeze({
-        id: "arc-soft-crackle",
-        label: "ARC-A · 电弧噼啪（0.13s）",
-        detail: "噪声带通 1500→520Hz 下扫 / 无音高 / 质心 834Hz / 4kHz 以上 0%",
-        url: "audio/arc-soft-crackle.wav",
-        gain: .24
+        id: "arc-b01-electrified-wood",
+        label: "ARC-B1 · 电化木裂（0.10s）",
+        detail: "砖块击破木料加速 1.35 + 高通 380Hz，尾补火花 / 质心 561Hz",
+        url: "audio/arc-b01-electrified-wood.wav",
+        gain: .23
       }),
       Object.freeze({
-        id: "arc-dry-tick",
-        label: "ARC-B · 干点（0.08s）",
-        detail: "木质短点 + 1.5ms 电流起音 / 质心 690Hz / 最不打扰",
-        url: "audio/arc-dry-tick.wav",
-        gain: .26
-      })
+        id: "arc-b02-metal-snap",
+        label: "ARC-B2 · 铁皮弹击（0.11s）",
+        detail: "金属共振 1650/2475/920Hz + 木质点击 / 质心 623Hz",
+        url: "audio/arc-b02-metal-snap.wav",
+        gain: .27
+      }),
+      Object.freeze({
+        id: "arc-b03-precharge",
+        label: "ARC-B3 · 反向预充（0.10s）",
+        detail: "26ms 吸气再炸开 / 质心 657Hz / 唯一有蓄电过程",
+        url: "audio/arc-b03-precharge.wav",
+        gain: .16
+      }),
+      Object.freeze({
+        id: "arc-b04-razor-buzz",
+        label: "ARC-B4 · 电钻嗡（0.10s）",
+        detail: "真实录音 razor_buzz 880ms 处最平滑的一段 / 质心 1451Hz / 4kHz 以上 2.9%",
+        url: "audio/arc-b04-razor-buzz.wav",
+        gain: .33
+      }),
+      Object.freeze({
+        id: "arc-b05-crack-snap",
+        label: "ARC-B5 · 干裂脆响（0.075s）",
+        detail: "真实录音 snap 主击穿处 / 质心 1154Hz",
+        url: "audio/arc-b05-crack-snap.wav",
+        gain: .19
+      }),
+      Object.freeze({
+        id: "arc-b06-low-pulse",
+        label: "ARC-B6 · 低频电击（0.12s）",
+        detail: "112Hz 冲击 + 640Hz 身体 + 4ms 电花 / 质心 111Hz",
+        url: "audio/arc-b06-low-pulse.wav",
+        gain: .16
+      }),
     ]),
-    defaultVariant: "arc-soft-crackle",
+    defaultVariant: "arc-b02-metal-snap",
     duck: .8,
     maxDuration: .16,
     cooldown: 220,

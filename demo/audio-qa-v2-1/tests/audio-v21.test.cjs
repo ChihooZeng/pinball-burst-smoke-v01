@@ -42,7 +42,13 @@ const AUDIO_SECONDS = {
   "audio/split-double-grain.wav": 0.120,
   "audio/split-low-thump.wav": 0.090,
   "audio/arc-soft-crackle.wav": 0.124989,
-  "audio/arc-dry-tick.wav": 0.074989
+  "audio/arc-dry-tick.wav": 0.074989,
+  "audio/arc-b01-electrified-wood.wav": 0.1,
+  "audio/arc-b02-metal-snap.wav": 0.11,
+  "audio/arc-b03-precharge.wav": 0.1,
+  "audio/arc-b04-razor-buzz.wav": 0.1,
+  "audio/arc-b05-crack-snap.wav": 0.075,
+  "audio/arc-b06-low-pulse.wav": 0.12
 };
 
 let pass = 0;
@@ -170,10 +176,13 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
     assert.equal(api.EVENTS.split.cooldown, 220, "裂变每次命中都触发，必须限流");
     assert.equal(api.EVENTS.split.maxVoices, 1);
     assert.equal(api.EVENTS.split.duck, .7);
-    assert.deepEqual(plain(map.arc.variants.map((v) => v.id)), ["arc-soft-crackle", "arc-dry-tick"]);
-    assert.equal(api.EVENTS.arc.defaultVariant, "arc-soft-crackle");
+    assert.deepEqual(plain(map.arc.variants.map((v) => v.id)),
+      ["arc-b01-electrified-wood", "arc-b02-metal-snap", "arc-b03-precharge",
+       "arc-b04-razor-buzz", "arc-b05-crack-snap", "arc-b06-low-pulse"]);
+    assert.equal(api.EVENTS.arc.defaultVariant, "arc-b02-metal-snap");
     assert.deepEqual(plain(api.EVENTS.arc.variants.map((v) => v.url)),
-      ["audio/arc-soft-crackle.wav", "audio/arc-dry-tick.wav"]);
+      ["audio/arc-b01-electrified-wood.wav", "audio/arc-b02-metal-snap.wav", "audio/arc-b03-precharge.wav",
+       "audio/arc-b04-razor-buzz.wav", "audio/arc-b05-crack-snap.wav", "audio/arc-b06-low-pulse.wav"]);
     assert.equal(api.EVENTS.arc.cooldown, 220, "电弧每次跳转都触发，必须限流");
     assert.equal(api.EVENTS.arc.maxVoices, 1);
     assert.equal(api.EVENTS.arc.duck, .8);
@@ -284,8 +293,12 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
       "audio/split-wood-flick.wav",
       "audio/split-double-grain.wav",
       "audio/split-low-thump.wav",
-      "audio/arc-soft-crackle.wav",
-      "audio/arc-dry-tick.wav",
+      "audio/arc-b01-electrified-wood.wav",
+      "audio/arc-b02-metal-snap.wav",
+      "audio/arc-b03-precharge.wav",
+      "audio/arc-b04-razor-buzz.wav",
+      "audio/arc-b05-crack-snap.wav",
+      "audio/arc-b06-low-pulse.wav",
       "audio/break-brick-d-deep.wav",
       "audio/clear-r02-piano-chime.wav",
       "audio/fail-power-down.wav",
@@ -629,10 +642,10 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
 
   test("页面用新版本参数，旧版本参数不残留", () => {
     for (const asset of ["sound-pack.js", "game.js", "qa-studio.js", "qa-studio.css"]) {
-      assert.ok(html.includes(asset + "?v=v21t"), asset + " 未升版");
+      assert.ok(html.includes(asset + "?v=v21u"), asset + " 未升版");
     }
     assert.ok(!html.includes("v21a"));
-    assert.ok(!html.includes("?v=v21b") && !html.includes("?v=v21c") && !html.includes("?v=v21d") && !html.includes("?v=v21f") && !html.includes("?v=v21g") && !html.includes("?v=v21h") && !html.includes("?v=v21i") && !html.includes("?v=v21j") && !html.includes("?v=v21k") && !html.includes("?v=v21l") && !html.includes("?v=v21m") && !html.includes("?v=v21n") && !html.includes("?v=v21o") && !html.includes("?v=v21p") && !html.includes("?v=v21q") && !html.includes("?v=v21r") && !html.includes("?v=v21s"), "旧版本参数残留");
+    assert.ok(!html.includes("?v=v21b") && !html.includes("?v=v21c") && !html.includes("?v=v21d") && !html.includes("?v=v21f") && !html.includes("?v=v21g") && !html.includes("?v=v21h") && !html.includes("?v=v21i") && !html.includes("?v=v21j") && !html.includes("?v=v21k") && !html.includes("?v=v21l") && !html.includes("?v=v21m") && !html.includes("?v=v21n") && !html.includes("?v=v21o") && !html.includes("?v=v21p") && !html.includes("?v=v21q") && !html.includes("?v=v21r") && !html.includes("?v=v21s") && !html.includes("?v=v21t"), "旧版本参数残留");
     assert.ok(!html.includes("audioqa2"));
   });
 
