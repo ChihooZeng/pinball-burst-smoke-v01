@@ -17,7 +17,7 @@
 | 分支 | `experiment/audio-qa-v2-1-20261109` |
 | 分支 HEAD | 以 `git rev-parse --short HEAD` 为准；其中必须包含 `9054a2e`（音效合并提交） |
 | 线上基线 | `origin/main` = `84b1a05`（回滚点） |
-| 领先提交 | 23 个（0 落后，可快进合并） |
+| 领先提交 | 以 `git status -sb` 显示的 `ahead N` 为准（N ≥ 24），**0 落后，可快进合并** |
 | 改动规模 | 65 files, +5937 / -27 |
 | 线上站点 | GitHub Pages，根目录仍是旧版 `弹球暴走 v0.4.1` |
 | 新游戏位置 | 仓库内 `demo/v1/`（不是站点根） |
