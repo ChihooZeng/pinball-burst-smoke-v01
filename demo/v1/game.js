@@ -15,7 +15,7 @@
   function store(key,value){try{localStorage.setItem(key,value);}catch(e){}}
   function applySkillSide(){document.querySelector('.shell').classList.toggle('skill-left',skillSide==='left');}
   function markSkillUsed(){if(firstSkillUsed)return;firstSkillUsed=true;store(FIRST_SKILL_KEY,'done');document.getElementById('skillGuide').classList.add('hidden');}
-  let build,events=[],counters,arcCharge=0,lastArcRelease=-99,fanClock=0,gunFlash=0,lastShotAngle=0;
+  let build,events=[],counters,arcCharge=0,lastArcRelease=-99,fanClock=0,gunFlash=0,turretRecoil=0,lastShotAngle=0;
   let collisionChecks=0,physicsCostMs=0,physicsSteps=0,maxPhysicsMs=0;
   const initialSeed=Number.isFinite(window.__PINBALL_SEED__)?window.__PINBALL_SEED__>>>0:null;
   function record(type,data={}){events.push({type,time:+elapsed.toFixed(4),wave,...data});if(events.length>6000)events.shift();}
@@ -132,7 +132,9 @@
     return HP_COLOR_CYCLE[band%HP_COLOR_CYCLE.length];
   }
   const canvas = document.querySelector("#game"), ctx = canvas.getContext("2d");
-  canvas.width=W;canvas.height=H;
+  /* V3.1 接入：画布后备像素按设备像素比放大（上限 2），否则 360 宽画面被整屏拉伸会糊成像素。 */
+  const RENDER_DPR=Math.max(1,Math.min(window.devicePixelRatio||1,2));
+  canvas.width=Math.round(W*RENDER_DPR);canvas.height=Math.round(H*RENDER_DPR);
   const $ = id => document.querySelector("#" + id);
   const ui = {
     wave: $("wave"), score: $("score"), rate: $("rate"), balls: $("balls"),
@@ -141,6 +143,22 @@
     choiceWave: $("choiceWave"), build: $("buildText"), final: $("finalStats")
   };
   const shooter = {x: W / 2, y: H - 37};
+
+  /* V3.1 炮台：底座/主体/核心固定，只有炮管绕锚点旋转。
+     素材由 experiments/turret-v31-preview/turret.svg 分层导出，1 游戏单位 = 6 素材像素。
+     锚点 (256,196) 在出球基准点上方 8 单位，炮口 (256,56) 距锚点 23.33 单位。 */
+  const TUR_PIVOT_LIFT=8, TUR_MUZZLE=23.33, TUR_RECOIL=2;
+  const turretParts=[
+    {src:"./assets/turret-v31/assembly@2x.png",x:120,y:160,w:272,h:292,img:null},
+    {src:"./assets/turret-v31/barrel@2x.png",x:214,y:44,w:84,h:176,img:null}
+  ];
+  let turretReady=0;
+  for(const part of turretParts){
+    const img=new Image();
+    img.onload=()=>{part.img=img;part.lx=(part.x-256)/6;part.ly=(part.y-196)/6;part.lw=part.w/6;part.lh=part.h/6;turretReady++;};
+    img.onerror=()=>{part.failed=true;turretReady++;};
+    img.src=part.src;
+  }
   const palette = ["#498cc2", "#518eae", "#8475c9", "#ba8e5a", "#637ab0"];
   const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
   let bricks, balls, particles, giant, aim, activePointer, wave, score;
@@ -452,11 +470,11 @@
   }
   function reset(){
     H=Math.round(Math.max(560,Math.min(900,360*(window.innerHeight||560)/(window.innerWidth||360))));
-    DANGER_Y=H-105;SUMMON_SAFE_BOTTOM=DANGER_Y-88;canvas.height=H;shooter.y=H-37;
+    DANGER_Y=H-105;SUMMON_SAFE_BOTTOM=DANGER_Y-88;canvas.height=Math.round(H*RENDER_DPR);shooter.y=H-37;
     WAVE_START_Y=window.innerWidth?Math.max(84,Math.ceil((document.querySelector(".topbar").getBoundingClientRect().height+28)*W/window.innerWidth)):84;
     pausedFrom=null;battleTime=0;waveReports=[];bankDamage=0;lockBackground(false);$("pauseOverlay").classList.add("hidden");
     window.PinballGameAudio?.stopBgm?.(0);
-    gunTarget=null;gunStreak=0;gunLast=-99;precisionTurns=focusDamage=gunBonusDamage=weakpointDamage=weakpointCharge=damageDealt=shotsWithContact=0;build=Build.createState(initialSeed===null?Math.floor(Math.random()*4294967296):initialSeed);events=[];arcCharge=0;lastArcRelease=-99;fanClock=0;gunFlash=0;
+    gunTarget=null;gunStreak=0;gunLast=-99;precisionTurns=focusDamage=gunBonusDamage=weakpointDamage=weakpointCharge=damageDealt=shotsWithContact=0;build=Build.createState(initialSeed===null?Math.floor(Math.random()*4294967296):initialSeed);events=[];arcCharge=0;lastArcRelease=-99;fanClock=0;gunFlash=0;turretRecoil=0;
     counters={splitChildren:0,arcReleases:0,arcSingleDamage:0,budgetReclaims:0,suppressedShots:0,suppressedChildren:0,maxBallsAlive:0,wallBounces:0,shotsByBuild:{base:0,split:0,arc:0,gun:0}};
     collisionChecks=0;physicsCostMs=0;physicsSteps=0;maxPhysicsMs=0;
     wave=1;score=0;phase="ready";charge=0;elapsed=0;level=1;xp=0;xpGoal=34;
@@ -674,7 +692,7 @@
   }
   function makeBall(angle,mini=false){
     const t=Build.tuning(build),buffSpeed=Build.buffModifiers(build).speed,speed=t.speed*buffSpeed;
-    return {x:shooter.x,y:shooter.y-28,vx:Math.sin(angle)*speed,vy:-Math.cos(angle)*speed,r:mini?SHOT_HIT_RADIUS*.83:SHOT_HIT_RADIUS,visualR:mini?SHOT_RADIUS*.83:SHOT_RADIUS,
+    return {x:shooter.x+Math.sin(angle)*TUR_MUZZLE,y:shooter.y-TUR_PIVOT_LIFT-Math.cos(angle)*TUR_MUZZLE,vx:Math.sin(angle)*speed,vy:-Math.cos(angle)*speed,r:mini?SHOT_HIT_RADIUS*.83:SHOT_HIT_RADIUS,visualR:mini?SHOT_RADIUS*.83:SHOT_RADIUS,
       life:0,maxLife:mini?Math.min(CFG.childTTL,t.ttl):t.ttl,trail:[],contacts:0,mini,splitDone:false,drill:false,
       drillLeft:0,chargeStacks:0,huntsLeft:hunterLevel,damage:t.damage,
       buffSpeed,lastHitId:null,lastHitLife:-99,lastArcAt:-99};
@@ -725,7 +743,7 @@
     if(build.coreBranch==="gun-b")offset=Math.sin(fanClock*Math.PI*2/CFG.fanPeriod)*CFG.fanAngle;
     lastShotAngle=aim+offset;const shot=makeBall(lastShotAngle);
     if(drillLevel>0&&shotNumber%(drillLevel===1?4:3)===0){shot.drill=true;shot.drillLeft=drillLevel===1?3:5;shot.r=SHOT_HIT_RADIUS*1.35;shot.visualR=SHOT_RADIUS*1.35;powerShots++;playSfx("drill");}
-    balls.push(shot);gunFlash=.07;counters.shotsByBuild[Build.preferred(build)||'base']++;
+    balls.push(shot);gunFlash=.07;turretRecoil=1;counters.shotsByBuild[Build.preferred(build)||'base']++;
     counters.maxBallsAlive=Math.max(counters.maxBallsAlive,balls.length);
     record("shot",{angle:+(aim+offset).toFixed(5),ttl:shot.maxLife,interval:t.interval});
     // V2.1: 机枪射击（每发开火）不再独立发声。
@@ -735,12 +753,12 @@
     if (phase !== "playing" || !build.seedAbility || emptyLatch || charge < selectedActive.maxCharge || giant || selectedActive.kind!=="giant") return false;
     unlockSound();
     charge=0;skillsUsed++;markSkillUsed();
-    giant={x:shooter.x,y:shooter.y-27,
+    giant={x:shooter.x+Math.sin(aim)*TUR_MUZZLE,y:shooter.y-TUR_PIVOT_LIFT-Math.cos(aim)*TUR_MUZZLE,
       vx:Math.sin(aim)*GIANT_SPEED,vy:-Math.cos(aim)*GIANT_SPEED,
       r:14,life:0,collisions:0,bounces:0,pierceLeft:GIANT_PIERCE_LIMIT,lastBounceFx:-100,trail:[],lastHitId:null,lastHitLife:-99};
-    burst(shooter.x,shooter.y-27,"#ffd482",24);
+    burst(giant.x,giant.y,"#ffd482",24);
     playSfx("giant");setState("超载冲锋：限时冲破 10 块，结束后散出追击球！");updateUI();
-    juice.onGiant(shooter.x,shooter.y-27);tapHaptic("heavy");
+    juice.onGiant(giant.x,giant.y);tapHaptic("heavy");
     return true;
   }
   function activateEquippedSkill(){
@@ -1409,7 +1427,7 @@
     generateSurvival(dt);
     if(phase!=="playing")return;
     if(!emptyLatch&&!bossVictory){
-      fanClock+=dt;gunFlash=Math.max(0,gunFlash-dt);
+      fanClock+=dt;gunFlash=Math.max(0,gunFlash-dt);turretRecoil=Math.max(0,turretRecoil-dt*5);
       if(autoSkill&&build.seedAbility&&charge>=MAX_CHARGE&&!giant)activateEquippedSkill();
       const fireInterval=Build.tuning(build).interval/Build.buffModifiers(build).rate;
       if(shootClock>=fireInterval){shootClock-=fireInterval;fire();}
@@ -1443,6 +1461,7 @@
   }
   function rounded(x,y,w,h,r) {ctx.beginPath();ctx.roundRect(x,y,w,h,r);}
   function draw() {
+    ctx.setTransform(RENDER_DPR,0,0,RENDER_DPR,0,0);
     ctx.clearRect(0,0,W,H);
     ctx.save();
     // Existing v0.5 giant-only shake remains when additional effects are off.
@@ -1646,11 +1665,25 @@
       ctx.fillStyle=combo>=5?"#ffcf8d":"#a6efd9";ctx.font="bold 17px system-ui";ctx.textAlign="center";
       ctx.fillText(combo+" COMBO",W/2,335);ctx.globalAlpha=1;
     }
-    ctx.save();ctx.translate(shooter.x,shooter.y);ctx.rotate(build.coreBranch==="gun-b"?aim+Math.sin(fanClock*Math.PI*2/CFG.fanPeriod)*CFG.fanAngle:aim);
-    if(gunFlash>0){ctx.fillStyle=Build.tuning(build).isGun?"#ffda84":"#9ce9ff";ctx.beginPath();ctx.arc(0,-32,3+gunFlash*50,0,Math.PI*2);ctx.fill();}
-    ctx.shadowColor="#5be9fb";ctx.shadowBlur=16;ctx.fillStyle="#398ba4";
-    rounded(-15,-10,30,30,9);ctx.fill();ctx.fillStyle="#b7edff";
-    rounded(-5,-29,10,27,4);ctx.fill();ctx.restore();
+    // V3.1：机体（底座+主体+核心）固定不转，炮管绕锚点独立旋转
+    const cannonAim=build.coreBranch==="gun-b"?aim+Math.sin(fanClock*Math.PI*2/CFG.fanPeriod)*CFG.fanAngle:aim;
+    const turretX=shooter.x,turretY=shooter.y-TUR_PIVOT_LIFT;
+    if(turretReady===2&&turretParts[0].img&&turretParts[1].img){
+      const A=turretParts[0],B=turretParts[1];
+      ctx.drawImage(A.img,turretX+A.lx,turretY+A.ly,A.lw,A.lh);
+      ctx.save();ctx.translate(turretX,turretY);ctx.rotate(cannonAim);
+      if(turretRecoil>0)ctx.translate(0,turretRecoil*TUR_RECOIL);
+      ctx.drawImage(B.img,B.lx,B.ly,B.lw,B.lh);
+      if(gunFlash>0){ctx.fillStyle=Build.tuning(build).isGun?"#ffda84":"#9ce9ff";ctx.beginPath();ctx.arc(0,-TUR_MUZZLE-3,2+gunFlash*34,0,Math.PI*2);ctx.fill();}
+      ctx.restore();
+    }else{
+      // 素材未就绪/加载失败：保留旧胶囊炮塔
+      ctx.save();ctx.translate(shooter.x,shooter.y);ctx.rotate(cannonAim);
+      if(gunFlash>0){ctx.fillStyle=Build.tuning(build).isGun?"#ffda84":"#9ce9ff";ctx.beginPath();ctx.arc(0,-32,3+gunFlash*50,0,Math.PI*2);ctx.fill();}
+      ctx.shadowColor="#5be9fb";ctx.shadowBlur=16;ctx.fillStyle="#398ba4";
+      rounded(-15,-10,30,30,9);ctx.fill();ctx.fillStyle="#b7edff";
+      rounded(-5,-29,10,27,4);ctx.fill();ctx.restore();
+    }
     ctx.fillStyle="#a6c5d9";ctx.textAlign="center";ctx.font="12px system-ui";
     
     ctx.restore();
