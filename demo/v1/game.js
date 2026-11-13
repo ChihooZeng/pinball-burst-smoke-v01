@@ -146,10 +146,13 @@
 
   /* V3.1 炮台：底座/主体/核心固定，只有炮管绕锚点旋转。
      素材由 experiments/turret-v31-preview/turret.svg 分层导出，1 游戏单位 = 6 素材像素。
-     锚点 (256,196) 在出球基准点上方 8 单位，炮口 (256,56) 距锚点 23.33 单位。 */
+     锚点 (256,196) 在出球基准点上方 8 单位，炮口 (256,56) 距锚点 23.33 单位。
+     x/y/w/h 必须填素材在 512 画布里的**裁剪原点与尺寸**（viewBox 单位），不能随手改成"看起来居中"的数：
+     源图里机体中心 255.75、底座中心 255.75、核心中心 255.5、炮管中心 256，全部同轴，
+     按裁剪原点落位后三条中心轴才会与旋转轴 (256) 重合。 */
   const TUR_PIVOT_LIFT=8, TUR_MUZZLE=23.33, TUR_RECOIL=2;
   const turretParts=[
-    {src:"./assets/turret-v31/assembly@2x.png",x:120,y:160,w:272,h:292,img:null},
+    {src:"./assets/turret-v31/assembly@2x.png",x:138,y:160,w:272,h:292,img:null},
     {src:"./assets/turret-v31/barrel@2x.png",x:214,y:44,w:84,h:176,img:null}
   ];
   let turretReady=0;
