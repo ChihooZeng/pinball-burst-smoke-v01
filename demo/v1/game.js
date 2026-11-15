@@ -132,9 +132,21 @@
     return HP_COLOR_CYCLE[band%HP_COLOR_CYCLE.length];
   }
   const canvas = document.querySelector("#game"), ctx = canvas.getContext("2d");
-  /* V3.1 接入：画布后备像素按设备像素比放大（上限 2），否则 360 宽画面被整屏拉伸会糊成像素。 */
-  const RENDER_DPR=Math.max(1,Math.min(window.devicePixelRatio||1,2));
-  canvas.width=Math.round(W*RENDER_DPR);canvas.height=Math.round(H*RENDER_DPR);
+  /* 后备像素 = CSS 实际显示宽 × 有效 DPR（上限 2），逻辑坐标仍是 360×H。
+     之前用 W×dpr 充当后备宽，CSS 把 360 宽拉到 390/430 时整块画面还要再放大 8%~19%，细节被二次插值。
+     这里每次都从 getBoundingClientRect() 重新换算，resize 多次也不会累积放大。 */
+  const RENDER_DPR_MAX=2;
+  let renderScale=1;
+  function fitCanvas(){
+    const box=canvas.getBoundingClientRect();
+    const cssW=box.width>0?box.width:W;
+    const dpr=Math.max(1,Math.min(window.devicePixelRatio||1,RENDER_DPR_MAX));
+    const bw=Math.max(1,Math.round(cssW*dpr));
+    renderScale=bw/W;
+    canvas.width=bw;
+    canvas.height=Math.max(1,Math.round(H*renderScale));
+  }
+  fitCanvas();
   const $ = id => document.querySelector("#" + id);
   const ui = {
     wave: $("wave"), score: $("score"), rate: $("rate"), balls: $("balls"),
@@ -473,7 +485,7 @@
   }
   function reset(){
     H=Math.round(Math.max(560,Math.min(900,360*(window.innerHeight||560)/(window.innerWidth||360))));
-    DANGER_Y=H-105;SUMMON_SAFE_BOTTOM=DANGER_Y-88;canvas.height=Math.round(H*RENDER_DPR);shooter.y=H-37;
+    DANGER_Y=H-105;SUMMON_SAFE_BOTTOM=DANGER_Y-88;fitCanvas();shooter.y=H-37;
     WAVE_START_Y=window.innerWidth?Math.max(84,Math.ceil((document.querySelector(".topbar").getBoundingClientRect().height+28)*W/window.innerWidth)):84;
     pausedFrom=null;battleTime=0;waveReports=[];bankDamage=0;lockBackground(false);$("pauseOverlay").classList.add("hidden");
     window.PinballGameAudio?.stopBgm?.(0);
@@ -732,6 +744,11 @@
     homingTurns++;playSfx("hunt");
     return true;
   }
+  /* 炮管当前实际角度：炮管绘制、机枪扇形射击、巨型球三者共用同一来源，
+     避免视觉层与发射层各自重算扇形相位导致方向不一致。 */
+  function cannonAngle(){
+    return build.coreBranch==="gun-b"?aim+Math.sin(fanClock*Math.PI*2/CFG.fanPeriod)*CFG.fanAngle:aim;
+  }
   function fire(){
     if(phase!=="playing"||emptyLatch)return false;
     const t=Build.tuning(build);
@@ -743,7 +760,7 @@
     }
     const shotNumber=++shotsFired;let offset=0;
     if(build.coreBranch==="gun-a")offset=(shotNumber%2?1:-1)*.012;
-    if(build.coreBranch==="gun-b")offset=Math.sin(fanClock*Math.PI*2/CFG.fanPeriod)*CFG.fanAngle;
+    if(build.coreBranch==="gun-b")offset=cannonAngle()-aim;
     lastShotAngle=aim+offset;const shot=makeBall(lastShotAngle);
     if(drillLevel>0&&shotNumber%(drillLevel===1?4:3)===0){shot.drill=true;shot.drillLeft=drillLevel===1?3:5;shot.r=SHOT_HIT_RADIUS*1.35;shot.visualR=SHOT_RADIUS*1.35;powerShots++;playSfx("drill");}
     balls.push(shot);gunFlash=.07;turretRecoil=1;counters.shotsByBuild[Build.preferred(build)||'base']++;
@@ -756,8 +773,10 @@
     if (phase !== "playing" || !build.seedAbility || emptyLatch || charge < selectedActive.maxCharge || giant || selectedActive.kind!=="giant") return false;
     unlockSound();
     charge=0;skillsUsed++;markSkillUsed();
-    giant={x:shooter.x+Math.sin(aim)*TUR_MUZZLE,y:shooter.y-TUR_PIVOT_LIFT-Math.cos(aim)*TUR_MUZZLE,
-      vx:Math.sin(aim)*GIANT_SPEED,vy:-Math.cos(aim)*GIANT_SPEED,
+    // 出生点与运动方向锁定同一帧的炮管角度，避免两个函数读到不同相位
+    const shotAng=cannonAngle();
+    giant={x:shooter.x+Math.sin(shotAng)*TUR_MUZZLE,y:shooter.y-TUR_PIVOT_LIFT-Math.cos(shotAng)*TUR_MUZZLE,
+      vx:Math.sin(shotAng)*GIANT_SPEED,vy:-Math.cos(shotAng)*GIANT_SPEED,
       r:14,life:0,collisions:0,bounces:0,pierceLeft:GIANT_PIERCE_LIMIT,lastBounceFx:-100,trail:[],lastHitId:null,lastHitLife:-99};
     burst(giant.x,giant.y,"#ffd482",24);
     playSfx("giant");setState("超载冲锋：限时冲破 10 块，结束后散出追击球！");updateUI();
@@ -1464,7 +1483,7 @@
   }
   function rounded(x,y,w,h,r) {ctx.beginPath();ctx.roundRect(x,y,w,h,r);}
   function draw() {
-    ctx.setTransform(RENDER_DPR,0,0,RENDER_DPR,0,0);
+    ctx.setTransform(renderScale,0,0,renderScale,0,0);
     ctx.clearRect(0,0,W,H);
     ctx.save();
     // Existing v0.5 giant-only shake remains when additional effects are off.
@@ -1669,7 +1688,7 @@
       ctx.fillText(combo+" COMBO",W/2,335);ctx.globalAlpha=1;
     }
     // V3.1：机体（底座+主体+核心）固定不转，炮管绕锚点独立旋转
-    const cannonAim=build.coreBranch==="gun-b"?aim+Math.sin(fanClock*Math.PI*2/CFG.fanPeriod)*CFG.fanAngle:aim;
+    const cannonAim=cannonAngle();
     const turretX=shooter.x,turretY=shooter.y-TUR_PIVOT_LIFT;
     if(turretReady===2&&turretParts[0].img&&turretParts[1].img){
       const A=turretParts[0],B=turretParts[1];
@@ -1757,7 +1776,7 @@
   $("again").addEventListener("click",()=>{unlockSound();reset();begin();});
   $("reset").addEventListener("click",()=>{unlockSound();reset();begin();});
   document.addEventListener?.("visibilitychange",()=>{if(document.hidden)pause();accumulator=0;lastFrame=performance.now();});
-  window.addEventListener("resize",()=>{pause();accumulator=0;lastFrame=performance.now();});
+  window.addEventListener("resize",()=>{fitCanvas();pause();accumulator=0;lastFrame=performance.now();});
   window.addEventListener("pagehide",()=>{pause();accumulator=0;lastFrame=performance.now();});
   window.addEventListener("keydown",e=>{
     if(phase==="paused"&&e.code==="Tab"){
