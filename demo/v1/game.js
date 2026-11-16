@@ -1525,11 +1525,12 @@
     rounded(x+.65,y+.65,w-1.3,h-1.3,r);ctx.stroke();
   }
   function brickText(x,y,w,h,text,ink,size){
+    // 参考图的数字是纯白 + 极轻投影，没有黑描边。
+    // 旧实现 1.9px 描边在 11.5px 字号上等于给笔画套了近 4 设备像素黑框，三位数会糊成一团。
     ctx.save();
     ctx.font="900 "+size+"px system-ui";ctx.textAlign="center";ctx.textBaseline="middle";
-    ctx.lineWidth=1.9;ctx.strokeStyle="rgba(2,8,16,.62)";
-    ctx.strokeText(text,x+w/2,y+h/2+.5);
-    ctx.fillStyle=ink;ctx.fillText(text,x+w/2,y+h/2+.5);
+    ctx.shadowColor="rgba(0,7,16,.42)";ctx.shadowBlur=2;ctx.shadowOffsetY=.6;
+    ctx.fillStyle=ink;ctx.fillText(text,x+w/2,y+h/2+.4);
     ctx.restore();
   }
   // 裂纹只出现在四角，绝不越过中心数字区
@@ -1796,14 +1797,14 @@
         ctx.lineWidth=e.hard?2.4:1.5;
         ctx.beginPath();ctx.arc(e.x,e.y,5+(e.hard?27:15)*t,0,Math.PI*2);ctx.stroke();
       }
+      ctx.save();
       for(const e of floatTexts){
         const t=clamp(e.age/.56,0,1);
         ctx.globalAlpha=1-t;ctx.textAlign="center";ctx.font="900 10.5px system-ui";
-        ctx.lineWidth=2.4;ctx.strokeStyle="rgba(2,8,16,.8)";
-        ctx.strokeText(e.text,e.x,e.y-8-t*23);
+        ctx.shadowColor="rgba(0,7,16,.5)";ctx.shadowBlur=2;ctx.shadowOffsetY=.5;
         ctx.fillStyle=e.color;ctx.fillText(e.text,e.x,e.y-8-t*23);
       }
-      ctx.globalAlpha=1;
+      ctx.restore();
     }
     if(combo>=2 && comboVisibility>0){
       const ct=clamp(comboVisibility,0,1);
