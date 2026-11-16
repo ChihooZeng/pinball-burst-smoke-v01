@@ -99,16 +99,36 @@
     {cut:[.23,.55,.89],tiers:[[1,1],[9,21],[25,43],[46,62]]},
     {cut:[.23,.55,.88],tiers:[[1,1],[11,24],[30,50],[53,72]]}
   ];
-  const HP_COLOR_CYCLE=[
-    "#257da9", // 1 - dark blue-cyan
-    "#218fa7", // 2-3 teal
-    "#428bbd", // 4-7 blue
-    "#7972c5", // 8-15 violet
-    "#bb77ad", // 16-31 magenta
-    "#cc817b", // 32-63 coral
-    "#b9985e", // 64-127 warm brass
-    "#4c9e90"  // 128-255 jade, then loop
-  ];
+  /* ===== 砖块视觉规范 V1.0 =====
+     参考图：experiments/brick-art-preview/reference/brick-art-v1.png
+     统一管线：深色底 → 霓虹描边 → 外发光 → 数字/图标 → 状态叠加（受击/裂纹/召唤）。
+     耐久按 4 档 8 级递进且不回环（旧实现 band%8 会让 HP64 与 HP1 同色）。 */
+  const BRICK_ART={
+    // edge=霓虹描边色，ft/fb=填充的上/下色（取色自参考图的实际渐变）
+    ramp:[
+      {max:1,   edge:"#3DE8D2", ft:"#04928A", fb:"#025558"}, // 1      低耐久 青绿
+      {max:3,   edge:"#57F2E2", ft:"#038F83", fb:"#035557"}, // 2-3
+      {max:5,   edge:"#4FD6FA", ft:"#0273A9", fb:"#033E65"}, // 4-5    中低 青蓝
+      {max:10,  edge:"#3FDBFF", ft:"#036CBC", fb:"#023E74"}, // 6-10
+      {max:20,  edge:"#8CB8FF", ft:"#0D4CDA", fb:"#072B81"}, // 11-20  中 紫蓝
+      {max:40,  edge:"#C08FFF", ft:"#5C23CF", fb:"#341981"}, // 21-40
+      {max:80,  edge:"#F79BFA", ft:"#AA2190", fb:"#63175E"}, // 41-80  高 粉紫
+      {max:1e9, edge:"#FFB6F2", ft:"#B02481", fb:"#6E1C59"}  // 81+
+    ],
+    special:{edge:"#4BEB9B", ft:"#0FA765", fb:"#0B5638"},   // 能量砖
+    elite:{edge:"#C39BFF", ft:"#6B2FD0", fb:"#44218A"},     // 精英砖
+    summon:{edge:"#4FC6FF", ft:"#0A78B8", fb:"#075A85"},    // 召唤砖
+    // Boss 保持深色底 + 霓虹框（与普通砖拉开层级）
+    boss:{edge:"#B26CFF", glow:"#A855F7", base:"#1D0B3A"},
+    finalBoss:{edge:"#FF7AD9", glow:"#F472B6", base:"#2E0A2A"},
+    fillTop:.66, fillBottom:.40,
+    radius:4
+  };
+  function brickStyle(hp,special){
+    if(special)return BRICK_ART.special;
+    for(let i=0;i<BRICK_ART.ramp.length;i++)if(hp<=BRICK_ART.ramp[i].max)return BRICK_ART.ramp[i];
+    return BRICK_ART.ramp[BRICK_ART.ramp.length-1];
+  }
   function hash01(n,r,c,salt=0){
     let h=(((n+17)*83492791)^((r+31)*73856093)^((c+61)*19349663)^(salt*374761393))>>>0;
     h=Math.imul(h^(h>>>16),0x7feb352d)>>>0;
@@ -123,14 +143,7 @@
     const [low,high]=profile.tiers[tier];
     return low+Math.floor(hash01(n,r,c,13)*(high-low+1));
   }
-  function brickColor(hp,special){
-    if(special)return "#3eba94";
-    // Readable fixed color cycle: distinct early tiers; later 12-HP bands
-    // walk around the same eight colors rather than sticking at orange.
-    const band=hp<=1?0:hp<=3?1:hp<=7?2:hp<=15?3:
-      4+Math.floor((hp-16)/12);
-    return HP_COLOR_CYCLE[band%HP_COLOR_CYCLE.length];
-  }
+  function brickColor(hp,special){return brickStyle(hp,special).edge;}
   const canvas = document.querySelector("#game"), ctx = canvas.getContext("2d");
   /* 后备像素 = CSS 实际显示宽 × 有效 DPR（上限 2），逻辑坐标仍是 360×H。
      之前用 W×dpr 充当后备宽，CSS 把 360 宽拉到 390/430 时整块画面还要再放大 8%~19%，细节被二次插值。
@@ -205,7 +218,7 @@
   let heavyHits=0,giantPiercings=0,giantHeavyBounces=0,powerShots=0,tailSoftens=0;
   // Visual feedback has its own capped state; core physics never stops for animation.
   const reducedMotion = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
-  let impactRings=[], floatTexts=[], combo=0, maxCombo=0, lastBreak=-99, comboVisibility=0, shake=0, hitCount=0;
+  let impactRings=[], floatTexts=[], breakFlashes=[], combo=0, maxCombo=0, lastBreak=-99, comboVisibility=0, shake=0, hitCount=0;
   let impactHaptics=true,lastHapticAt=-10000;
   const juice=window.PinballJuice.create({W,H,reducedMotion});
   const impactMode=$("impactMode");
@@ -622,12 +635,18 @@
   function addCharge(n) {
     charge = clamp(charge + n, 0, MAX_CHARGE);
   }
-  function burst(x, y, color, n = 9) {
+  function burst(x, y, color, n = 9, shard = false) {
     for (let i = 0; i < (reducedMotion ? Math.ceil(n/3) : n); i++) {
       const a = Math.random() * Math.PI * 2, speed = 32 + Math.random() * 105;
-      particles.push({x, y, vx: Math.cos(a) * speed, vy: Math.sin(a) * speed, life: .42, color});
+      particles.push({x, y, vx: Math.cos(a) * speed, vy: Math.sin(a) * speed, life: .42, color,
+        rot: Math.random() * 6.283, spin: (Math.random() - .5) * 16, shard});
     }
     if (particles.length > 220) particles.splice(0, particles.length - 220);
+  }
+  function flashBurst(x,y,color){
+    if(reducedMotion)return;
+    breakFlashes.push({x,y,age:0,color});
+    if(breakFlashes.length>16)breakFlashes.shift();
   }
   function impactVisual(x,y,hard=false) {
     if (reducedMotion) return;
@@ -685,7 +704,8 @@
     if(combo>=3&&combo%3===0)numberPop(cx,cy-12,combo+" 连碎!","#a5f8df");
     if(source==="giant")shake=Math.max(shake,.11);
     juice.onBreak(b,{combo,source,impact});tapHaptic(source==="giant"?"heavy":"break");
-    burst(cx,cy,b.color,source==="giant"?19:12);
+    flashBurst(cx,cy,b.color);
+    burst(cx,cy,b.color,source==="giant"?19:12,true);
     // Secondary explosions and lightning cannot snowball the active-skill meter.
     if(source==="normal"||source==="drill")addCharge(b.special?34:8);
     if(b.special&&(source==="normal"||source==="drill"))setState("能量砖！超载冲锋充能");
@@ -1460,7 +1480,8 @@
       updateGiant(dt);
     }
     if(bossVictory){lightningArcs=[];lightningChains=[];}
-    particles.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=.97;p.vy*=.97;p.life-=dt;});
+    particles.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=.97;p.vy*=.97;p.life-=dt;p.rot=(p.rot||0)+(p.spin||0)*dt;});
+    breakFlashes.forEach(f=>f.age+=dt);breakFlashes=breakFlashes.filter(f=>f.age<.2);
     particles=particles.filter(p=>p.life>0);
     for(const b of bricks)if(b.alive&&b.bonk>0)b.bonk=Math.max(0,b.bonk-dt);
     impactRings.forEach(e=>e.age+=dt);impactRings=impactRings.filter(e=>e.age<(e.hard?.24:.15));
@@ -1482,6 +1503,110 @@
     const cost=performance.now()-stepStart;physicsCostMs+=cost;physicsSteps++;maxPhysicsMs=Math.max(maxPhysicsMs,cost);
   }
   function rounded(x,y,w,h,r) {ctx.beginPath();ctx.roundRect(x,y,w,h,r);}
+
+  /* —— 砖块绘制基础件：所有砖块共用同一套"深色底 + 霓虹边 + 数字"语言 —— */
+  function withAlpha(hex,a){
+    const n=parseInt(hex.slice(1),16);
+    return "rgba("+((n>>16)&255)+","+((n>>8)&255)+","+(n&255)+","+a+")";
+  }
+  function brickTile(x,y,w,h,r,style,blur){
+    // 参考图里砖块是"发光的彩色块"：霓虹色半透明填充 + 上亮下暗的轻微渐变
+    ctx.save();
+    ctx.shadowColor=style.edge;ctx.shadowBlur=blur;
+    const g=ctx.createLinearGradient(0,y,0,y+h);
+    g.addColorStop(0,style.ft);g.addColorStop(1,style.fb);
+    ctx.fillStyle=g;rounded(x,y,w,h,r);ctx.fill();
+    ctx.restore();
+    // 顶部内侧高光：让砖块有厚度，但不加纹理
+    ctx.save();ctx.globalAlpha=.13;ctx.fillStyle="#ffffff";
+    rounded(x+1.6,y+1.4,w-3.2,Math.min(5.5,h*.28),Math.max(1,r-1));ctx.fill();ctx.restore();
+    // 霓虹描边
+    ctx.strokeStyle=style.edge;ctx.lineWidth=1.3;
+    rounded(x+.65,y+.65,w-1.3,h-1.3,r);ctx.stroke();
+  }
+  function brickText(x,y,w,h,text,ink,size){
+    ctx.save();
+    ctx.font="900 "+size+"px system-ui";ctx.textAlign="center";ctx.textBaseline="middle";
+    ctx.lineWidth=1.9;ctx.strokeStyle="rgba(2,8,16,.62)";
+    ctx.strokeText(text,x+w/2,y+h/2+.5);
+    ctx.fillStyle=ink;ctx.fillText(text,x+w/2,y+h/2+.5);
+    ctx.restore();
+  }
+  // 裂纹只出现在四角，绝不越过中心数字区
+  function brickCracks(b){
+    const x=b.x,y=b.y,w=b.w,h=b.h;
+    ctx.save();ctx.globalAlpha=.9;ctx.strokeStyle="#ffe6fb";ctx.lineWidth=1.05;ctx.lineJoin="round";
+    ctx.beginPath();
+    ctx.moveTo(x+1,y+5);ctx.lineTo(x+4.6,y+4);ctx.lineTo(x+3.4,y+9);ctx.lineTo(x+7.6,y+8);
+    ctx.moveTo(x+w-1,y+h-5);ctx.lineTo(x+w-5,y+h-4);ctx.lineTo(x+w-4,y+h-9);
+    if(h>=20){ctx.moveTo(x+w-1,y+4);ctx.lineTo(x+w-4,y+6);}
+    ctx.stroke();ctx.restore();
+  }
+  function brickFlash(b){
+    if(!(b.bonk>0))return;
+    ctx.save();ctx.globalAlpha=Math.min(1,b.bonk/.12)*.5;ctx.fillStyle="#ffffff";
+    rounded(b.x,b.y,b.w,b.h,BRICK_ART.radius);ctx.fill();ctx.restore();
+  }
+  function brickIcon(cx,cy,s,kind){
+    ctx.save();ctx.translate(cx,cy);
+    ctx.fillStyle="#f2fffb";ctx.strokeStyle="#f2fffb";ctx.lineJoin="round";
+    if(kind==="energy"){
+      ctx.beginPath();ctx.moveTo(.9,-s);ctx.lineTo(-1.9,s*.06);ctx.lineTo(.1,s*.06);ctx.lineTo(-.7,s);ctx.lineTo(2.1,-s*.1);ctx.lineTo(.1,-s*.1);ctx.closePath();ctx.fill();
+    }else if(kind==="elite"){
+      ctx.beginPath();ctx.moveTo(0,-s);ctx.lineTo(s*.86,0);ctx.lineTo(0,s);ctx.lineTo(-s*.86,0);ctx.closePath();ctx.fill();
+    }else{
+      ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(0,0,s*.8,0,Math.PI*2);ctx.stroke();
+      ctx.beginPath();ctx.arc(0,0,s*.26,0,Math.PI*2);ctx.fill();
+    }
+    ctx.restore();
+  }
+  /* Boss：紫色/粉紫霓虹框 + 内核光；最终 Boss 三阶段用装甲状态表达 */
+  function drawBossTile(b){
+    const st=b.isFinalBoss?BRICK_ART.finalBoss:BRICK_ART.boss;
+    const stage=b.isFinalBoss?finaleStage:1;
+    const r=b.isFinalBoss?11:10;
+    const cx=b.x+b.w/2,cy=b.y+b.h/2;
+    ctx.save();
+    ctx.shadowColor=st.glow;ctx.shadowBlur=renderQuality==="full"?(b.isFinalBoss?22:18):4;
+    ctx.fillStyle=st.base;rounded(b.x,b.y,b.w,b.h,r);ctx.fill();
+    ctx.restore();
+    // 内核光：阶段三最强
+    const coreA=b.isFinalBoss?(stage>=3?.62:stage===2?.34:.2):.28;
+    const g=ctx.createRadialGradient(cx,cy,1,cx,cy,b.w*.52);
+    g.addColorStop(0,withAlpha(st.edge,coreA));
+    g.addColorStop(.55,withAlpha(st.edge,coreA*.3));
+    g.addColorStop(1,"rgba(0,0,0,0)");
+    ctx.save();ctx.fillStyle=g;rounded(b.x+2,b.y+2,b.w-4,b.h-4,r-2);ctx.fill();ctx.restore();
+    // 外圈光晕：让 Boss 从密集砖阵里跳出来
+    ctx.save();
+    ctx.globalAlpha=.32;ctx.strokeStyle=st.edge;ctx.lineWidth=2.4;
+    rounded(b.x-2.5,b.y-2.5,b.w+5,b.h+5,r+2);ctx.stroke();
+    ctx.restore();
+    // 装甲框：阶段二破损（断线），阶段三更亮并加内白线
+    ctx.save();
+    ctx.strokeStyle=st.edge;
+    ctx.lineWidth=stage>=3?2.6:(b.isFinalBoss?2.4:2.2);
+    if(stage===2)ctx.setLineDash([10,5]);
+    rounded(b.x+1,b.y+1,b.w-2,b.h-2,r);ctx.stroke();
+    ctx.setLineDash([]);
+    if(stage>=3){
+      ctx.globalAlpha=.55;ctx.strokeStyle="#ffffff";ctx.lineWidth=1;
+      rounded(b.x+3.2,b.y+3.2,b.w-6.4,b.h-6.4,r-2);ctx.stroke();
+    }
+    ctx.restore();
+    if(stage>=2){
+      ctx.save();ctx.globalAlpha=.75;ctx.strokeStyle=st.edge;ctx.lineWidth=1;
+      ctx.beginPath();
+      ctx.moveTo(b.x+3,b.y+b.h*.28);ctx.lineTo(b.x+11,b.y+b.h*.36);ctx.lineTo(b.x+8,b.y+b.h*.5);
+      ctx.moveTo(b.x+b.w-3,b.y+b.h*.72);ctx.lineTo(b.x+b.w-12,b.y+b.h*.64);
+      ctx.stroke();ctx.restore();
+    }
+    if(b.isFinalBoss){
+      ctx.save();ctx.font="bold 8px system-ui";ctx.textAlign="center";ctx.fillStyle="#ffd9f2";
+      ctx.globalAlpha=.95;ctx.fillText("FINAL BOSS · "+stage+"/3",cx,b.y+13.5);ctx.restore();
+    }
+    brickText(b.x,b.y+(b.isFinalBoss?6:2),b.w,b.h-(b.isFinalBoss?8:4),String(b.hp),"#fff6ff",b.isFinalBoss?21:17);
+  }
   function draw() {
     ctx.setTransform(renderScale,0,0,renderScale,0,0);
     ctx.clearRect(0,0,W,H);
@@ -1509,13 +1634,29 @@
     if(summonSignals.length&&boss&&boss.alive){
       ctx.save();
       for(const sig of summonSignals){
+        const w=sig.w||BRICK_W,h=sig.h||BRICK_H;
         const x=boss.x+sig.dx,y=boss.y+sig.dy;
-        const t=sig.age/sig.delay,pulse=.5+.5*Math.sin(t*9.42);
-        ctx.globalAlpha=reducedMotion?.5:.27+.53*pulse;
-        ctx.lineWidth=1.6;ctx.strokeStyle=sig.finale?"#ffd18e":"#8fe9ff";ctx.shadowColor=sig.finale?"#ffc86a":"#7dcfff";
-        ctx.shadowBlur=renderQuality==="full"?12:2;
-        ctx.setLineDash([3,4]);rounded(x,y,sig.w||BRICK_W,sig.h||BRICK_H,4);ctx.stroke();
-        ctx.setLineDash([]);ctx.beginPath();ctx.moveTo(x+4,y+(sig.h||BRICK_H)/2);ctx.lineTo(x+(sig.w||BRICK_W)-4,y+(sig.h||BRICK_H)/2);ctx.stroke();
+        const t=clamp(sig.age/sig.delay,0,1);
+        const col=sig.finale?"#FFC46A":"#7FE7FF";
+        // 1 半透明砖块投影：随进度渐显
+        ctx.globalAlpha=.10+.30*t;
+        ctx.fillStyle=col;rounded(x,y,w,h,4);ctx.fill();
+        // 2 能量聚集：内框由大向小收拢
+        const k=1-.34*t;
+        ctx.globalAlpha=.22+.42*t;
+        ctx.strokeStyle=col;ctx.lineWidth=1+.9*t;
+        rounded(x+w*(1-k)/2,y+h*(1-k)/2,w*k,h*k,3);ctx.stroke();
+        // 3 轮廓：前 60% 虚线，之后转实线并加亮
+        ctx.globalAlpha=t<.6?.55+.3*t:.92;
+        ctx.lineWidth=t<.6?1.4:1.8;
+        if(t<.6)ctx.setLineDash([3,4]);else ctx.setLineDash([]);
+        rounded(x,y,w,h,4);ctx.stroke();ctx.setLineDash([]);
+        // 4 生成前的中心脉冲
+        if(t>.55){
+          const q=(t-.55)/.45;
+          ctx.globalAlpha=.5*(1-q);ctx.strokeStyle="#ffffff";ctx.lineWidth=1.1;
+          rounded(x+w*q*.5,y+h*q*.5,w*(1-q),h*(1-q),3);ctx.stroke();
+        }
       }
       ctx.restore();
     }
@@ -1544,26 +1685,13 @@
     for(const brick of bricks){
       if(!brick.alive) continue;
       ctx.save();
-      if(brick.isElite){
-        ctx.shadowColor="#ffb34d";ctx.shadowBlur=20;ctx.fillStyle="#694126";
-        rounded(brick.x,brick.y,brick.w,brick.h,10);ctx.fill();ctx.lineWidth=3;ctx.strokeStyle="#ffd18d";ctx.stroke();ctx.shadowBlur=0;
-        ctx.fillStyle="#fff2d7";ctx.textAlign="center";ctx.font="900 19px system-ui";
-        ctx.fillText(String(brick.hp),brick.x+brick.w/2,brick.y+brick.h/2+6);ctx.restore();continue;
-      }
-      if(brick.isBoss){
-        ctx.shadowColor=brick.isFinalBoss?"#ff9c73":"#bd76ff";ctx.shadowBlur=brick.isFinalBoss?31:25;ctx.fillStyle=brick.isFinalBoss?"#7c335a":"#613d92";
-        rounded(brick.x,brick.y,brick.w,brick.h,12);ctx.fill();
-        ctx.lineWidth=3;ctx.strokeStyle=brick.isFinalBoss?"#ffd6aa":"#d89cff";ctx.stroke();ctx.shadowBlur=0;
-        ctx.fillStyle="#fff3df";ctx.font=brick.isFinalBoss?"900 23px system-ui":"900 17px system-ui";ctx.textAlign="center";
-        ctx.fillText(String(brick.hp),brick.x+brick.w/2,brick.y+brick.h/2+6);
-        if(brick.isFinalBoss){ctx.font="bold 9px system-ui";ctx.fillStyle="#ffe5c5";ctx.fillText("FINAL BOSS · "+finaleStage+"/3",brick.x+brick.w/2,brick.y+17);}
-        ctx.restore();continue;
-      }
+      // 召唤入场缩放
       if(brick.summonAge!==undefined&&brick.summonAge<.38&&!reducedMotion){
         const t=Math.max(0,brick.summonAge/.38),scale=.5+.5*(1-Math.pow(1-t,3));
         ctx.globalAlpha=.35+.65*t;ctx.translate(brick.x+brick.w/2,brick.y+brick.h/2);
         ctx.scale(scale,scale);ctx.translate(-brick.x-brick.w/2,-brick.y-brick.h/2);
       }
+      // 受击形变
       if(juice.mode!=="off")juice.applyBrickMotion(ctx,brick);
       else if(brick.bonk>0 && !reducedMotion){
         const intensity=Math.sin((brick.bonk/.12)*Math.PI)*.045;
@@ -1571,50 +1699,29 @@
         ctx.scale(1+intensity,1-intensity);
         ctx.translate(-brick.x-brick.w/2,-brick.y-brick.h/2);
       }
-      ctx.shadowColor=brick.color;ctx.shadowBlur=renderQuality==="full"?7:2;ctx.fillStyle=brick.color;
-      rounded(brick.x,brick.y,brick.w,brick.h,4);ctx.fill();ctx.shadowBlur=0;
-      // Readability: big double-digit armor stands out without cluttering HP1 tiles.
-      if(brick.hp>=15&&!brick.special){
-        ctx.strokeStyle=brick.hp>=25?"#ffe7a4":"#ffc99d";ctx.lineWidth=1.35;
-        rounded(brick.x+.7,brick.y+.7,brick.w-1.4,brick.h-1.4,4);ctx.stroke();
-      }
-      if(brick.cracked){
-        ctx.fillStyle="#ffffff3f";rounded(brick.x+3,brick.y+3,brick.w-6,3,2);ctx.fill();
-        ctx.strokeStyle="#fff1bc";ctx.lineWidth=1.3;ctx.beginPath();
-        ctx.moveTo(brick.x+7,brick.y+2);ctx.lineTo(brick.x+13,brick.y+10);
-        ctx.lineTo(brick.x+9,brick.y+15);ctx.lineTo(brick.x+18,brick.y+21);
-        ctx.stroke();
-        if(brick.hp>1){ctx.fillStyle="#ffffff";ctx.font="bold 13px system-ui";ctx.textAlign="center";ctx.fillText(String(brick.hp),brick.x+brick.w/2,brick.y+Math.min(16,brick.h-4));}
+      if(brick.isBoss){drawBossTile(brick);ctx.restore();continue;}
+      // 统一管线：类型只换配色 + 角标图标
+      const style=brick.special?BRICK_ART.special:
+        (brick.isElite?BRICK_ART.elite:(brick.bossSupport?BRICK_ART.summon:brickStyle(brick.hp,false)));
+      const blur=renderQuality==="full"?(brick.isElite?13:11):0;
+      brickTile(brick.x,brick.y,brick.w,brick.h,brick.isElite?5:BRICK_ART.radius,style,blur);
+      if(brick.cracked)brickCracks(brick);
+      brickFlash(brick);
+      if(brick.special){
+        brickIcon(brick.x+brick.w/2,brick.y+brick.h/2+0.5,6.6,"energy");
       }else{
-        // Untouched numbered tiles show remaining HP; HP1 stays hidden.
-        // Color communicates HP tier; numeral communicates exact remaining work.
-        if(brick.armored){
-          ctx.fillStyle="#ffffff1c";rounded(brick.x+1.5,brick.y+1.5,brick.w-3,4,2);ctx.fill();
-        }
-        ctx.fillStyle=brick.special?"#083e2b":"#ffffff";
-        ctx.font="bold 13px system-ui";ctx.textAlign="center";
-        if(brick.hp>1) ctx.fillText(String(brick.hp),brick.x+brick.w/2,brick.y+Math.min(16,brick.h-4));
-        if(brick.hp===1 && !brick.special){ctx.fillStyle="#ffffff40";rounded(brick.x+4,brick.y+4,brick.w-8,2,1);ctx.fill();}
-        if(brick.special){
-          ctx.fillStyle="#0b4f35";ctx.font="bold 7px system-ui";
-          ctx.fillText("★",brick.x+brick.w-6,brick.y+8);
-        }
+        const num=String(brick.hp);
+        const hasIcon=brick.isElite||brick.bossSupport;
+        brickText(brick.x+(hasIcon?2.4:0),brick.y,brick.w,brick.h,num,"#ffffff",num.length>2?10:11.5);
+        if(brick.isElite)brickIcon(brick.x+6.2,brick.y+5.8,3.2,"elite");
+        else if(brick.bossSupport)brickIcon(brick.x+6.2,brick.y+5.8,3.2,"summon");
       }
+      // 召唤落地余波（保留原有 0.7s 扩散环）
       if(!brick.bossSupport&&brick.summonSource&&brick.summonAge!==undefined&&brick.summonAge<.7&&!reducedMotion){
         const t=brick.summonAge/.7;
-        ctx.save();ctx.globalAlpha=Math.max(0,.48*(1-t));
-        ctx.strokeStyle=brick.summonSource==="clear"?"#b6f7ff":"#70e7d2";
-        ctx.lineWidth=1.5;
+        ctx.save();ctx.globalAlpha=Math.max(0,.45*(1-t));
+        ctx.strokeStyle=brick.summonSource==="clear"?"#b6f7ff":"#70e7d2";ctx.lineWidth=1.4;
         rounded(brick.x-5*t,brick.y-5*t,brick.w+10*t,brick.h+10*t,4+4*t);ctx.stroke();ctx.restore();
-      }
-      if(brick.bossSupport){
-        ctx.strokeStyle="#8bdcff";ctx.lineWidth=1.3;
-        rounded(brick.x-.8,brick.y-.8,brick.w+1.6,brick.h+1.6,5);ctx.stroke();
-        if(brick.summonAge!==undefined&&brick.summonAge<.7&&!reducedMotion){
-          const t=brick.summonAge/.7;
-          ctx.globalAlpha=Math.max(0,.85*(1-t));ctx.strokeStyle="#b2f8ff";ctx.lineWidth=2.4;
-          rounded(brick.x-8*t,brick.y-8*t,brick.w+16*t,brick.h+16*t,5+6*t);ctx.stroke();
-        }
       }
       ctx.restore();
     }
@@ -1654,7 +1761,21 @@
       }
       ctx.restore();
     }
-    for(const p of particles){ctx.globalAlpha=clamp(p.life/.42,0,1);ctx.fillStyle=p.color;ctx.fillRect(p.x-2,p.y-2,4,4);}
+    for(const f of breakFlashes){
+      const t=clamp(f.age/.18,0,1),r=9+27*t;
+      const fg=ctx.createRadialGradient(f.x,f.y,0,f.x,f.y,r);
+      fg.addColorStop(0,"rgba(255,255,255,"+(.68*(1-t)).toFixed(3)+")");
+      fg.addColorStop(.45,withAlpha(f.color||"#ffffff",.3*(1-t)));
+      fg.addColorStop(1,"rgba(255,255,255,0)");
+      ctx.fillStyle=fg;ctx.beginPath();ctx.arc(f.x,f.y,r,0,Math.PI*2);ctx.fill();
+    }
+    for(const p of particles){
+      ctx.globalAlpha=clamp(p.life/.42,0,1);ctx.fillStyle=p.color;
+      if(p.shard){
+        ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot||0);
+        ctx.fillRect(-2.1,-1.5,4.2,3);ctx.restore();
+      }else ctx.fillRect(p.x-2,p.y-2,4,4);
+    }
     ctx.globalAlpha=1;
     juice.draw(ctx);
     // Boss shockwave expands with the real victory timer. No combat collision.
@@ -1677,15 +1798,26 @@
       }
       for(const e of floatTexts){
         const t=clamp(e.age/.56,0,1);
-        ctx.globalAlpha=1-t;ctx.fillStyle=e.color;ctx.textAlign="center";ctx.font="bold 13px system-ui";
-        ctx.fillText(e.text,e.x,e.y-8-t*23);
+        ctx.globalAlpha=1-t;ctx.textAlign="center";ctx.font="900 10.5px system-ui";
+        ctx.lineWidth=2.4;ctx.strokeStyle="rgba(2,8,16,.8)";
+        ctx.strokeText(e.text,e.x,e.y-8-t*23);
+        ctx.fillStyle=e.color;ctx.fillText(e.text,e.x,e.y-8-t*23);
       }
       ctx.globalAlpha=1;
     }
     if(combo>=2 && comboVisibility>0){
-      ctx.globalAlpha=clamp(comboVisibility*2,0,1);
-      ctx.fillStyle=combo>=5?"#ffcf8d":"#a6efd9";ctx.font="bold 17px system-ui";ctx.textAlign="center";
-      ctx.fillText(combo+" COMBO",W/2,335);ctx.globalAlpha=1;
+      const ct=clamp(comboVisibility,0,1);
+      const grow=1+Math.min(.34,combo*.028);
+      ctx.save();
+      ctx.globalAlpha=clamp(ct*1.5,0,1);
+      ctx.translate(10,H-72);ctx.scale(grow,grow);
+      ctx.textAlign="left";ctx.textBaseline="alphabetic";
+      ctx.font="900 18px system-ui";
+      ctx.shadowColor="#ffb347";ctx.shadowBlur=renderQuality==="full"?10:0;
+      ctx.fillStyle=combo>=5?"#ffd08a":"#a6efd9";
+      ctx.fillText(combo+" COMBO",0,0);
+      ctx.restore();
+      ctx.globalAlpha=1;
     }
     // V3.1：机体（底座+主体+核心）固定不转，炮管绕锚点独立旋转
     const cannonAim=cannonAngle();
