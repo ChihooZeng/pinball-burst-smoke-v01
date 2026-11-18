@@ -1594,8 +1594,10 @@
     const bx=brick.x+(w-total)/2;
     const cy=brick.y+h/2;
     if(kind){
-      const alpha=kind==="energy"?(.78+.22*Math.sin(animT*2.618)):1;   // 2.4s
-      const pulse=kind==="summon"?(.9+.12*Math.sin(animT*3.1416)):1;    // 2.0s
+      // animT 为数字时才动；lite / reducedMotion 传 null，停在区间中点
+      const live=typeof animT==="number";
+      const alpha=kind==="energy"?(live?.89+.11*Math.sin(animT*2.618):.89):1;   // 2.4s → 0.78–1.00
+      const pulse=kind==="summon"?(live?.96+.06*Math.sin(animT*3.1416):.96):1;  // 2.0s → 0.90–1.02
       brickIcon(bx+iconU/2,cy,(iconU/2)*.92,kind,alpha,pulse);
     }
     if(numTxt){
@@ -1770,7 +1772,7 @@
       }
       brickFace(brick,
         brick.special?"energy":(brick.isElite?"elite":(brick.bossSupport?"summon":null)),
-        reducedMotion?0:brickClock);
+        (renderQuality==="full"&&!reducedMotion)?brickClock:null);
       // 召唤落地余波（保留原有 0.7s 扩散环）
       if(!brick.bossSupport&&brick.summonSource&&brick.summonAge!==undefined&&brick.summonAge<.7&&!reducedMotion){
         const t=brick.summonAge/.7;
