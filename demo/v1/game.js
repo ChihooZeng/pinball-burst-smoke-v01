@@ -1049,15 +1049,15 @@
         // Giant rule: remaining HP <=5 (or already cracked) explodes and
         // pierces. Above 5 chips three points and bounces by real surface normal.
         const penetrates=!block.isBoss&&(block.hp<=GIANT_PIERCE_HP || block.cracked);
-        if(penetrates){
-          hitBrick(block,"giant",impact);
-          giantPiercings++;giant.pierceLeft--;
-        }else{
-          hitBrick(block,"giantHeavy",impact);
-          heavyHits++;giantHeavyBounces++;
-          reflect(giant,normal);
-          recordGiantBounce("brick");
-        }
+        if(penetrates)hitBrick(block,"giant",impact);
+        else{hitBrick(block,"giantHeavy",impact);heavyHits++;giantHeavyBounces++;}
+        // A killing blow on the Boss clears `giant` inside hitBrick→defeatBoss
+        // (the ultimate is destroyed with the victory finisher). Either branch can
+        // reach it, directly or through hitBrick's shock-wave follow-up, so the
+        // update ends here: never reflect a null, never read giant after this point.
+        if(!giant)return;
+        if(penetrates){giantPiercings++;giant.pierceLeft--;}
+        else{reflect(giant,normal);recordGiantBounce("brick");}
         markFinalRush();
         // Giant is an active effect, not a primary-ball charge source.
         giant.collisions++;giantTotalHits++;
