@@ -35,11 +35,15 @@
     for(let i=0;i<3;i++){const card=Build.card(build,choiceSet[i]);$("choiceTitle"+i).textContent=card.title;$("choiceDesc"+i).textContent=card.description;}
     ui.choice.classList.remove("hidden");
   }
-  function finishPrototype(){if(phase==="complete")return;playSfx("clear");phase="complete";balls=[];giant=null;ui.win.classList.remove("hidden");$("winTitle").textContent="20波试玩 · 挑战完成";ui.final.textContent="构筑："+Build.DEFS[build.coreBranch||build.seedAbility].name+" · 用时 "+Math.round(elapsed)+" 秒 · 击碎 "+score+" 块。请反馈手感，后续内容等待验收。";record("complete");setState("Demo V1.0 · 20关挑战完成");updateUI();}
+  function finishPrototype(){if(phase==="complete")return;playSfx("clear");phase="complete";balls=[];giant=null;ui.win.classList.remove("hidden");$("winLabel").textContent="RUN COMPLETE";$("winTitle").textContent="20波试玩 · 挑战完成";ui.final.textContent="构筑："+Build.DEFS[build.coreBranch||build.seedAbility].name+" · 用时 "+Math.round(elapsed)+" 秒 · 击碎 "+score+" 块。请反馈手感，后续内容等待验收。";record("complete");setState("Demo V1.0 · 20关挑战完成");updateUI();}
 
   const BOSS_INTERVAL=110, SURGE_INTERVAL=75, FALL_BASE=6.8, MAX_BRICKS=168;
   const START_ROWS=6, SPAWN_INTERVAL=3.5, PHYSICS_DT=1/120, MAX_FRAME_STEPS=6;
   const AMBIENT_SUMMON_INTERVAL=8.4, SUMMON_SAFE_TOP=48;
+  // Boss waves: `.boss-hud` (54-78px) and the `#finalRushLabel` prompt ("BOSS · 第 N 波",
+  // 82-96px) own the top of the arena. 104 keeps >=8px clear of both at 360-390 wide
+  // (1 game unit is 1 CSS px at 360). Ordinary field spawns keep the 48 floor.
+  const BOSS_HUD_SAFE_TOP=104;
   let SUMMON_SAFE_BOTTOM=DANGER_Y-88;
   const UPPER_LIMIT=175, LOWER_START=275, BRIDGE_BOTTOM=335;
   const BRIDGE_WARNING=1.0, BOSS_WARNING=1.0, CLEAR_CELEBRATE=.60, CLEAR_WARNING=.90, CLEAR_GRACE=2.1;
@@ -507,6 +511,7 @@
     counters={splitChildren:0,arcReleases:0,arcSingleDamage:0,budgetReclaims:0,suppressedShots:0,suppressedChildren:0,maxBallsAlive:0,wallBounces:0,shotsByBuild:{base:0,split:0,arc:0,gun:0}};
     collisionChecks=0;physicsCostMs=0;physicsSteps=0;maxPhysicsMs=0;
     wave=1;score=0;phase="ready";charge=0;elapsed=0;level=1;xp=0;xpGoal=34;
+    $("winLabel").textContent="RUN COMPLETE";
     $("winTitle").textContent="砖阵触及警戒线";
     waveElapsed=0;waveTailSoftened=false;waveSpawnCount=0;bossSummonTotal=0;clearWindowActive=false;waveStartingTargets=0;waveUpgrades=0;
     choiceQueue=0;choiceSet=[];powerLevel=0;volleyLevel=0;rateLevel=0;speedLevel=0;lifeLevel=0;
@@ -1112,13 +1117,16 @@
     finaleStage=stage;
     const picks=[],cols=stage===2?[0,8,1,7,2,6]:[2,6,1,7,0,8];
     const offsets=stage===2?[-88,-60,-30,14,43,72,101]:[-92,-66,-38,6,38,69,98];
+    // The formation is translated below the Boss HUD instead of dropping its
+    // upper rows: same row count, same per-row HP, same cadence.
+    const shift=Math.max(0,BOSS_HUD_SAFE_TOP-(boss.y+Math.min(...offsets)));
     let count=0;
     for(const dy of offsets)for(const col of cols){
       if(count>=18)break;
       // Entry corridor is kept open below the Boss.
       if(dy>=14&&col>=3&&col<=5)continue;
-      const x=12+col*BRICK_STEP_X,y=boss.y+dy;
-      if(y<SUMMON_SAFE_TOP||y+BRICK_H>DANGER_Y-85)continue;
+      const x=12+col*BRICK_STEP_X,y=boss.y+dy+shift;
+      if(y<BOSS_HUD_SAFE_TOP||y+BRICK_H>DANGER_Y-85)continue;
       if(!isSlotFree(x,y))continue;
       const high=(col===1||col===7)&&(dy<45);
       const hp=high?(stage===2?26:35)+Math.floor(hash01(wave,stage,col,Math.floor(dy)+410)*(stage===2?18:23)):
@@ -1130,12 +1138,13 @@
     // A full armored field can block the side-flank slots. Keep a small
     // reserve of safe *upper* positions so stage 3 still creates real targets.
     if(count<13){
-      const rows=[SUMMON_SAFE_TOP+8,SUMMON_SAFE_TOP+36,SUMMON_SAFE_TOP+64,boss.y-125,boss.y-98];
+      const rows=[BOSS_HUD_SAFE_TOP+8,BOSS_HUD_SAFE_TOP+36,BOSS_HUD_SAFE_TOP+64,
+        BOSS_HUD_SAFE_TOP+92,BOSS_HUD_SAFE_TOP+120];
       const fallbackCols=stage===2?[0,2,4,6,8,1,7,3,5]:[1,3,5,7,0,8,2,6,4];
       for(const y of rows)for(const col of fallbackCols){
         if(count>=16)break;
         const x=12+col*BRICK_STEP_X;
-        if(y+BRICK_H>Math.min(SUMMON_SAFE_BOTTOM,DANGER_Y-85))continue;
+        if(y<BOSS_HUD_SAFE_TOP||y+BRICK_H>Math.min(SUMMON_SAFE_BOTTOM,DANGER_Y-85))continue;
         if(!isSlotFree(x,y))continue;
         const hp=(stage===2?13:19)+Math.floor(hash01(wave,stage,col,Math.floor(y)+522)*19);
         summonSignals.push({bossId:boss.id,dx:x-boss.x,dy:y-boss.y,
@@ -1172,7 +1181,7 @@
     // Choose rows across the *whole field*, not only the highest empty row.
     // Side wings remain available below the Boss, center is reserved for entry.
     const rows=[];
-    for(let y=SUMMON_SAFE_TOP+3;y+BRICK_H<SUMMON_SAFE_BOTTOM;y+=WAVE_ROW_GAP)rows.push(y);
+    for(let y=BOSS_HUD_SAFE_TOP+3;y+BRICK_H<SUMMON_SAFE_BOTTOM;y+=WAVE_ROW_GAP)rows.push(y);
     const banks=[[],[],[]];
     for(let ri=0;ri<rows.length;ri++)for(let col=0;col<BRICK_COLUMNS;col++){
       const y=rows[ri],x=12+col*BRICK_STEP_X;
@@ -1413,6 +1422,7 @@
         const dangerSource=danger.isBoss?"BOSS":danger.summonSource==="boss"?"Boss召唤砖":danger.summonSource==="finale"?"终局增援砖":"初始砖";
         record("touchline",{wave,source:dangerSource,brickId:danger.id,hp:danger.hp,elapsed:+waveElapsed.toFixed(2),bossHp:boss?.hp??null,bossSupportBorn:bossSummonTotal});
         phase="lost";balls=[];giant=null;ui.win.classList.remove("hidden");
+        $("winLabel").textContent="RUN OVER";
         const seconds=Math.floor(elapsed);
         ui.final.textContent="生存 "+Math.floor(seconds/60)+"分"+seconds%60+
           "秒 · 击碎 "+score+" 块 · 到达第 "+wave+" 波 · LV."+level+

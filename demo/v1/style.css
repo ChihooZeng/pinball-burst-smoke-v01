@@ -48,6 +48,9 @@ canvas{width:100%;height:100%;object-fit:contain}
 #pauseOverlay{inset:max(8px,env(safe-area-inset-top)) max(8px,calc((100vw - 520px)/2)) max(8px,env(safe-area-inset-bottom));z-index:20;max-height:100dvh}.pause-scroll{flex:1}.pause-scroll label{font-size:12px;color:#c2e3f3}.sound-controls{height:44px}.sound-controls input{min-height:40px}.pause-scroll select{min-height:40px;background:#173149;color:#d7f4ff;border:1px solid #4a7188;border-radius:7px}
 .overlay{padding:calc(env(safe-area-inset-top) + 65px) 20px calc(env(safe-area-inset-bottom) + 20px);justify-content:safe center}.overlay p{max-width:340px}.upgrade-options{max-width:460px}.upgrade-card{min-height:76px;font-size:14px}.upgrade-card span{font-size:12px}
 #pauseOverlay{padding:16px}.topbar:has(~ .arena .overlay:not(.hidden)){z-index:6}body:has(#pauseOverlay:not(.hidden)) .topbar{z-index:3}
+/* Start screen is a title card: hide battle progress, keep the settings button.
+   visibility (not display) keeps the topbar height, so the arena never shifts. */
+.topbar:has(~ .arena #startOverlay:not(.hidden)) .combat-summary{visibility:hidden}
 @media(orientation:landscape){.arena{left:50%;transform:translateX(-50%);width:min(100%,calc(100dvh * 1.05))}.topbar{left:max(0px,calc((100vw - 100dvh*1.05)/2));right:max(0px,calc((100vw - 100dvh*1.05)/2))}.overlay{padding:12px;gap:6px}.upgrade-options{gap:5px}.upgrade-card{min-height:55px;padding:7px}.start-icon{font-size:24px}.ult-wrap{bottom:12px}.overlay h2{font-size:19px}}
 /* Keep fixed settings relative to the viewport even in the wide-screen camera. */
 @media(orientation:landscape){.arena{left:0;right:0;transform:none;margin:0 auto}}
