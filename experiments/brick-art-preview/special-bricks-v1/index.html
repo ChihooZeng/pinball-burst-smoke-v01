@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>特殊砖美术预览 V1.0 · 弹珠超载</title>
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<div class="app">
+
+  <header class="head">
+    <div>
+      <p class="eyebrow">BRICK ART · SPECIAL SET</p>
+      <h1>特殊砖美术预览 <span>V1.0</span></h1>
+      <p class="sub">与普通砖同一套体系：只靠颜色 + 一个图标区分</p>
+    </div>
+    <label class="switch">
+      <input type="checkbox" id="animToggle" checked>
+      <span>动效预览</span>
+    </label>
+  </header>
+
+  <section class="block">
+    <h2>1 · 横向对照<em>放大 + 1× 实际</em></h2>
+    <canvas id="cvCompare" class="cv"></canvas>
+    <p class="note">上行为放大细节，下行为 29×22 实际游戏尺寸。数字为游戏内真实 HP；能量砖沿用正式逻辑不显示数字（HP 恒为 1）。</p>
+  </section>
+
+  <section class="block">
+    <h2>2 · 图标细节<em>最大 6× 放大</em></h2>
+    <canvas id="cvDetail" class="cv"></canvas>
+    <p class="note">三种图标分别是：闪电（能量）· 菱形（精英）· 双层圆环（召唤）。图标与数字作为一个整体居中，不遮挡 HP。</p>
+  </section>
+
+  <section class="block">
+    <h2>3 · 实际尺寸混排<em>1× · 与普通砖同名同尺寸</em></h2>
+    <div class="fieldWrap">
+      <canvas id="cvField" class="cv cvField"></canvas>
+    </div>
+    <p class="note">在不放大的情况下，三种特殊砖能否从一整片普通砖里被认出来——这一排就是最终答案。</p>
+  </section>
+
+  <section class="block">
+    <h2>4 · 手机画面<em>390×844</em></h2>
+    <div class="phoneWrap">
+      <canvas id="cvPhone" class="cv cvPhone"></canvas>
+    </div>
+    <p class="note">模拟正式游戏的 390×844 竖屏构图：砖阵在战斗区，炮塔在底部，特殊砖混在砖阵中。</p>
+  </section>
+
+  <section class="block">
+    <h2>5 · 参数表<em>与 demo/v1/game.js 同源</em></h2>
+    <div class="tableWrap">
+      <table class="spec">
+        <thead><tr><th>砖种</th><th>描边 edge</th><th>填充上 ft</th><th>填充下 fb</th><th>边框</th><th>外发光</th><th>图标</th><th>动效</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><i class="dot normal"></i>普通砖</td>
+            <td><code>#3DE8D2 → #FFB6F2</code><br><small>8 级色阶</small></td>
+            <td colspan="2"><small>见 8 级色阶表</small></td>
+            <td>1.3px</td><td>blur 8</td><td>无</td><td>无</td>
+          </tr>
+          <tr>
+            <td><i class="dot energy"></i>能量砖</td>
+            <td><code>#4BEB9B</code></td>
+            <td><code>#0FA765</code></td>
+            <td><code>#0B5638</code></td>
+            <td>1.3px</td><td>blur 8</td><td>闪电 · 7×7</td><td>呼吸 2.4s</td>
+          </tr>
+          <tr>
+            <td><i class="dot elite"></i>精英砖</td>
+            <td><code>#C39BFF</code></td>
+            <td><code>#6B2FD0</code></td>
+            <td><code>#44218A</code></td>
+            <td><b>1.6px</b></td><td>blur 10</td><td>菱形 · 7×7</td><td>内发光 3.0s</td>
+          </tr>
+          <tr>
+            <td><i class="dot summon"></i>召唤砖</td>
+            <td><code>#4FC6FF</code></td>
+            <td><code>#0A78B8</code></td>
+            <td><code>#075A85</code></td>
+            <td>1.3px</td><td>blur 8</td><td>双层环 · 7×7</td><td>环脉冲 2.0s</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">普通砖 8 级色阶：<code>1</code> #3DE8D2 · <code>2-3</code> #57F2E2 · <code>4-5</code> #4FD6FA · <code>6-10</code> #3FDBFF · <code>11-20</code> #8CB8FF · <code>21-40</code> #C08FFF · <code>41-80</code> #F79BFA · <code>81+</code> #FFB6F2</p>
+  </section>
+
+  <footer class="foot">
+    <span>弹珠超载 · 砖块美术 V1.0 特殊砖扩展</span>
+    <span>29×22 逻辑单位 · Canvas 程序化绘制 · 零外部素材</span>
+  </footer>
+</div>
+<script src="./special-bricks.js"></script>
+</body>
+</html>

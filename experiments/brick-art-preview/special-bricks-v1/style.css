@@ -1,0 +1,70 @@
+/* 特殊砖美术预览 V1.0 —— 与正式游戏同一套深色霓虹语言 */
+:root{
+  --bg:#050d18;
+  --panel:#071727;
+  --line:#1d3346;
+  --ink:#dceef8;
+  --muted:#7fa4bb;
+  --dim:#5f8ba3;
+  --cyan:#7fe9f5;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB",sans-serif;
+  -webkit-font-smoothing:antialiased}
+.app{max-width:820px;margin:0 auto;padding:22px 18px 40px;display:flex;flex-direction:column;gap:14px}
+
+.head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding-bottom:6px}
+.eyebrow{margin:0 0 5px;font-size:9.5px;font-weight:800;letter-spacing:.28em;color:var(--dim)}
+.head h1{margin:0;font-size:21px;font-weight:900;letter-spacing:.01em}
+.head h1 span{font-size:10px;font-weight:800;letter-spacing:.1em;color:#052e3a;background:var(--cyan);
+  padding:2px 6px;border-radius:5px;vertical-align:middle;margin-left:4px}
+.sub{margin:6px 0 0;font-size:12px;color:var(--muted);line-height:1.5}
+
+.switch{flex:none;display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--muted);
+  border:1px solid var(--line);border-radius:8px;padding:7px 10px;background:var(--panel);cursor:pointer;white-space:nowrap}
+.switch input{appearance:none;width:30px;height:16px;border-radius:99px;background:#16303f;position:relative;margin:0;cursor:pointer;transition:background .18s}
+.switch input::after{content:"";position:absolute;left:2px;top:2px;width:12px;height:12px;border-radius:50%;background:#6f93a6;transition:transform .18s,background .18s}
+.switch input:checked{background:#12525f}
+.switch input:checked::after{transform:translateX(14px);background:var(--cyan)}
+
+.block{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:13px 14px 12px}
+.block h2{margin:0 0 10px;font-size:11.5px;font-weight:800;letter-spacing:.14em;color:var(--dim);
+  display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.block h2 em{font-style:normal;font-size:10px;letter-spacing:.06em;color:#436b81}
+.note{margin:9px 0 0;font-size:11px;line-height:1.6;color:var(--muted)}
+.note code{font-size:10.5px;color:#9fd8e6;background:#0b2133;padding:1px 4px;border-radius:3px}
+
+.cv{display:block;width:100%;border-radius:9px;background:#061320}
+.fieldWrap{background:#061320;border-radius:9px;padding:12px 8px;overflow-x:auto;display:flex;justify-content:center}
+.cvField{background:transparent;flex:none}
+
+.phoneWrap{display:flex;justify-content:center;background:#08111c;border-radius:9px;padding:14px 10px;overflow-x:auto}
+.cvPhone{border-radius:14px;box-shadow:0 0 0 1px #1a3648,0 14px 40px #000a;max-width:100%}
+
+.tableWrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:8px}
+.spec{width:100%;border-collapse:collapse;font-size:11.5px;min-width:600px}
+.spec th{text-align:left;padding:7px 8px;font-size:10px;letter-spacing:.1em;color:var(--dim);
+  border-bottom:1px solid var(--line);font-weight:800;white-space:nowrap}
+.spec td{padding:9px 8px;border-bottom:1px solid #102434;color:#b9d6e6;vertical-align:middle}
+.spec tbody tr:last-child td{border-bottom:0}
+.spec code{font-size:10.5px;color:#9fd8e6;background:#0b2133;padding:1px 4px;border-radius:3px}
+.spec td b{color:#ffd08a}
+.spec small{color:#6d93a9;font-size:10px}
+.dot{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.dot.normal{background:linear-gradient(180deg,#04928A,#025558);box-shadow:0 0 0 1px #3DE8D2}
+.dot.energy{background:linear-gradient(180deg,#0FA765,#0B5638);box-shadow:0 0 0 1px #4BEB9B}
+.dot.elite{background:linear-gradient(180deg,#6B2FD0,#44218A);box-shadow:0 0 0 1px #C39BFF}
+.dot.summon{background:linear-gradient(180deg,#0A78B8,#075A85);box-shadow:0 0 0 1px #4FC6FF}
+
+.foot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  font-size:10px;color:#436b81;padding-top:6px;border-top:1px solid #102434;letter-spacing:.04em}
+
+@media(max-width:520px){
+  .app{padding:16px 12px 30px;gap:11px}
+  .head{flex-direction:column;gap:9px}
+  .head h1{font-size:18px}
+  .block{padding:11px 11px 10px}
+  .cvPhone{width:100%}
+  .foot{font-size:9px}
+}
