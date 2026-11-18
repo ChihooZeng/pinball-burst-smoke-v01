@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>普通砖七色霓虹系统预览 V1.0 · 弹珠超载</title>
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<div class="app">
+
+  <header class="head">
+    <div>
+      <p class="eyebrow">BRICK ART · 7-COLOR TIER SYSTEM</p>
+      <h1>普通砖七色霓虹系统 <span>V1.0</span></h1>
+      <p class="sub">七级耐久 · 薄荷绿 → 洋红 · 不取模、不回环</p>
+    </div>
+    <label class="switch">
+      <input type="checkbox" id="animToggle" checked>
+      <span>特殊砖动效</span>
+    </label>
+  </header>
+
+  <section class="block">
+    <h2>A · 七色横向对照<em>HP 1 / 2 / 4 / 8 / 16 / 32 / 64 / 128</em></h2>
+    <canvas id="cvTiers" class="cv"></canvas>
+    <p class="note">上行放大、下行 1× 实际尺寸。<code>1</code> 与 <code>2</code> 同为一级（薄荷绿），其余逐级递进；<code>128</code> 已在最高级，不会回到低耐久颜色。</p>
+  </section>
+
+  <section class="block">
+    <h2>B · 实际砖阵<em>9 列 · 1× 真实间距</em></h2>
+    <div class="fieldWrap">
+      <canvas id="cvField" class="cv cvField"></canvas>
+    </div>
+    <p class="note">只放普通砖，HP 从 1 到 128 混合。看三件事：颜色是否杂乱、相邻砖是否分得清、高耐久砖是否有威胁感。</p>
+  </section>
+
+  <section class="block">
+    <h2>C · 特殊砖混排<em>七色 + 能量 / 精英 / 召唤</em></h2>
+    <div class="fieldWrap">
+      <canvas id="cvMix" class="cv cvField"></canvas>
+    </div>
+    <p class="note">特殊砖即 V1.0 方案（绿色闪电 / 紫色菱形 / 青蓝双环），未做任何改动。</p>
+  </section>
+
+  <section class="block">
+    <h2>D · 撞色检查<em>特殊砖 vs 最接近的普通砖</em></h2>
+    <canvas id="cvClash" class="cv"></canvas>
+    <p class="note">三对并排：左为普通砖、右为特殊砖。这是七色方案里颜色最接近的三组，用来判断"只靠颜色"够不够——结论是必须靠图标。</p>
+  </section>
+
+  <section class="block">
+    <h2>E · 手机实际尺寸<em>360×640 · 390×844</em></h2>
+    <div class="phoneRow">
+      <figure>
+        <canvas id="cvPhone360" class="cv cvPhone"></canvas>
+        <figcaption>360×640 · 9 列铺满</figcaption>
+      </figure>
+      <figure>
+        <canvas id="cvPhone390" class="cv cvPhone"></canvas>
+        <figcaption>390×844</figcaption>
+      </figure>
+    </div>
+    <p class="note">砖块 29×22、列间距 38.5、行距 31、危险线 H−105，全部按正式游戏常量摆放。</p>
+  </section>
+
+  <section class="block">
+    <h2>F · 七色参数<em>确定性映射 · 无回环</em></h2>
+    <div class="tableWrap">
+      <table class="spec">
+        <thead><tr><th>等级</th><th>HP 范围</th><th>主填充</th><th>描边 / 光晕</th><th>填充上 ft</th><th>填充下 fb</th><th>白字对比度</th></tr></thead>
+        <tbody id="specBody"></tbody>
+      </table>
+    </div>
+    <p class="note">映射用 if 链顺序查表：不出现 <code>%</code> 运算、不使用数组循环，HP 超过 128 继续落在第 7 级。</p>
+  </section>
+
+  <section class="block">
+    <h2>G · 与现网 8 级色阶对照<em>附录</em></h2>
+    <canvas id="cvOldNew" class="cv"></canvas>
+    <p class="note">上排为现网 8 级、下排为本次七色，HP 取 <code>1/3/5/10/20/40/80/128</code>。注意 <code>80</code> 与 <code>128</code>：现网是两个粉色级，七色方案里都归入 Lv7（65+）。</p>
+  </section>
+
+  <footer class="foot">
+    <span>弹珠超载 · 砖块美术 · 七色耐久预览</span>
+    <span>29×22 逻辑单位 · Canvas 程序化绘制 · 零外部素材</span>
+  </footer>
+</div>
+<script src="./seven-color.js"></script>
+</body>
+</html>
