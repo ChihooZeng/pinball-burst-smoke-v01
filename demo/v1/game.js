@@ -15,7 +15,7 @@
   function store(key,value){try{localStorage.setItem(key,value);}catch(e){}}
   function applySkillSide(){document.querySelector('.shell').classList.toggle('skill-left',skillSide==='left');}
   function markSkillUsed(){if(firstSkillUsed)return;firstSkillUsed=true;store(FIRST_SKILL_KEY,'done');document.getElementById('skillGuide').classList.add('hidden');}
-  let build,events=[],counters,arcCharge=0,lastArcRelease=-99,fanClock=0,gunFlash=0,turretRecoil=0,lastShotAngle=0;
+  let build,events=[],counters,arcCharge=0,lastArcRelease=-99,fanClock=0,gunFlash=0,turretRecoil=0,brickClock=0,lastShotAngle=0;
   let collisionChecks=0,physicsCostMs=0,physicsSteps=0,maxPhysicsMs=0;
   const initialSeed=Number.isFinite(window.__PINBALL_SEED__)?window.__PINBALL_SEED__>>>0:null;
   function record(type,data={}){events.push({type,time:+elapsed.toFixed(4),wave,...data});if(events.length>6000)events.shift();}
@@ -104,24 +104,25 @@
      统一管线：深色底 → 霓虹描边 → 外发光 → 数字/图标 → 状态叠加（受击/裂纹/召唤）。
      耐久按 4 档 8 级递进且不回环（旧实现 band%8 会让 HP64 与 HP1 同色）。 */
   const BRICK_ART={
-    // edge=霓虹描边色，ft/fb=填充的上/下色（取色自参考图的实际渐变）
+    /* 七级耐久（V1.0 定稿）：薄荷绿 → 青 → 蓝 → 靛 → 紫 → 洋红。
+       edge=描边/光晕，ft/fb=填充上/下（由 main 按明度 ×0.60 / ×0.36 派生，白字对比度 4.55–9.34:1）。
+       映射用顺序查表，不取模、不回环：128 / 256 / 1000 都落在 Lv7。 */
     ramp:[
-      {max:1,   edge:"#3DE8D2", ft:"#04928A", fb:"#025558"}, // 1      低耐久 青绿
-      {max:3,   edge:"#57F2E2", ft:"#038F83", fb:"#035557"}, // 2-3
-      {max:5,   edge:"#4FD6FA", ft:"#0273A9", fb:"#033E65"}, // 4-5    中低 青蓝
-      {max:10,  edge:"#3FDBFF", ft:"#036CBC", fb:"#023E74"}, // 6-10
-      {max:20,  edge:"#8CB8FF", ft:"#0D4CDA", fb:"#072B81"}, // 11-20  中 紫蓝
-      {max:40,  edge:"#C08FFF", ft:"#5C23CF", fb:"#341981"}, // 21-40
-      {max:80,  edge:"#F79BFA", ft:"#AA2190", fb:"#63175E"}, // 41-80  高 粉紫
-      {max:1e9, edge:"#FFB6F2", ft:"#B02481", fb:"#6E1C59"}  // 81+
+      {lv:1, max:2,   edge:"#4BE9B9", ft:"#17856E", fb:"#0E5042", main:"#27DDB7"}, // 1-2
+      {lv:2, max:4,   edge:"#3FDBD6", ft:"#0E7379", fb:"#094548", main:"#18BFC9"}, // 3-4
+      {lv:3, max:8,   edge:"#3FDBFF", ft:"#13768B", fb:"#0C4754", main:"#20C4E8"}, // 5-8
+      {lv:4, max:16,  edge:"#5AA1FF", ft:"#17568F", fb:"#0E3356", main:"#278FEF"}, // 9-16
+      {lv:5, max:32,  edge:"#7B7EFF", ft:"#343F8E", fb:"#1F2655", main:"#5669ED"}, // 17-32
+      {lv:6, max:64,  edge:"#C088FF", ft:"#60318C", fb:"#3A1E54", main:"#A052EA"}, // 33-64
+      {lv:7, max:1e9, edge:"#FF78E6", ft:"#882D76", fb:"#521B47", main:"#E34BC5"}  // 65+
     ],
-    special:{edge:"#4BEB9B", ft:"#0FA765", fb:"#0B5638"},   // 能量砖
-    elite:{edge:"#C39BFF", ft:"#6B2FD0", fb:"#44218A"},     // 精英砖
-    summon:{edge:"#4FC6FF", ft:"#0A78B8", fb:"#075A85"},    // 召唤砖
+    // 特殊砖 V1.0：与普通砖撞色是已接受的取舍，识别交给图标
+    special:{edge:"#4BEB9B", ft:"#0FA765", fb:"#0B5638", border:1.3, blur:8},   // 能量砖
+    elite:{edge:"#C39BFF", ft:"#6B2FD0", fb:"#44218A", border:1.6, blur:10},    // 精英砖
+    summon:{edge:"#4FC6FF", ft:"#0A78B8", fb:"#075A85", border:1.3, blur:8},    // 召唤砖
     // Boss 保持深色底 + 霓虹框（与普通砖拉开层级）
     boss:{edge:"#B26CFF", glow:"#A855F7", base:"#1D0B3A"},
     finalBoss:{edge:"#FF7AD9", glow:"#F472B6", base:"#2E0A2A"},
-    fillTop:.66, fillBottom:.40,
     radius:4
   };
   function brickStyle(hp,special){
@@ -502,7 +503,7 @@
     WAVE_START_Y=window.innerWidth?Math.max(84,Math.ceil((document.querySelector(".topbar").getBoundingClientRect().height+28)*W/window.innerWidth)):84;
     pausedFrom=null;battleTime=0;waveReports=[];bankDamage=0;lockBackground(false);$("pauseOverlay").classList.add("hidden");
     window.PinballGameAudio?.stopBgm?.(0);
-    gunTarget=null;gunStreak=0;gunLast=-99;precisionTurns=focusDamage=gunBonusDamage=weakpointDamage=weakpointCharge=damageDealt=shotsWithContact=0;build=Build.createState(initialSeed===null?Math.floor(Math.random()*4294967296):initialSeed);events=[];arcCharge=0;lastArcRelease=-99;fanClock=0;gunFlash=0;turretRecoil=0;
+    gunTarget=null;gunStreak=0;gunLast=-99;precisionTurns=focusDamage=gunBonusDamage=weakpointDamage=weakpointCharge=damageDealt=shotsWithContact=0;build=Build.createState(initialSeed===null?Math.floor(Math.random()*4294967296):initialSeed);events=[];arcCharge=0;lastArcRelease=-99;fanClock=0;gunFlash=0;turretRecoil=0;brickClock=0;
     counters={splitChildren:0,arcReleases:0,arcSingleDamage:0,budgetReclaims:0,suppressedShots:0,suppressedChildren:0,maxBallsAlive:0,wallBounces:0,shotsByBuild:{base:0,split:0,arc:0,gun:0}};
     collisionChecks=0;physicsCostMs=0;physicsSteps=0;maxPhysicsMs=0;
     wave=1;score=0;phase="ready";charge=0;elapsed=0;level=1;xp=0;xpGoal=34;
@@ -1469,7 +1470,7 @@
     generateSurvival(dt);
     if(phase!=="playing")return;
     if(!emptyLatch&&!bossVictory){
-      fanClock+=dt;gunFlash=Math.max(0,gunFlash-dt);turretRecoil=Math.max(0,turretRecoil-dt*5);
+      fanClock+=dt;gunFlash=Math.max(0,gunFlash-dt);turretRecoil=Math.max(0,turretRecoil-dt*5);brickClock+=dt;
       if(autoSkill&&build.seedAbility&&charge>=MAX_CHARGE&&!giant)activateEquippedSkill();
       const fireInterval=Build.tuning(build).interval/Build.buffModifiers(build).rate;
       if(shootClock>=fireInterval){shootClock-=fireInterval;fire();}
@@ -1520,9 +1521,10 @@
     // 顶部内侧高光：让砖块有厚度，但不加纹理
     ctx.save();ctx.globalAlpha=.13;ctx.fillStyle="#ffffff";
     rounded(x+1.6,y+1.4,w-3.2,Math.min(5.5,h*.28),Math.max(1,r-1));ctx.fill();ctx.restore();
-    // 霓虹描边
-    ctx.strokeStyle=style.edge;ctx.lineWidth=1.3;
-    rounded(x+.65,y+.65,w-1.3,h-1.3,r);ctx.stroke();
+    // 霓虹描边：精英砖 1.6px，其余 1.3px（V1.0 规范）
+    const bw=style.border||1.3;
+    ctx.strokeStyle=style.edge;ctx.lineWidth=bw;
+    rounded(x+bw*.5,y+bw*.5,w-bw,h-bw,r);ctx.stroke();
   }
   function brickText(x,y,w,h,text,ink,size){
     // 参考图的数字是纯白 + 极轻投影，没有黑描边。
@@ -1548,18 +1550,63 @@
     ctx.save();ctx.globalAlpha=Math.min(1,b.bonk/.12)*.5;ctx.fillStyle="#ffffff";
     rounded(b.x,b.y,b.w,b.h,BRICK_ART.radius);ctx.fill();ctx.restore();
   }
-  function brickIcon(cx,cy,s,kind){
-    ctx.save();ctx.translate(cx,cy);
-    ctx.fillStyle="#f2fffb";ctx.strokeStyle="#f2fffb";ctx.lineJoin="round";
+  /* 三种特殊砖图标（V1.0）：7×7 逻辑单位，与数字整体居中。
+     rad = 图标半径；alpha/pulse 用于呼吸与环脉冲。
+     菱形用描边而非 destination-out 镂空——后者会挖穿游戏画布下层。 */
+  function brickIcon(cx,cy,rad,kind,alpha,pulse){
+    ctx.save();ctx.translate(cx,cy);ctx.scale(rad,rad);
+    ctx.globalAlpha=alpha==null?1:alpha;
+    ctx.fillStyle="#F2FFFB";ctx.strokeStyle="#E8FBFF";ctx.lineJoin="round";ctx.lineCap="round";
     if(kind==="energy"){
-      ctx.beginPath();ctx.moveTo(.9,-s);ctx.lineTo(-1.9,s*.06);ctx.lineTo(.1,s*.06);ctx.lineTo(-.7,s);ctx.lineTo(2.1,-s*.1);ctx.lineTo(.1,-s*.1);ctx.closePath();ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(.42,-1);ctx.lineTo(-.78,-.06);ctx.lineTo(-.12,-.06);
+      ctx.lineTo(-.44,1);ctx.lineTo(.78,.02);ctx.lineTo(.12,.02);
+      ctx.closePath();ctx.fill();
     }else if(kind==="elite"){
-      ctx.beginPath();ctx.moveTo(0,-s);ctx.lineTo(s*.86,0);ctx.lineTo(0,s);ctx.lineTo(-s*.86,0);ctx.closePath();ctx.fill();
+      // 空心菱形：三角形描边宽度在归一化坐标里 0.30
+      ctx.lineWidth=.30;
+      ctx.beginPath();
+      ctx.moveTo(0,-1);ctx.lineTo(.8,0);ctx.lineTo(0,1);ctx.lineTo(-.8,0);
+      ctx.closePath();ctx.stroke();
     }else{
-      ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(0,0,s*.8,0,Math.PI*2);ctx.stroke();
-      ctx.beginPath();ctx.arc(0,0,s*.26,0,Math.PI*2);ctx.fill();
+      const k=pulse==null?1:pulse;
+      ctx.lineWidth=.26/Math.max(.6,k);
+      ctx.beginPath();ctx.arc(0,0,.92*k,0,Math.PI*2);ctx.stroke();
+      ctx.lineWidth=.19/Math.max(.6,k);
+      ctx.beginPath();ctx.arc(0,0,.46,0,Math.PI*2);ctx.stroke();
     }
     ctx.restore();
+  }
+
+  /* 图标 + 数字作为一个整体水平居中；超宽时降级图标 6 / 字号 10 */
+  function brickFace(brick,kind,animT){
+    const w=brick.w,h=brick.h;
+    const numTxt=kind==="energy"?"":String(brick.hp);
+    let iconU=7,gap=2,size=11.5;
+    ctx.font="900 "+size+"px system-ui";
+    let numW=numTxt?ctx.measureText(numTxt).width:0;
+    if(kind&&numTxt&&iconU+gap+numW>w-4){
+      iconU=6;size=10;
+      ctx.font="900 "+size+"px system-ui";
+      numW=ctx.measureText(numTxt).width;
+    }
+    const total=kind?(numTxt?iconU+gap+numW:iconU):numW;
+    const bx=brick.x+(w-total)/2;
+    const cy=brick.y+h/2;
+    if(kind){
+      const alpha=kind==="energy"?(.78+.22*Math.sin(animT*2.618)):1;   // 2.4s
+      const pulse=kind==="summon"?(.9+.12*Math.sin(animT*3.1416)):1;    // 2.0s
+      brickIcon(bx+iconU/2,cy,(iconU/2)*.92,kind,alpha,pulse);
+    }
+    if(numTxt){
+      ctx.save();
+      ctx.font="900 "+size+"px system-ui";
+      ctx.textAlign="left";ctx.textBaseline="middle";
+      ctx.shadowColor="rgba(0,7,16,.42)";ctx.shadowBlur=2;ctx.shadowOffsetY=.6;
+      ctx.fillStyle="#ffffff";
+      ctx.fillText(numTxt,kind?bx+iconU+gap:bx,brick.y+h/2+.4);
+      ctx.restore();
+    }
   }
   /* Boss：紫色/粉紫霓虹框 + 内核光；最终 Boss 三阶段用装甲状态表达 */
   function drawBossTile(b){
@@ -1701,22 +1748,29 @@
         ctx.translate(-brick.x-brick.w/2,-brick.y-brick.h/2);
       }
       if(brick.isBoss){drawBossTile(brick);ctx.restore();continue;}
-      // 统一管线：类型只换配色 + 角标图标
+      // 统一管线：七色按 HP 顺序查表；特殊砖只换配色 + 图标
       const style=brick.special?BRICK_ART.special:
         (brick.isElite?BRICK_ART.elite:(brick.bossSupport?BRICK_ART.summon:brickStyle(brick.hp,false)));
-      const blur=renderQuality==="full"?(brick.isElite?13:11):0;
+      const blur=renderQuality==="full"?(style.blur||8):0;
       brickTile(brick.x,brick.y,brick.w,brick.h,brick.isElite?5:BRICK_ART.radius,style,blur);
       if(brick.cracked)brickCracks(brick);
       brickFlash(brick);
-      if(brick.special){
-        brickIcon(brick.x+brick.w/2,brick.y+brick.h/2+0.5,6.6,"energy");
-      }else{
-        const num=String(brick.hp);
-        const hasIcon=brick.isElite||brick.bossSupport;
-        brickText(brick.x+(hasIcon?2.4:0),brick.y,brick.w,brick.h,num,"#ffffff",num.length>2?10:11.5);
-        if(brick.isElite)brickIcon(brick.x+6.2,brick.y+5.8,3.2,"elite");
-        else if(brick.bossSupport)brickIcon(brick.x+6.2,brick.y+5.8,3.2,"summon");
+      // 精英砖内发光：3s 周期，只叠加径向光，不改外形
+      if(brick.isElite&&renderQuality==="full"&&!reducedMotion){
+        const ig=.72+.28*Math.sin(brickClock*2.094);
+        const cx=brick.x+brick.w/2,cy=brick.y+brick.h/2;
+        ctx.save();
+        const rg=ctx.createRadialGradient(cx,cy,0,cx,cy,brick.w*.62);
+        rg.addColorStop(0,withAlpha(style.edge,.20*ig));
+        rg.addColorStop(1,"rgba(0,0,0,0)");
+        ctx.globalCompositeOperation="lighter";
+        ctx.fillStyle=rg;
+        rounded(brick.x+1,brick.y+1,brick.w-2,brick.h-2,Math.max(1,BRICK_ART.radius-1));ctx.fill();
+        ctx.restore();
       }
+      brickFace(brick,
+        brick.special?"energy":(brick.isElite?"elite":(brick.bossSupport?"summon":null)),
+        reducedMotion?0:brickClock);
       // 召唤落地余波（保留原有 0.7s 扩散环）
       if(!brick.bossSupport&&brick.summonSource&&brick.summonAge!==undefined&&brick.summonAge<.7&&!reducedMotion){
         const t=brick.summonAge/.7;
