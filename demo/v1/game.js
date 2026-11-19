@@ -3,14 +3,14 @@
 "use strict";
 (() => {
   const Build=window.PinballBuilds, CFG=Build.CONFIG;
-  const locale=window.PinballI18n, {t}=locale;
+  const locale=window.PinballI18n, {t:translate}=locale;
   const qaMode=new URLSearchParams(location.search).get("qa")==="1";
   const version="1.0.0-rc.1";
   document.querySelector("#qaBossPreview").hidden=!qaMode;
   document.querySelector("#diagnostics").hidden=!qaMode;
   let lastMessage=null, failure=null, practiceRun=false;
-  const durationText=seconds=>t("time",{min:Math.floor(seconds/60),sec:Math.floor(seconds%60)});
-  const bossName=()=>t(wave===MAX_WAVES?"finalBossName":"bossName");
+  const durationText=seconds=>translate("time",{min:Math.floor(seconds/60),sec:Math.floor(seconds%60)});
+  const bossName=()=>translate(wave===MAX_WAVES?"finalBossName":"bossName");
   const W = 360, MAX_WAVES = CFG.maxWaves;
   let H = 560, DANGER_Y=455, WAVE_START_Y=84;
   let pausedFrom=null, focusBeforePause=null, battleTime=0, waveMetrics=null, waveReports=[], bankDamage=0;
@@ -37,8 +37,8 @@
     record("seed",{id});setState("firstPower");updateUI();return true;
   }
   function showCards(seed=false){
-    $("choiceTitle").textContent=t(!build.seedAbility?"selectSpecialty":"selectUpgrade");
-    $("choiceWave").textContent=!build.seedAbility?t("firstUpgrade"):t("upgradeHeader",{wave,level});
+    $("choiceTitle").textContent=translate(!build.seedAbility?"selectSpecialty":"selectUpgrade");
+    $("choiceWave").textContent=!build.seedAbility?translate("firstUpgrade"):translate("upgradeHeader",{wave,level});
     for(let i=0;i<3;i++){const card=Build.card(build,choiceSet[i]);$("choiceTitle"+i).textContent=card.title;$("choiceDesc"+i).textContent=card.description;}
     ui.choice.classList.remove("hidden");
   }
@@ -65,7 +65,7 @@
       const record=records[id];
       if(!Number.isInteger(record?.wave)||!Number.isFinite(record.seconds))continue;
       const item=document.createElement("li");
-      item.textContent=Build.DEFS[id].name+" · "+t(record.cleared===MAX_WAVES?"recordWin":"recordEntry",
+      item.textContent=Build.DEFS[id].name+" · "+translate(record.cleared===MAX_WAVES?"recordWin":"recordEntry",
         {wave:record.wave,time:durationText(record.seconds)});
       list.append(item);
     }
@@ -75,12 +75,12 @@
     const outcome=phase==="paused"?pausedFrom:phase;
     if(outcome!=="lost"&&outcome!=="complete")return;
     const won=outcome==="complete";
-    $("winLabel").textContent=t(won?"wonLabel":"lostLabel");
-    $("winTitle").textContent=t(won?"winTitle":"lossTitle");
+    $("winLabel").textContent=translate(won?"wonLabel":"lostLabel");
+    $("winTitle").textContent=translate(won?"winTitle":"lossTitle");
     const time=durationText(elapsed);
-    const name=Build.DEFS[build.coreBranch||build.seedAbility]?.name||t("cannon");
-    ui.final.textContent=won?t("result",{build:name,time,score}):
-      t("lossStats",{wave,time,score,cause:t(failure?.key||"regularBrick"),hp:failure?.hp??0});
+    const name=Build.DEFS[build.coreBranch||build.seedAbility]?.name||translate("cannon");
+    ui.final.textContent=won?translate("result",{build:name,time,score}):
+      translate("lossStats",{wave,time,score,cause:translate(failure?.key||"regularBrick"),hp:failure?.hp??0});
   }
   function finishPrototype(){
     if(phase==="complete")return;
@@ -136,10 +136,10 @@
   // One playable class/active skill now. This registry can later add distinct
   // playable classes/skills without giving every cannon the same passive.
   const CANNON_CLASSES=Object.freeze({
-    free:Object.freeze({id:"free",get label(){return t("cannon");},passive:"none"})
+    free:Object.freeze({id:"free",get label(){return translate("cannon");},passive:"none"})
   });
   const ACTIVE_SKILLS=Object.freeze({
-    giant:Object.freeze({id:"giant",get label(){return t("overload");},kind:"giant",maxCharge:MAX_CHARGE})
+    giant:Object.freeze({id:"giant",get label(){return translate("overload");},kind:"giant",maxCharge:MAX_CHARGE})
   });
   // Numeric HP ramps by survival time, while keeping many light bricks for break chains.
   // The last profile repeats with a late multiplier instead of sticking at ~36 HP.
@@ -358,32 +358,32 @@
   $("soundTest").addEventListener("click",()=>{unlockSound();playSfx("brick_hit");}); // V2.1: 试听按钮只验证砖甲受击这一路，不再借用已删除的技能选择音。
 
   function setState(id, values={}){
-    lastMessage={id,values};ui.state.textContent=t(id,values);
+    lastMessage={id,values};ui.state.textContent=translate(id,values);
   }
   function updateUI(){
     const clock=Math.floor(elapsed),mm=String(Math.floor(clock/60)).padStart(2,"0"),ss=String(clock%60).padStart(2,"0");
-    ui.wave.textContent=mm+":"+ss;$("waveLabel").textContent=t("waveCount",{wave,max:MAX_WAVES});ui.score.textContent=String(score);
+    ui.wave.textContent=mm+":"+ss;$("waveLabel").textContent=translate("waveCount",{wave,max:MAX_WAVES});ui.score.textContent=String(score);
     ui.rate.textContent="LV."+level;ui.balls.textContent=String(livingCount());
     ui.charge.textContent=Math.floor(charge)+"%";ui.fill.style.width=charge+"%";
     const cleared=Math.max(0,waveStartingTargets-livingCount());
-    $("xpLabel").textContent=t(bossVictory?"waveBossVictory":boss?.alive?"waveBossObjective":"waveProgress",{wave,clear:cleared,total:waveStartingTargets});
+    $("xpLabel").textContent=translate(bossVictory?"waveBossVictory":boss?.alive?"waveBossObjective":"waveProgress",{wave,clear:cleared,total:waveStartingTargets});
     $("xpFill").style.width=(waveStartingTargets?Math.min(100,cleared/waveStartingTargets*100):0)+"%";
     $("pause").disabled=false;
     $("buffStatus").textContent=build.temporaryBuffs.map(b=>Build.BUFFS[b.id].name+" "+Math.ceil(b.remaining)+"s").join(" · ");
     const ready=phase==="playing"&&!emptyLatch&&!!build.seedAbility&&charge>=MAX_CHARGE&&!giant;
     ui.giant.parentElement.classList.toggle("hidden",!build.seedAbility);
-    ui.giant.disabled=!ready||autoSkill;ui.giant.textContent=t(giant?"overloadActive":autoSkill?"overloadAuto":ready?"overloadReady":"overloadCharge",{sec:giant?Math.ceil(GIANT_LIFETIME-giant.life):0,charge:Math.floor(charge)});
+    ui.giant.disabled=!ready||autoSkill;ui.giant.textContent=translate(giant?"overloadActive":autoSkill?"overloadAuto":ready?"overloadReady":"overloadCharge",{sec:giant?Math.ceil(GIANT_LIFETIME-giant.life):0,charge:Math.floor(charge)});
     const showGuide=ready&&!firstSkillUsed&&!autoSkill;$("skillGuide").classList.toggle("hidden",!showGuide);ui.giant.classList.toggle("guide-pulse",showGuide);
     $("giantLife").classList.toggle("hidden",!giant);
     $("giantTimeText").textContent=giant?Math.max(0,GIANT_LIFETIME-giant.life).toFixed(1)+"s":"0.0s";
     $("giantTimeFill").style.width=giant?Math.max(0,(GIANT_LIFETIME-giant.life)/GIANT_LIFETIME*100)+"%":"0%";
-    $("loadoutLabel").textContent=Build.DEFS[build.coreBranch||build.seedAbility]?.name||t("cannon");
+    $("loadoutLabel").textContent=Build.DEFS[build.coreBranch||build.seedAbility]?.name||translate("cannon");
     ui.build.textContent=Object.keys(build.ranks).map(id=>Build.DEFS[id].name+" R"+build.ranks[id]).join(" · ");
     $("bossHud").classList.toggle("hidden",!boss||!boss.alive);
     if(boss&&boss.alive){
       const guarded=boss.isFinalBoss&&boss.hp<=finaleHpFloor();
       $("bossName").textContent=bossName();
-      const stage=isFinaleWave(wave)?t("stage",{stage:finaleStage})+(guarded?" · "+t("shield"):"")+" · ":"";
+      const stage=isFinaleWave(wave)?translate("stage",{stage:finaleStage})+(guarded?" · "+translate("shield"):"")+" · ":"";
       $("bossText").textContent=stage+boss.hp+" / "+boss.initialHp;
       $("bossFill").style.width=Math.max(0,boss.hp/boss.initialHp*100)+"%";
     }
@@ -659,7 +659,7 @@
     electricStage=3;electricStageStarts[3]=elapsed;
     const marker=$("finalRushLabel");
     marker.classList.add("active");marker.classList.add("stage-3");
-    marker.textContent=t("lastTargets");
+    marker.textContent=translate("lastTargets");
     // V2.1: 爆雷/连锁爆破不再独立发声。
   }
   function markFinalRush(){
@@ -747,7 +747,7 @@
       b.hp-=taken;armorHits+=taken;damageDealt+=taken;
       if(guard>0&&taken===0){setState("guard");record("finale_guard",{stage:finaleStage,hp:b.hp});}
       b.bonk=.12;impactVisual(b.x+b.w/2,b.y+b.h/2,b.hp===0);
-      numberPop(b.x+b.w/2,b.y-1,taken?"−"+taken:t("shield"),taken?"#ffdfb2":"#ffe0ab");
+      numberPop(b.x+b.w/2,b.y-1,taken?"−"+taken:translate("shield"),taken?"#ffdfb2":"#ffe0ab");
       if(b.hp>0){
         if(!b.isFinalBoss)b.color=brickColor(b.hp,b.special);
         if(b.hp<=2&&!b.cracked){b.cracked=true;armorCracks++;}
@@ -768,7 +768,7 @@
     combo=elapsed-lastBreak<=1.25?combo+1:1;
     lastBreak=elapsed;maxCombo=Math.max(combo,maxCombo);comboVisibility=1;
     impactVisual(cx,cy,true);
-    if(combo>=3&&combo%3===0)numberPop(cx,cy-12,t("breakCombo",{count:combo}),"#a5f8df");
+    if(combo>=3&&combo%3===0)numberPop(cx,cy-12,translate("breakCombo",{count:combo}),"#a5f8df");
     if(source==="giant")shake=Math.max(shake,.11);
     juice.onBreak(b,{combo,source,impact});tapHaptic(source==="giant"?"heavy":"break");
     flashBurst(cx,cy,b.color);
@@ -1575,9 +1575,9 @@
       bricks=bricks.filter(b=>b.alive);
     if(choiceQueue>0)offerChoice();
     const message=$("finalRushLabel");
-    if(elapsed<alertUntil){message.classList.add("active");message.textContent=t(emptyLatch?"perfect":boss?.alive?"bossWaveLabel":"waveOnly",{wave,boss:bossName()});}
-    else if(boss&&boss.alive&&livingCount()===1&&waveElapsed%6>=4){message.classList.add("active");message.textContent=t("weak");}
-    else if(livingCount()>0&&livingCount()<=5&&waveElapsed>12){message.classList.add("active");message.textContent=t("tail");}
+    if(elapsed<alertUntil){message.classList.add("active");message.textContent=translate(emptyLatch?"perfect":boss?.alive?"bossWaveLabel":"waveOnly",{wave,boss:bossName()});}
+    else if(boss&&boss.alive&&livingCount()===1&&waveElapsed%6>=4){message.classList.add("active");message.textContent=translate("weak");}
+    else if(livingCount()>0&&livingCount()<=5&&waveElapsed>12){message.classList.add("active");message.textContent=translate("tail");}
     else message.classList.remove("active");
     uiClock+=dt;
     if(uiClock>=.10){uiClock=0;updateUI();}
@@ -1734,7 +1734,7 @@
     }
     if(b.isFinalBoss){
       ctx.save();ctx.font="bold 8px system-ui";ctx.textAlign="center";ctx.fillStyle="#ffd9f2";
-      ctx.globalAlpha=.95;ctx.fillText(t("finalStage",{stage}),cx,b.y+13.5);ctx.restore();
+      ctx.globalAlpha=.95;ctx.fillText(translate("finalStage",{stage}),cx,b.y+13.5);ctx.restore();
     }
     brickText(b.x,b.y+(b.isFinalBoss?6:2),b.w,b.h-(b.isFinalBoss?8:4),String(b.hp),"#fff6ff",b.isFinalBoss?21:17);
   }
@@ -1757,7 +1757,7 @@
     ctx.save();
     ctx.setLineDash([8,5]);ctx.strokeStyle="#ff667c";ctx.lineWidth=2;
     ctx.beginPath();ctx.moveTo(0,DANGER_Y);ctx.lineTo(W,DANGER_Y);ctx.stroke();ctx.setLineDash([]);
-    ctx.fillStyle="#ffb3bd";ctx.font="bold 10px system-ui";ctx.textAlign="left";ctx.fillText(t("danger"),7,DANGER_Y-8);
+    ctx.fillStyle="#ffb3bd";ctx.font="bold 10px system-ui";ctx.textAlign="left";ctx.fillText(translate("danger"),7,DANGER_Y-8);
     if(clearFlash>0){ctx.fillStyle="rgba(80,246,216,"+(clearFlash*.12)+")";ctx.fillRect(0,0,W,H);}
     ctx.restore();
     // Lightweight telegraph: a flickering outline appears before a Boss brick
@@ -1925,7 +1925,7 @@
       ctx.beginPath();ctx.arc(v.x,v.y,10+t*(v.farthest+30),0,Math.PI*2);ctx.stroke();
       ctx.shadowBlur=0;ctx.globalAlpha=Math.min(1,.9*(1-t)+.25);
       ctx.font="900 19px system-ui";ctx.textAlign="center";ctx.fillStyle="#fff3dc";
-      ctx.fillText(t("bossBreak"),W/2,Math.min(H-150,220));ctx.restore();
+      ctx.fillText(translate("bossBreak"),W/2,Math.min(H-150,220));ctx.restore();
     }
     if(!reducedMotion){
       for(const e of impactRings){
@@ -1953,7 +1953,7 @@
       ctx.font="900 18px system-ui";
       ctx.shadowColor="#ffb347";ctx.shadowBlur=renderQuality==="full"?10:0;
       ctx.fillStyle=combo>=5?"#ffd08a":"#a6efd9";
-      ctx.fillText(t("combo",{count:combo}),0,0);
+      ctx.fillText(translate("combo",{count:combo}),0,0);
       ctx.restore();
       ctx.globalAlpha=1;
     }
@@ -1982,18 +1982,18 @@
   }
   function renderBuildPanel(){
     const q=Build.summary(build),stats=q.stats,mods=q.modifiers;
-    $("pauseSubtitle").textContent=[t("waveCount",{wave,max:MAX_WAVES}),Build.DEFS[q.focus]?.name,Build.DEFS[q.branch]?.name].filter(Boolean).join(" · ");
-    $("buildStats").textContent=t("buildStats",{damage:stats.damage,rate:(mods.rate/stats.interval).toFixed(2),
+    $("pauseSubtitle").textContent=[translate("waveCount",{wave,max:MAX_WAVES}),Build.DEFS[q.focus]?.name,Build.DEFS[q.branch]?.name].filter(Boolean).join(" · ");
+    $("buildStats").textContent=translate("buildStats",{damage:stats.damage,rate:(mods.rate/stats.interval).toFixed(2),
       speed:(stats.speed*mods.speed).toFixed(0),ttl:stats.ttl.toFixed(1),balls:balls.length,max:MAX_BALLS});
     $("buildSkills").textContent=q.skills.map(skill=>skill.name+" · R"+skill.rank+"\n"+skill.effect).join("\n\n");
     const last=q.history.at(-1),deltas=entry=>Build.describeDeltas(entry).map(delta=>delta.text).join(" · ");
     $("lastUpgrade").textContent=last?Build.DEFS[last.id].name+"\n"+deltas(last)+"\n"+
-      t("upgradeStats",{before:last.before.damage,after:last.after.damage,rateBefore:(1/last.before.interval).toFixed(2),
-        rateAfter:(1/last.after.interval).toFixed(2)}):t("noUpgrade");
-    $("buildHistory").textContent=q.history.map(entry=>t(entry.wave?"perfect":"seed",{wave:entry.wave})+
+      translate("upgradeStats",{before:last.before.damage,after:last.after.damage,rateBefore:(1/last.before.interval).toFixed(2),
+        rateAfter:(1/last.after.interval).toFixed(2)}):translate("noUpgrade");
+    $("buildHistory").textContent=q.history.map(entry=>translate(entry.wave?"perfect":"seed",{wave:entry.wave})+
       " · "+Build.DEFS[entry.id].name+"\n"+deltas(entry)).join("\n\n");
-    $("buildBuffs").textContent=q.buffs.length?q.buffs.map(buff=>t("buffTime",{name:buff.name,sec:buff.remaining.toFixed(1),description:buff.description})).join("\n"):t("noBuffs");
-    $("resume").textContent=t(pausedFrom==="ready"||pausedFrom==="lost"||pausedFrom==="complete"?"resume":"continue");
+    $("buildBuffs").textContent=q.buffs.length?q.buffs.map(buff=>translate("buffTime",{name:buff.name,sec:buff.remaining.toFixed(1),description:buff.description})).join("\n"):translate("noBuffs");
+    $("resume").textContent=translate(pausedFrom==="ready"||pausedFrom==="lost"||pausedFrom==="complete"?"resume":"continue");
   }
   function applyLanguage(){
     locale.apply(document);
