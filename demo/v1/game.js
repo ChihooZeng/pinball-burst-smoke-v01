@@ -843,6 +843,15 @@
   // Lightning now travels and damages targets ONE AT A TIME, not all at once.
   // Arc's finite queue is independent from physical collisions, so visual
   // steps cannot recursively spawn lightning or freeze the simulation.
+  function nearestArcTarget(anchor, used){
+    let best=null, nearest=CFG.arcRange[arcLevel]**2;
+    for(const brick of bricks){
+      if(!brick.alive||used.has(brick.id))continue;
+      const distance=(brick.x+brick.w/2-anchor.x)**2+(brick.y+brick.h/2-anchor.y)**2;
+      if(distance<nearest){best=brick;nearest=distance;}
+    }
+    return best;
+  }
   function triggerLightning(origin,ball){
     if(!arcLevel||!origin||!ball||ball.mini||ball.contacts===undefined||bossVictory)return false;
     arcCharge++;
@@ -854,12 +863,9 @@
     let from=start;
     if(branch!=="arc-b")for(let i=0;i<limit;i++){
       const anchor=branch==="arc-a"?from:start;
-      const candidates=bricks.filter(b=>b.alive&&!used.has(b.id)&&
-        Math.hypot(b.x+b.w/2-anchor.x,b.y+b.h/2-anchor.y)<=CFG.arcRange[arcLevel]);
-      candidates.sort((a,b)=>Math.hypot(a.x+a.w/2-anchor.x,a.y+a.h/2-anchor.y)-
-        Math.hypot(b.x+b.w/2-anchor.x,b.y+b.h/2-anchor.y));
-      if(!candidates.length)break;
-      const target=candidates[0];chosen.push(target);used.add(target.id);
+      const target=nearestArcTarget(anchor,used);
+      if(!target)break;
+      chosen.push(target);used.add(target.id);
       from={x:target.x+target.w/2,y:target.y+target.h/2};
     }
     let single=false;
@@ -895,15 +901,19 @@
       let processed=0;
       while(chain.index<chain.targets.length&&chain.hops<chain.maxTargets&&
             elapsed>=chain.nextAt&&processed++<2){
-        const id=chain.targets[chain.index++],brick=bricks.find(b=>b.alive&&b.id===id);
+        let id=chain.targets[chain.index++];
+        let brick=bricks.find(b=>b.alive&&b.id===id);
         chain.nextAt+=ARC_HOP_INTERVAL;
+        if(!brick&&chain.branch!=="arc-b"){
+          brick=nearestArcTarget(chain.from,chain.used);
+          if(brick){id=brick.id;chain.used.add(id);}
+        }
         if(!brick)continue;
         const next={x:brick.x+brick.w/2,y:brick.y+brick.h/2};
         const effect=Build.effects(build);
-        const armorBonus=(brick.isBoss||brick.ringArmor||brick.isElite||brick.bossSupport)?effect.arcArmorBonus:0;
+        const armorBonus=brick.armored||brick.isBoss?effect.arcArmorBonus:0;
         const isOrigin=id===chain.originId;
-        const damage=(isOrigin?(chain.branch==="arc-b"?
-          CFG.focusDamage+(build.ranks["arc-b"]>1?3:0):
+        const damage=(isOrigin?(chain.branch==="arc-b"?effect.arcSolo:
           CFG.bossArcDamage+chain.missing*arcLevel):CFG.arcDamage[arcLevel])+armorBonus;
         const before=brick.hp;
         if(!reducedMotion){
@@ -913,18 +923,18 @@
         hitBrick(brick,"lightning",null,damage);
         const taken=Math.max(0,before-brick.hp);
         lightningDamage+=taken;
+        if(taken>0&&Build.preferred(build)==="arc"&&!bossVictory){
+          addCharge(chain.branch==="arc-b"?5:2);
+        }
         if(isOrigin){counters.arcSingleDamage+=taken;focusDamage+=taken;}
         chain.from=next;chain.hops++;
         record("arc_hop",{target:id,order:chain.hops,damage:taken,killed:!brick.alive});
         playSfx("arc");
         if(bossVictory)return; // Boss kill locks victory immediately
         if(chain.branch!=="arc-b"&&!brick.alive&&chain.targets.length<chain.maxTargets){
-          const candidates=bricks.filter(b=>b.alive&&!chain.used.has(b.id)&&
-            Math.hypot(b.x+b.w/2-next.x,b.y+b.h/2-next.y)<=CFG.arcRange[arcLevel]);
-          candidates.sort((a,b)=>Math.hypot(a.x+a.w/2-next.x,a.y+a.h/2-next.y)-
-            Math.hypot(b.x+b.w/2-next.x,b.y+b.h/2-next.y));
-          if(candidates.length){
-            const extra=candidates[0];chain.used.add(extra.id);chain.targets.push(extra.id);
+          const extra=nearestArcTarget(next,chain.used);
+          if(extra){
+            chain.used.add(extra.id);chain.targets.push(extra.id);
             chain.extraHops++;
           }
         }
