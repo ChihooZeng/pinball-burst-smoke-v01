@@ -103,27 +103,20 @@
     {cut:[.23,.55,.89],tiers:[[1,1],[9,21],[25,43],[46,62]]},
     {cut:[.23,.55,.88],tiers:[[1,1],[11,24],[30,50],[53,72]]}
   ];
-  /* ===== 砖块视觉规范 V1.0 =====
-     参考图：experiments/brick-art-preview/reference/brick-art-v1.png
-     统一管线：深色底 → 霓虹描边 → 外发光 → 数字/图标 → 状态叠加（受击/裂纹/召唤）。
-     耐久按 4 档 8 级递进且不回环（旧实现 band%8 会让 HP64 与 HP1 同色）。 */
+  // Fixed HP bands. Color follows remaining HP, independent of wave and position.
   const BRICK_ART={
-    /* 七级耐久（V1.0 定稿）：薄荷绿 → 青 → 蓝 → 靛 → 紫 → 洋红。
-       edge=描边/光晕，ft/fb=填充上/下（由 main 按明度 ×0.60 / ×0.36 派生，白字对比度 4.55–9.34:1）。
-       映射用顺序查表，不取模、不回环：128 / 256 / 1000 都落在 Lv7。 */
     ramp:[
-      {lv:1, max:2,   edge:"#4BE9B9", ft:"#17856E", fb:"#0E5042", main:"#27DDB7"}, // 1-2
-      {lv:2, max:4,   edge:"#3FDBD6", ft:"#0E7379", fb:"#094548", main:"#18BFC9"}, // 3-4
-      {lv:3, max:8,   edge:"#3FDBFF", ft:"#13768B", fb:"#0C4754", main:"#20C4E8"}, // 5-8
-      {lv:4, max:16,  edge:"#5AA1FF", ft:"#17568F", fb:"#0E3356", main:"#278FEF"}, // 9-16
-      {lv:5, max:32,  edge:"#7B7EFF", ft:"#343F8E", fb:"#1F2655", main:"#5669ED"}, // 17-32
-      {lv:6, max:64,  edge:"#C088FF", ft:"#60318C", fb:"#3A1E54", main:"#A052EA"}, // 33-64
-      {lv:7, max:1e9, edge:"#FF78E6", ft:"#882D76", fb:"#521B47", main:"#E34BC5"}  // 65+
+      {max:1,        edge:"#6AFF80", ft:"#189655", fb:"#075638"},
+      {max:2,        edge:"#5397FF", ft:"#2569D8", fb:"#153D89"},
+      {max:6,        edge:"#FFD54B", ft:"#AA7C04", fb:"#644600"},
+      {max:12,       edge:"#FF65D6", ft:"#BB3D9E", fb:"#6C185D"},
+      {max:24,       edge:"#FF9C49", ft:"#C95D1E", fb:"#6C2B0B"},
+      {max:48,       edge:"#A992FF", ft:"#674ACA", fb:"#352075"},
+      {max:Infinity, edge:"#FF6073", ft:"#BA354F", fb:"#691629"}
     ],
-    // 特殊砖 V1.0：与普通砖撞色是已接受的取舍，识别交给图标
-    special:{edge:"#4BEB9B", ft:"#0FA765", fb:"#0B5638", border:1.3, blur:8},   // 能量砖
-    elite:{edge:"#C39BFF", ft:"#6B2FD0", fb:"#44218A", border:1.6, blur:10},    // 精英砖
-    summon:{edge:"#4FC6FF", ft:"#0A78B8", fb:"#075A85", border:1.3, blur:8},    // 召唤砖
+    special:{edge:"#2DF7DA", ft:"#008875", fb:"#005746", border:1.3, blur:8},
+    elite:{edge:"#FFF1CA", ft:"#81704C", fb:"#49402A", border:1.6, blur:10},
+    summon:{edge:"#CDE6FF", ft:"#527993", fb:"#314B66", border:1.3, blur:8},
     // Boss 保持深色底 + 霓虹框（与普通砖拉开层级）
     boss:{edge:"#B26CFF", glow:"#A855F7", base:"#1D0B3A"},
     finalBoss:{edge:"#FF7AD9", glow:"#F472B6", base:"#2E0A2A"},
@@ -1521,9 +1514,9 @@
     return "rgba("+((n>>16)&255)+","+((n>>8)&255)+","+(n&255)+","+a+")";
   }
   function brickTile(x,y,w,h,r,style,blur){
-    // 参考图里砖块是"发光的彩色块"：霓虹色半透明填充 + 上亮下暗的轻微渐变
+    // Opaque color face with a soft halo and a crisp edge.
     ctx.save();
-    ctx.shadowColor=style.edge;ctx.shadowBlur=blur;
+    ctx.shadowColor=withAlpha(style.edge,.64);ctx.shadowBlur=blur;
     const g=ctx.createLinearGradient(0,y,0,y+h);
     g.addColorStop(0,style.ft);g.addColorStop(1,style.fb);
     ctx.fillStyle=g;rounded(x,y,w,h,r);ctx.fill();
@@ -1591,7 +1584,7 @@
   /* 图标 + 数字作为一个整体水平居中；超宽时降级图标 6 / 字号 10 */
   function brickFace(brick,kind,animT){
     const w=brick.w,h=brick.h;
-    const numTxt=kind==="energy"?"":String(brick.hp);
+    const numTxt=kind==="energy"||(!kind&&brick.hp===1)?"":String(brick.hp);
     let iconU=7,gap=2,size=11.5;
     ctx.font="900 "+size+"px system-ui";
     let numW=numTxt?ctx.measureText(numTxt).width:0;
