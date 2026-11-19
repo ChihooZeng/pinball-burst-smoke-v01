@@ -14,7 +14,6 @@
   const W = 360, MAX_WAVES = CFG.maxWaves;
   let H = 560, DANGER_Y=455, WAVE_START_Y=84;
   let pausedFrom=null, focusBeforePause=null, battleTime=0, waveMetrics=null, waveReports=[], bankDamage=0;
-  let gunTarget=null,gunStreak=0,gunLast=-99;
   let precisionTurns=0,focusDamage=0,gunBonusDamage=0,weakpointDamage=0,weakpointCharge=0,damageDealt=0,shotsWithContact=0;
   let waveFallMultiplier=1;
   const FIRST_SKILL_KEY='pinball-overload-first-skill-v1',SIDE_KEY='pinball-overload-skill-side-v1',AUTO_KEY='pinball-overload-auto-skill-v1';
@@ -524,6 +523,10 @@
     }
     return result;
   }
+  function normalDropSpeed(n){
+    const latePressure=n>=11&&n<=19?1+(n-10)*.022:1;
+    return Math.min(8.4,FALL_BASE+Math.max(0,n-1)*.09)*CFG.fallScale*latePressure;
+  }
   function spawnWave(n,plan=null){
     wave=n;waveElapsed=0;waveTailSoftened=false;boss=null;bossVictory=null;lightningChains=[];lightningArcs=[];
     waveMetrics={breaks:0,lastBreak:0,longestNoBreak:0,tailSeconds:0,bossSoloSeconds:0,shots:shotsFired||0,children:counters.splitChildren,reclaims:counters.budgetReclaims,suppressed:counters.suppressedShots,suppressedChildren:counters.suppressedChildren};
@@ -542,6 +545,10 @@
     const oldReferenceGap=455-(84+8*28+BRICK_H);
     const oldHeightFactor=Math.max(1,Math.min(3.2,1+Math.max(0,virtualOldGap/oldReferenceGap-1)*.70));
     waveFallMultiplier=n===1?1:oldHeightFactor*Math.max(.58,gap/Math.max(1,virtualOldGap));
+    // Give the last dense formations enough response time on short screens.
+    // The actual HP, positions, and Boss pressure stay intact.
+    const responseTime=n===18?22:n===19?26:0;
+    if(responseTime>0&&gap>0)waveFallMultiplier=Math.min(waveFallMultiplier,gap/(normalDropSpeed(n)*responseTime));
     record("wave_pressure",{wave:n,fallMultiplier:+waveFallMultiplier.toFixed(3),gap:+gap.toFixed(1)});
     waveStartingTargets=livingCount();
     clearPreview=[];clearPreviewShown=false;clearWindowActive=false;
@@ -560,7 +567,7 @@
     WAVE_START_Y=window.innerWidth?Math.max(84,Math.ceil((document.querySelector(".topbar").getBoundingClientRect().height+28)*W/window.innerWidth)):84;
     pausedFrom=null;battleTime=0;waveReports=[];bankDamage=0;lockBackground(false);$("pauseOverlay").classList.add("hidden");
     window.PinballGameAudio?.stopBgm?.(0);
-    gunTarget=null;gunStreak=0;gunLast=-99;precisionTurns=focusDamage=gunBonusDamage=weakpointDamage=weakpointCharge=damageDealt=shotsWithContact=0;build=Build.createState(initialSeed===null?Math.floor(Math.random()*4294967296):initialSeed);events=[];arcCharge=0;lastArcRelease=-99;fanClock=0;gunFlash=0;turretRecoil=0;brickClock=0;
+    precisionTurns=focusDamage=gunBonusDamage=weakpointDamage=weakpointCharge=damageDealt=shotsWithContact=0;build=Build.createState(initialSeed===null?Math.floor(Math.random()*4294967296):initialSeed);events=[];arcCharge=0;lastArcRelease=-99;fanClock=0;gunFlash=0;turretRecoil=0;brickClock=0;
     counters={splitChildren:0,arcReleases:0,arcSingleDamage:0,budgetReclaims:0,suppressedShots:0,suppressedChildren:0,maxBallsAlive:0,wallBounces:0,shotsByBuild:{base:0,split:0,arc:0,gun:0}};
     collisionChecks=0;physicsCostMs=0;physicsSteps=0;maxPhysicsMs=0;
     wave=1;score=0;phase="ready";charge=0;elapsed=0;level=1;xp=0;xpGoal=34;
@@ -1012,8 +1019,9 @@
     let pressure=0;
     const gunRank=Build.effectiveRank(build,"gun");
     if(!ball.mini&&gunRank>1&&Build.preferred(build)==="gun"){
-      gunStreak=gunTarget===block.id&&elapsed-gunLast<=2?gunStreak+1:1;gunTarget=block.id;gunLast=elapsed;
-      pressure=Math.min(gunRank-1,Math.floor((gunStreak-1)/3));
+      block.gunStreak=elapsed-(block.gunLast??-Infinity)<=2?block.gunStreak+1:1;
+      block.gunLast=elapsed;
+      pressure=Math.min(gunRank-1,Math.floor((block.gunStreak-1)/3));
     }
     const weak=block.isBoss&&livingCount()===1&&waveElapsed%6>=4;
     if(weak){addCharge(4);weakpointCharge+=4;} // Boss weakpoint grants extra charge, not +1 hidden damage.
@@ -1474,12 +1482,11 @@
     if(!emptyLatch){
       waveElapsed+=dt;
       const liveBefore=livingCount();if(liveBefore>0){waveMetrics.longestNoBreak=Math.max(waveMetrics.longestNoBreak,waveElapsed-waveMetrics.lastBreak);if(liveBefore<=5)waveMetrics.tailSeconds+=dt;if(liveBefore===1&&boss)waveMetrics.bossSoloSeconds+=dt;}
-      const latePressure=wave>=11&&wave<=19?1+(wave-10)*.022:1;
       const finalePressure=isFinaleWave(wave)?.34+.11*(finaleStage-1):1;
       // Boss10 gains speed as battle lasts; move the initial lowest guides
       // one row up so the faster visual descent does not cause instant losses.
       const bossPressure=wave===10?Math.min(1.49,1.22+Math.max(0,waveElapsed-8)*.014):isFinaleWave(wave)?.9:1;
-      const speed=Math.min(8.4,FALL_BASE+Math.max(0,wave-1)*.09)*bossPressure*CFG.fallScale*waveFallMultiplier*latePressure*finalePressure;
+      const speed=normalDropSpeed(wave)*bossPressure*waveFallMultiplier*finalePressure;
       for(const brick of bricks)if(brick.alive)brick.y+=speed*dt;
       const danger=bricks.find(b=>b.alive&&b.y+b.h>=DANGER_Y);
       if(danger){
