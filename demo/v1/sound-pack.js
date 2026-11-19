@@ -354,6 +354,8 @@ function versionedUrl(url) {
 
 let ctx = null, bus = null, limiter = null;
 const buffers = new Map(), loading = new Map(), unavailable = new Set();
+const pendingLoads = [];
+let activeLoads = 0;
 const voices = [], last = Object.create(null);
 const plays = Object.create(null), suppressed = Object.create(null), drops = Object.create(null);
 let errors = 0, lastError = null, silentDrops = 0;
@@ -381,6 +383,22 @@ function setup(unlock = true) {
 
 function bufferKey(eventId, variantId) { return eventId + ":" + variantId; }
 
+// Reserve room for the page and the streaming BGM on HTTP/1.1 hosts.
+function queueLoad(task) {
+  return new Promise((resolve, reject) => {
+    pendingLoads.push(async () => {
+      activeLoads++;
+      try { resolve(await task()); }
+      catch (error) { reject(error); }
+      finally {
+        activeLoads--;
+        pendingLoads.shift()?.();
+      }
+    });
+    if (activeLoads < 3) pendingLoads.shift()();
+  });
+}
+
 /* 解码一次并计算响度补偿，保证四条声音在手机外放上量级接近。 */
 function load(eventId, variantId) {
   const event = EVENTS[eventId];
@@ -390,7 +408,7 @@ function load(eventId, variantId) {
   if (buffers.has(key)) return Promise.resolve(buffers.get(key));
   if (loading.has(key)) return loading.get(key);
   if (unavailable.has(key)) return Promise.reject(new Error("Unavailable audio " + key));
-  const job = (async () => {
+  const job = queueLoad(async () => {
     const audio = setup(false);
     if (!audio) throw new Error("Web Audio unsupported");
     const versioned = versionedUrl(variant.url);
@@ -412,7 +430,7 @@ function load(eventId, variantId) {
     const record = { buffer, level, url: variant.url };
     buffers.set(key, record);
     return record;
-  })();
+  });
   loading.set(key, job);
   job.catch(e => {
     errors++;

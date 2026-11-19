@@ -1,0 +1,8 @@
+:root{color-scheme:dark;font:16px/1.65 system-ui,sans-serif;color:#e8f5ff;background:#071423}
+.policy{max-width:44rem;margin:auto;padding:1.5rem}
+.policy h1,.policy h2{line-height:1.25}
+.policy select{font:inherit;min-height:44px}
+.policy a{color:#92eae1;display:inline-flex;align-items:center;min-height:44px}
+.policy dd{margin:0 0 .8rem;overflow-wrap:anywhere}
+.policy dt{font-weight:650}
+.policy-host{border:1px solid #45657a;padding:.9rem;border-radius:.7rem}

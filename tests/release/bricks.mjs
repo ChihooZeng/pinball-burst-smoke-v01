@@ -22,6 +22,21 @@ try {
     window.__PINBALL_SEED__ = 20261118;
     window.__PINBALL_TEST__ = true;
     window.canvasLabels = [];
+    window.lowBrickColors = new Set();
+    let rounded;
+    const roundRect = CanvasRenderingContext2D.prototype.roundRect;
+    const stroke = CanvasRenderingContext2D.prototype.stroke;
+    CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,...args){
+      rounded={x,y,w,h};
+      return roundRect.call(this,x,y,w,h,...args);
+    };
+    CanvasRenderingContext2D.prototype.stroke = function(...args){
+      if(window.captureLabels && rounded && Math.abs(rounded.w-27.7)<.01 && Math.abs(rounded.h-20.7)<.01){
+        const target=window.__pinballTest.allBricks().find(b=>b.alive && Math.abs(b.x+.65-rounded.x)<.01 && Math.abs(b.y+.65-rounded.y)<.01);
+        if(target?.hp===1 && !target.special && !target.isElite && !target.bossSupport) lowBrickColors.add(this.strokeStyle);
+      }
+      return stroke.apply(this,args);
+    };
     const fillText = CanvasRenderingContext2D.prototype.fillText;
     CanvasRenderingContext2D.prototype.fillText = function(text,x,y,...args){
       if (window.captureLabels) canvasLabels.push({text:String(text),x,y});
@@ -54,9 +69,13 @@ try {
       await sleep(wave===10?1500:430);
       await page.eval(`(()=>{document.querySelector('#pause').click();
         document.querySelector('#pauseOverlay').classList.add('hidden');
-        canvasLabels.length=0;window.captureLabels=true;})()`);
+        canvasLabels.length=0;lowBrickColors.clear();window.captureLabels=true;})()`);
       await sleep(78);
       await page.eval("window.captureLabels=false");
+      if(wave<=4 && mode==="after"){
+        waveData[wave-1].renderedLowBrickColors=await page.eval("[...lowBrickColors].sort()");
+        assert.equal(waveData[wave-1].renderedLowBrickColors.length,3,`wave ${wave} should render three ordinary 1HP colors`);
+      }
       if(wave===1 && mode==="after") {
         assert.equal(await page.eval("canvasLabels.some(label=>label.text==='1')"),false,"ordinary 1HP must render without a number");
         assert.equal(await page.eval("canvasLabels.some(label=>label.text==='2')"),true,"ordinary 2HP must retain its number");

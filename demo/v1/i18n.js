@@ -118,6 +118,8 @@
     "qaNote": ["跳关局不计入通关记录。", "QA runs do not count toward records."],
     "qaField": ["测试场 · {count} 块砖", "Test field · {count} bricks"],
     "credit": ["音乐：Cut and Run — Kevin MacLeod · CC BY 4.0", "Music: Cut and Run — Kevin MacLeod · CC BY 4.0"],
+    "analytics": ["参与玩法统计", "Share gameplay analytics"],
+    "analyticsHelp": ["帮助我们了解玩家在哪一波停下，以及如何搭配流派。随时可在设置中关闭。", "Help us understand where runs end and how builds are played. Change this anytime in Settings."],
     "privacy": ["隐私", "Privacy"],
     "howToPlay": ["操作说明", "How to play"],
     "records": ["最佳纪录", "Best runs"],

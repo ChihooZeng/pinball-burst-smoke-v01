@@ -4,12 +4,19 @@
 (() => {
   const Build=window.PinballBuilds, CFG=Build.CONFIG;
   const locale=window.PinballI18n, {t:translate}=locale;
-  const boot=window.PinballBoot;
+  const boot=window.PinballBoot,analytics=window.PinballAnalytics;
+  const analyticsEvents={
+    wave_start:"wave_start",wave_clear:"wave_clear",choice:"upgrade_selected",
+    seed:"faction_selected",boss_start:"boss_start",boss_defeated:"boss_defeated",
+    touchline:"game_over",complete:"game_complete",restart:"game_restart",
+    paused:"pause",resumed:"resume",heartbeat:"run_heartbeat"
+  };
+  const analyticsState=()=>({wave,seconds:Math.floor(battleTime),faction:build.seedAbility});
   const qaMode=new URLSearchParams(location.search).get("qa")==="1";
-  const version="1.0.0-rc.1";
+  const version="1.0.0-rc.2";
   document.querySelector("#qaBossPreview").hidden=!qaMode;
   document.querySelector("#diagnostics").hidden=!qaMode;
-  let lastMessage=null, failure=null, practiceRun=false;
+  let lastMessage=null, failure=null, practiceRun=false, nextHeartbeat=15;
   const durationText=seconds=>translate("time",{min:Math.floor(seconds/60),sec:Math.floor(seconds%60)});
   const bossName=()=>translate(wave===MAX_WAVES?"finalBossName":"bossName");
   const W = 360, MAX_WAVES = CFG.maxWaves;
@@ -26,7 +33,19 @@
   let build,events=[],counters,arcCharge=0,lastArcRelease=-99,fanClock=0,gunFlash=0,turretRecoil=0,brickClock=0,lastShotAngle=0;
   let collisionChecks=0,physicsCostMs=0,physicsSteps=0,maxPhysicsMs=0;
   const initialSeed=Number.isFinite(window.__PINBALL_SEED__)?window.__PINBALL_SEED__>>>0:null;
-  function record(type,data={}){events.push({type,time:+elapsed.toFixed(4),wave,...data});if(events.length>6000)events.shift();}
+  function record(type,data={}){
+    events.push({type,time:+elapsed.toFixed(4),wave,...data});
+    if(events.length>6000)events.shift();
+    if(!analytics||practiceRun)return;
+    if(type==="intro_start")analytics.start(analyticsState());
+    if(type==="first_upgrade"){
+      analytics.event("tutorial_complete",analyticsState());
+      analytics.event("faction_selected",analyticsState());
+    }
+    if(analyticsEvents[type])analytics.event(analyticsEvents[type],{
+      ...analyticsState(),upgrade:type==="choice"?data.id:null,reason:data.reason??data.source??null
+    });
+  }
   function syncBuild(){
     splitLevel=Build.effectiveRank(build,"split");arcLevel=Build.effectiveRank(build,"arc");
     rateLevel=build.ranks.rate||0;powerLevel=build.ranks.power||0;speedLevel=build.ranks.speed||0;lifeLevel=build.ranks.life||0;
@@ -156,7 +175,7 @@
     {cut:[.23,.55,.89],tiers:[[1,1],[9,21],[25,43],[46,62]]},
     {cut:[.23,.55,.88],tiers:[[1,1],[11,24],[30,50],[53,72]]}
   ];
-  // Fixed HP bands. Color follows remaining HP, independent of wave and position.
+  // Fixed HP bands with three face colors for ordinary 1HP bricks in waves 1–4.
   const BRICK_ART={
     ramp:[
       {max:1,        edge:"#6AFF80", ft:"#189655", fb:"#075638"},
@@ -175,6 +194,16 @@
     finalBoss:{edge:"#FF7AD9", glow:"#F472B6", base:"#2E0A2A"},
     radius:4
   };
+  const EARLY_ONE_HP_ART=[
+    BRICK_ART.ramp[0],
+    {edge:"#FF805C", ft:"#CF4A2F", fb:"#83261B"},
+    {edge:"#E483FF", ft:"#A43BC2", fb:"#5D1F79"}
+  ];
+  function earlyOneHpStyle(brick){
+    if(wave>4||brick.hp!==1||brick.special||brick.isElite||brick.bossSupport||brick.isBoss)return null;
+    const column=Math.round((brick.x-12)/BRICK_STEP_X);
+    return EARLY_ONE_HP_ART[(brick.id+column+wave-1)%EARLY_ONE_HP_ART.length];
+  }
   function brickStyle(hp,special){
     if(special)return BRICK_ART.special;
     for(let i=0;i<BRICK_ART.ramp.length;i++)if(hp<=BRICK_ART.ramp[i].max)return BRICK_ART.ramp[i];
@@ -495,6 +524,7 @@
     for(const tile of tiles)bricks.push(brickAt(tile.x,tile.y,tile.hp,
       {...tile,special:tile.special,summonAge:0,summonSource:"wave"}));
     if(isBossWave(n))bossSpawn();
+    if(n>1){record("wave_start");if(isBossWave(n))record("boss_start");}
     // Compensate for added 5px vertical pitch so the same phone does not
     // suddenly lose ~40px of its original warning time.
     const bottom=Math.max(...bricks.map(b=>b.y+b.h));
@@ -531,7 +561,7 @@
     counters={splitChildren:0,arcReleases:0,arcSingleDamage:0,budgetReclaims:0,suppressedShots:0,suppressedChildren:0,maxBallsAlive:0,wallBounces:0,shotsByBuild:{base:0,split:0,arc:0,gun:0}};
     collisionChecks=0;physicsCostMs=0;physicsSteps=0;maxPhysicsMs=0;
     wave=1;score=0;phase="ready";charge=0;elapsed=0;level=1;xp=0;xpGoal=34;
-    failure=null;practiceRun=false;lastMessage=null;
+    failure=null;practiceRun=false;lastMessage=null;nextHeartbeat=15;
     waveElapsed=0;waveTailSoftened=false;waveSpawnCount=0;bossSummonTotal=0;clearWindowActive=false;waveStartingTargets=0;waveUpgrades=0;
     choiceQueue=0;choiceSet=[];powerLevel=0;volleyLevel=0;rateLevel=0;speedLevel=0;lifeLevel=0;
     hunterLevel=0;ricochetLevel=0;splitLevel=0;shockLevel=0;drillLevel=0;arcLevel=0;
@@ -558,7 +588,7 @@
     unlockSound();phase="playing";$("startOverlay").classList.add("hidden");choiceSet=[];
     window.PinballGameAudio?.startBgm?.();
     shootClock=Build.tuning(build).interval-CFG.firstShot;
-    record("intro_start");setState("introAim");updateUI();return true;
+    record("intro_start");record("wave_start");setState("introAim");updateUI();return true;
   }
 
   // Test-only entry on the isolated experiment page. Simulates nine legitimate
@@ -719,6 +749,7 @@
       b.armored=false;
     }
     if(b.cracked)armorBreaks++;
+    const breakColor=earlyOneHpStyle(b)?.edge||b.color;
     damageDealt+=b.hp;b.hp=0;b.alive=false;score++;
     if(waveMetrics){waveMetrics.breaks++;waveMetrics.longestNoBreak=Math.max(waveMetrics.longestNoBreak,waveElapsed-waveMetrics.lastBreak);waveMetrics.lastBreak=waveElapsed;}
     if(b.special){Build.grantBuff(build,b.buffId);record("buff",{id:b.buffId,remaining:Build.BUFFS[b.buffId].duration});}
@@ -734,8 +765,8 @@
     }
     if(source==="giant")shake=Math.max(shake,.11);
     juice.onBreak(b,{combo,source,impact});tapHaptic(source==="giant"?"heavy":"break");
-    flashBurst(cx,cy,b.color);
-    burst(cx,cy,b.color,source==="giant"?19:12,true);
+    flashBurst(cx,cy,breakColor);
+    burst(cx,cy,breakColor,source==="giant"?19:12,true);
     // Secondary explosions and lightning cannot snowball the active-skill meter.
     if(source==="normal"||source==="drill")addCharge(b.special?34:8);
     if(b.special&&(source==="normal"||source==="drill"))setState("energyHit");
@@ -1511,6 +1542,7 @@
     if(phase!=="playing")return;
     const stepStart=performance.now();
     elapsed+=dt;if(!emptyLatch){shootClock+=dt;battleTime+=dt;Build.tickBuffs(build,dt);}
+    if(analytics?.available&&battleTime>=nextHeartbeat){nextHeartbeat+=15;record("heartbeat");}
     generateSurvival(dt);
     if(phase!=="playing")return;
     if(!emptyLatch&&!bossVictory){
@@ -1804,9 +1836,9 @@
         ctx.translate(-brick.x-brick.w/2,-brick.y-brick.h/2);
       }
       if(brick.isBoss){drawBossTile(brick);ctx.restore();continue;}
-      // 统一管线：七色按 HP 顺序查表；特殊砖只换配色 + 图标
+      // 特殊砖使用独立配色和图标。
       const style=brick.special?BRICK_ART.special:
-        (brick.isElite?BRICK_ART.elite:(brick.bossSupport?BRICK_ART.summon:brickStyle(brick.hp,false)));
+        (brick.isElite?BRICK_ART.elite:(brick.bossSupport?BRICK_ART.summon:earlyOneHpStyle(brick)||brickStyle(brick.hp,false)));
       const blur=renderQuality==="full"?(style.blur||8):0;
       brickTile(brick.x,brick.y,brick.w,brick.h,brick.isElite?5:BRICK_ART.radius,style,blur);
       if(brick.cracked)brickCracks(brick);
@@ -1981,14 +2013,17 @@
   function lockBackground(locked){
     for(const element of document.querySelectorAll?.(".topbar,.hud,.footer,.combat-status,#game,#choiceOverlay,#startOverlay,#winOverlay,.ult-wrap")||[])element.inert=locked;
   }
-  function pause(){
+  function pause(reason="settings"){
     if(!["ready","seeding","playing","choosing","lost","complete"].includes(phase))return false;
     pausedFrom=phase;phase="paused";activePointer=null;accumulator=0;
+    if(pausedFrom==="playing"||pausedFrom==="choosing")record("paused",{reason});
     focusBeforePause=document.activeElement;lockBackground(true);renderBuildPanel();$("pauseOverlay").classList.remove("hidden");$("resume").focus?.();window.PinballGameAudio?.pauseBgm?.();updateUI();return true;
   }
   function resume(){
     if(phase!=="paused")return false;phase=pausedFrom;pausedFrom=null;accumulator=0;lastFrame=performance.now();
-    $("pauseOverlay").classList.add("hidden");lockBackground(false);focusBeforePause?.focus?.();window.PinballGameAudio?.resumeBgm?.();updateUI();return true;
+    $("pauseOverlay").classList.add("hidden");lockBackground(false);focusBeforePause?.focus?.();
+    if(phase==="playing"||phase==="choosing"){sound?.resumeBgm();record("resumed");}
+    updateUI();return true;
   }
   $("pause").addEventListener("click",()=>phase==="paused"?resume():pause());
   $("resume").addEventListener("click",resume);
@@ -2032,19 +2067,26 @@
   $("jumpFinalBoss").addEventListener("click",jumpToFinalBoss);
   for(let i=0;i<3;i++)$("choice"+i).addEventListener("click",()=>{unlockSound();chooseUpgrade(choiceSet[i]);});
   $("home").addEventListener("click",reset);
-  $("again").addEventListener("click",()=>{unlockSound();reset();begin();});
-  $("reset").addEventListener("click",()=>{unlockSound();reset();begin();});
+  function restartRun(){
+    unlockSound();record("restart",{reason:"restart"});reset();begin();
+  }
+  $("again").addEventListener("click",restartRun);
+  $("reset").addEventListener("click",restartRun);
   function resetFrameClock(){accumulator=0;lastFrame=performance.now();}
   function suspendBattle(){
-    if(["playing","choosing","seeding"].includes(phase))pause();
+    if(["playing","choosing","seeding"].includes(phase))pause("background");
     resetFrameClock();
   }
   document.addEventListener("visibilitychange",()=>{
-    if(document.hidden)suspendBattle();
+    if(document.hidden){suspendBattle();analytics?.close();}
     else resetFrameClock();
   });
   window.addEventListener("resize",()=>{fitCanvas();activePointer=null;resetFrameClock();});
-  window.addEventListener("pagehide",suspendBattle);
+  window.addEventListener("pagehide",()=>{
+    const active=phase==="paused"?pausedFrom:phase;
+    const exit=!practiceRun&&["playing","choosing"].includes(active)?{...analyticsState(),reason:"exit"}:null;
+    suspendBattle();analytics?.close(exit);
+  });
   window.addEventListener("keydown",e=>{
     if(phase==="paused"&&e.code==="Tab"){
       const focusable=Array.from($("pauseOverlay").querySelectorAll("button,input,select,[tabindex='0'],summary")).filter(el=>!el.disabled);
@@ -2053,7 +2095,7 @@
       else if(!e.shiftKey&&document.activeElement===last){first?.focus();e.preventDefault();}
       return;
     }
-    if(e.code==="KeyP"||e.code==="Escape"){if(phase==="paused")resume();else pause();e.preventDefault();return;}
+    if(e.code==="KeyP"||e.code==="Escape"){if(phase==="paused")resume();else pause("keyboard");e.preventDefault();return;}
     if(phase!=="playing"||emptyLatch)return;
     if(e.code==="ArrowLeft"){aim=clamp(aim-.09,-1.08,1.08);e.preventDefault();}
     if(e.code==="ArrowRight"){aim=clamp(aim+.09,-1.08,1.08);e.preventDefault();}
@@ -2192,7 +2234,7 @@
     };
   }
   function makeBallTest(mini=false){return makeBall(0,mini);}
-  reset();applyLanguage();resetFrameClock();scheduleFrame();
+  reset();applyLanguage();analytics?.wireConsent();resetFrameClock();scheduleFrame();
   boot.markReady(()=>{
     canvas.width=canvas.width; // Clears the Canvas save stack after an interrupted draw.
     reset();applyLanguage();resetFrameClock();scheduleFrame();

@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/png" href="/demo/v1/assets/icon-192.png">
+  <title>Marble Overload Analytics</title>
+  <style>
+    :root{background:#071423;color:#e8f5ff;font:16px system-ui;color-scheme:dark}
+    main{max-width:64rem;margin:auto;padding:1.5rem}
+    form{display:flex;flex-wrap:wrap;align-items:end;gap:.75rem}
+    label{display:grid;gap:.25rem}
+    input,select,button{font:inherit;min-height:2.75rem;padding:0 .6rem}
+    table{border-collapse:collapse;width:100%;margin-bottom:2rem;font-variant-numeric:tabular-nums}
+    th,td{text-align:left;border-bottom:1px solid #385267;padding:.45rem}
+    [role=status]{min-height:1.4rem;color:#99dfd5}
+  </style>
+  <script src="./dashboard.js" defer></script>
+</head>
+<body>
+  <main>
+    <h1>Marble Overload Analytics</h1>
+    <form id="access">
+      <label>Dashboard token<input id="token" type="password" required autocomplete="off"></label>
+      <label>Period
+        <select id="period"><option value="1">24 hours</option><option value="7">7 days</option><option value="30" selected>30 days</option><option value="90">90 days</option></select>
+      </label>
+      <button type="submit">Load metrics</button>
+    </form>
+    <p id="status" role="status"></p>
+    <section id="results" aria-label="Metrics"></section>
+  </main>
+</body>
+</html>
