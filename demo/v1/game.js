@@ -84,7 +84,7 @@
   }
   function finishPrototype(){
     if(phase==="complete")return;
-    playSfx("clear");phase="complete";balls=[];giant=null;
+    playSfx("victory");sound?.stopBgm(1200);phase="complete";balls=[];giant=null;
     ui.win.classList.remove("hidden");renderResult();
     record("complete");saveBestRun();setState("winTitle");updateUI();
   }
@@ -248,12 +248,10 @@
   let waveElapsed=0,clearWindowActive=false,bossSummonTotal=0,waveTailSoftened=false,waveSpawnCount=0,waveStartingTargets=0,waveUpgrades=0;
   let finaleStage=0,finaleWaveSpawns=[0,0,0,0],finaleDamageCheckpoints=[];
   let phase, charge, hunterLevel, ricochetLevel, splitLevel, shockLevel, drillLevel, arcLevel, shootClock, elapsed;
-  let skillsUsed, ricochetTriggers, lastFrame, soundContext, masterGain, soundLimiter, soundVolume=.78;
-  // V2.1 临时开关：原有合成提示音（裂变/追击/钻头/电弧/超载+Boss降临）默认全部关闭。
-  // 只关闭播放，不删 beep()、不删任何触发点；改成 true 即整体恢复，无需其它改动。
-  const LEGACY_SYNTH_CUES_ENABLED=false;
+  let skillsUsed, ricochetTriggers, lastFrame;
+  let soundVolume=.78, soundMuted=false;
   let accumulator=0,uiClock=0,metricsClock=0,frameSamples=0,fpsNow=0,slowFrames=0,renderQuality="full",drawMs=0;
-  let sfxLast=Object.create(null), bonusVolleyBalls=0, homingTurns=0, shockWaves=0, directBreaks=0;
+  let bonusVolleyBalls=0, homingTurns=0, shockWaves=0, directBreaks=0;
   let shotsFired, brickContacts, shotMaxContacts, splitBursts, chainBursts, giantRebounds, giantBrickRebounds, giantWallRebounds, giantTotalHits;
   let endgameActive=false,endgameStartedAt=null,endgameElapsed=0,endgameWaveStats=[];
   let lightningArcs=[],lightningChains=[],lightningTriggers=0,lightningDamage=0,lightningOriginCount=0;
@@ -290,72 +288,31 @@
     lastHapticAt=t;
     try{return !!navigator.vibrate(kind==="heavy"?24:kind==="break"?16:8);}catch(_){return false;}
   }
-  // Web Audio mix: audible at ordinary device volume, but capped for dense chains.
-  // First gesture resumes the audio context; setting volume never auto-plays sound.
-  function unlockSound() {
-    try {
-      if(!soundContext){
-        const Audio=window.AudioContext||window.webkitAudioContext;
-        if(!Audio)return;
-        soundContext=new Audio();
-        masterGain=soundContext.createGain();
-        soundLimiter=soundContext.createDynamicsCompressor();
-        soundLimiter.threshold.value=-18;
-        soundLimiter.knee.value=18;
-        soundLimiter.ratio.value=5;
-        soundLimiter.attack.value=.003;
-        soundLimiter.release.value=.18;
-        masterGain.connect(soundLimiter);soundLimiter.connect(soundContext.destination);
-        masterGain.gain.value=soundVolume*.82;
-      }
-      if(soundContext.state==="suspended"){
-        const resume=soundContext.resume();
-        if(resume&&typeof resume.then==="function")resume.catch(()=>{}); // Unlock silently: first user interaction is not an upgrade.
-      }
-    }catch(_){}
+  const sound=window.PinballGameAudio;
+  const volumeKey="pinball-v1-volume",muteKey="pinball-v1-muted";
+  try {
+    const saved=localStorage.getItem(volumeKey);
+    if(saved!==null)soundVolume=clamp(Number(saved),0,1);
+    soundMuted=localStorage.getItem(muteKey)==="yes";
+  } catch {}
+  function unlockSound(){sound?.prime();}
+  function playSfx(kind){sound?.play(kind);}
+  const volumeInput=$("soundVolume"),volumeText=$("soundValue"),muteInput=$("mute");
+  function updateMix(){
+    const percent=Math.round(soundVolume*100);
+    volumeInput.value=String(percent);volumeText.textContent=percent+"%";
+    muteInput.checked=soundMuted;
+    sound?.setVolume(soundVolume);sound?.setMasterMuted(soundMuted);
   }
-  function beep(freq,seconds=.06,amp=.026,type="triangle"){
-    if(!soundContext||!masterGain||soundVolume<=0)return;
-    try{
-      const t=soundContext.currentTime,o=soundContext.createOscillator(),g=soundContext.createGain();
-      const duration=Math.max(.02,Math.min(seconds,.4));
-      o.type=type;
-      o.frequency.setValueAtTime(Math.max(60,freq),t);
-      o.frequency.exponentialRampToValueAtTime(Math.max(65,freq*.56),t+duration);
-      const level=Math.min(.23,Math.max(.018,amp*4.0));
-      g.gain.setValueAtTime(.0001,t);
-      g.gain.exponentialRampToValueAtTime(level,t+.006);
-      g.gain.exponentialRampToValueAtTime(.0001,t+duration);
-      o.connect(g);g.connect(masterGain);o.start(t);o.stop(t+duration+.008);
-    }catch(_){}
-  }
-  function playSfx(kind){
-    // V2.1: 砖甲受击(hit/armor)、砖块击破(break)、清屏升级(clear)、触线失败(fail)
-    // 全部由 sound-pack.js 接管；被设为「无音效」时同样由它吞掉，绝不回退成合成音。
-    if(window.PinballGameAudio?.play(kind,soundVolume))return;
-    // 走到这里的只剩游戏原有合成提示音：裂变/追击/钻头/电弧/超载+Boss降临。
-    if(kind!=="split"&&kind!=="hunt"&&kind!=="drill"&&kind!=="arc"&&kind!=="giant")return;
-    // 单一可逆开关，默认关闭这组旧提示音。改 true 即恢复，beep() 与触发点都保留。
-    if(!LEGACY_SYNTH_CUES_ENABLED)return;
-    if(!soundContext||soundVolume<=0)return;
-    const now=soundContext.currentTime;
-    if(now-(sfxLast[kind]??-999)<.12)return;
-    sfxLast[kind]=now;
-    if(kind==="drill"){beep(480,.105,.043,"sawtooth");}
-    else if(kind==="split"){beep(820,.12,.037);beep(1140,.07,.022);}
-    else if(kind==="arc"){beep(960,.09,.032,"square");}
-    else if(kind==="hunt"){beep(610,.09,.032);}
-    else if(kind==="giant"){beep(125,.34,.085,"sawtooth");beep(265,.22,.07,"triangle");}
-  }
-  const volumeInput=$("soundVolume"), volumeText=$("soundValue");
-  volumeInput.value="78";volumeText.textContent="78%";
   volumeInput.addEventListener("input",()=>{
     soundVolume=clamp(Number(volumeInput.value)/100,0,1);
-    volumeText.textContent=Math.round(soundVolume*100)+"%";
-    if(masterGain)masterGain.gain.setTargetAtTime(soundVolume*.82,soundContext.currentTime,.015);
-    window.PinballGameAudio?.setVolume(soundVolume);
+    store(volumeKey,String(soundVolume));updateMix();
   });
-  $("soundTest").addEventListener("click",()=>{unlockSound();playSfx("brick_hit");}); // V2.1: 试听按钮只验证砖甲受击这一路，不再借用已删除的技能选择音。
+  muteInput.addEventListener("change",()=>{
+    soundMuted=muteInput.checked;store(muteKey,soundMuted?"yes":"no");updateMix();
+  });
+  $("soundTest").addEventListener("click",()=>{unlockSound();playSfx("brick_hit");});
+  updateMix();
 
   function setState(id, values={}){
     lastMessage={id,values};ui.state.textContent=translate(id,values);
@@ -562,6 +519,7 @@
     spawnWave(1);
   }
   function reset(){
+    sound?.stopBgm(0);
     H=Math.round(Math.max(560,Math.min(900,360*(window.innerHeight||560)/(window.innerWidth||360))));
     DANGER_Y=H-105;SUMMON_SAFE_BOTTOM=DANGER_Y-88;fitCanvas();shooter.y=H-37;
     WAVE_START_Y=window.innerWidth?Math.max(84,Math.ceil((document.querySelector(".topbar").getBoundingClientRect().height+28)*W/window.innerWidth)):84;
@@ -768,7 +726,10 @@
     combo=elapsed-lastBreak<=1.25?combo+1:1;
     lastBreak=elapsed;maxCombo=Math.max(combo,maxCombo);comboVisibility=1;
     impactVisual(cx,cy,true);
-    if(combo>=3&&combo%3===0)numberPop(cx,cy-12,translate("breakCombo",{count:combo}),"#a5f8df");
+    if(combo>=3&&combo%3===0){
+      numberPop(cx,cy-12,translate("breakCombo",{count:combo}),"#a5f8df");
+      playSfx("combo");
+    }
     if(source==="giant")shake=Math.max(shake,.11);
     juice.onBreak(b,{combo,source,impact});tapHaptic(source==="giant"?"heavy":"break");
     flashBurst(cx,cy,b.color);
@@ -828,7 +789,7 @@
       const diff=Math.atan2(Math.sin(desired-current),Math.cos(desired-current));
       const next=current+clamp(diff,-.65,.65);ball.vx=Math.cos(next)*speed;ball.vy=Math.sin(next)*speed;
     }else{ball.vx=speed*dx/d;ball.vy=speed*dy/d;}ball.huntsLeft--;
-    homingTurns++;playSfx("hunt");
+    homingTurns++;
     return true;
   }
   /* 炮管当前实际角度：炮管绘制、机枪扇形射击、巨型球三者共用同一来源，
@@ -849,11 +810,11 @@
     if(build.coreBranch==="gun-a")offset=(shotNumber%2?1:-1)*.012;
     if(build.coreBranch==="gun-b")offset=cannonAngle()-aim;
     lastShotAngle=aim+offset;const shot=makeBall(lastShotAngle);
-    if(drillLevel>0&&shotNumber%(drillLevel===1?4:3)===0){shot.drill=true;shot.drillLeft=drillLevel===1?3:5;shot.r=SHOT_HIT_RADIUS*1.35;shot.visualR=SHOT_RADIUS*1.35;powerShots++;playSfx("drill");}
+    if(drillLevel>0&&shotNumber%(drillLevel===1?4:3)===0){shot.drill=true;shot.drillLeft=drillLevel===1?3:5;shot.r=SHOT_HIT_RADIUS*1.35;shot.visualR=SHOT_RADIUS*1.35;powerShots++;}
+    if(t.isGun)playSfx("gun_fire");
     balls.push(shot);gunFlash=.07;turretRecoil=1;counters.shotsByBuild[Build.preferred(build)||'base']++;
     counters.maxBallsAlive=Math.max(counters.maxBallsAlive,balls.length);
     record("shot",{angle:+(aim+offset).toFixed(5),ttl:shot.maxLife,interval:t.interval});
-    // V2.1: 机枪射击（每发开火）不再独立发声。
     return true;
   }
   function fireGiant() {
@@ -1178,7 +1139,7 @@
     const r=isFinaleWave(wave)?finalBossRect():featuredRect();boss=brickAt(r.x,r.y,hp,{w:r.w,h:r.h,isBoss:true,color:isFinaleWave(wave)?"#cf668f":"#ab66f5",isFinalBoss:isFinaleWave(wave)});
     bricks.push(boss);bossSummonClock=0;bossSummonTotal=0;bossSupportXP=0;summonSignals=[];
     alertUntil=elapsed+2.5;setState("bossAppears",{wave,boss:bossName()});
-    if(phase==="playing")playSfx("giant");return true;
+    return true;
   }
 
   // Final encounter only: finite, telegraphed Boss-driven reinforcements.
@@ -1402,7 +1363,7 @@
     alertUntil=elapsed+BOSS_FINISH_DURATION;shake=.18;
     burst(x,y,"#ffe7ae",reducedMotion?9:38);juice.onSplash({x,y});
     record("boss_finisher_start",{wave:finishedWave,targets:pending.length});
-    // V2.1: Boss 终结爆炸不再播连锁爆破音，避免与砖块击破音重叠。
+    playSfx("boss_defeated");
     setState("bossBreak");
     updateUI();
   }
@@ -2118,7 +2079,7 @@
       armorHits,armorCracks,armorBreaks,heavyHits,giantPiercings,giantHeavyBounces,tailSoftens,
       giantRemaining:giant?Math.max(0,GIANT_LIFETIME-giant.life):0,giantLifetime:GIANT_LIFETIME,
       giantPiercesLeft:giant?.pierceLeft??0,stormBuild:!!(splitLevel&&arcLevel),blastBuild:!!(shockLevel&&drillLevel),
-      bonusVolleyBalls,homingTurns,shockWaves,directBreaks,soundVolume,impactHaptics,
+      bonusVolleyBalls,homingTurns,shockWaves,directBreaks,soundVolume,soundMuted,impactHaptics,
       electricTargetsWithUpgrade:Math.min(5,ELECTRIC_TARGETS[electricStage]+arcLevel),
       remainingHp:bricks.filter(b=>b.alive).reduce((n,b)=>n+b.hp,0),
       visibleNumbers:bricks.filter(b=>b.alive&&!b.cracked).length,
@@ -2196,7 +2157,7 @@
       removeNormalBricks(){for(const b of bricks)if(b.alive&&!b.isBoss&&!b.bossSupport)b.alive=false;},
       leaveBricks(n){let kept=0;for(const b of bricks)if(b.alive&&!b.isBoss&&!b.bossSupport){if(kept++>=n)b.alive=false;}},
       setBossHp(hp){if(boss&&boss.alive){boss.hp=hp;boss.initialHp=hp;}},
-      isSoundRunning(){return soundContext?.state==="running";}
+      isSoundRunning(){return sound?.getState().contextState==="running";}
     };
   }
   function makeBallTest(mini=false){return makeBall(0,mini);}

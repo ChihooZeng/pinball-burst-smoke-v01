@@ -11,8 +11,13 @@
 (() => {
 "use strict";
 
-const REVISION = "audio-qa-v21u-20261111";
+const REVISION = "pinball-v1-mix-20261119";
 const STORAGE = "pinball-audio-qa-v21-20261109";
+
+function cue(id, name, url, gain, maxDuration, cooldown, priority, duck) {
+  return {id,name,variants:[{id,label:name,url,gain}],maxDuration,cooldown,priority,
+    maxVoices:1,duck};
+}
 
 /* 事件表：唯一事实来源。调试台、JSON 导出、游戏路由都读这一份。 */
 const EVENTS = Object.freeze({
@@ -25,14 +30,14 @@ const EVENTS = Object.freeze({
         id: "v5-wood-light",
         label: "V5 木质轻敲",
         detail: "原机枪射击组 bundled · impactWood light 000",
-        url: "audio/mg.ogg",
+        url: "audio/wood-light-compatible.wav",
         gain: .26
       }),
       Object.freeze({
         id: "v5-wood-thud",
         label: "V5 木板闷响",
         detail: "原普通命中组 bundled · impactWood medium 001",
-        url: "audio/hit.ogg",
+        url: "audio/hit-compatible.wav",
         gain: .55
       })
     ]),
@@ -271,7 +276,12 @@ const EVENTS = Object.freeze({
     cooldown: 55,
     maxVoices: 3,
     priority: 1
-  }
+  },
+  combo: cue("combo","连击","audio/combo-chime.wav",.24,.15,600,3,.78),
+  gun_fire: cue("gun_fire","机枪","audio/cannon-feed.wav",.18,.14,130,1,.86),
+  giant: cue("giant","超载","audio/overload-launch.wav",.55,.55,900,4,.60),
+  boss_defeated: cue("boss_defeated","核心击破","audio/core-break.wav",.60,.70,1200,5,.42),
+  victory: cue("victory","挑战完成","audio/victory-chime.wav",.50,1.3,1500,5,.35)
 });
 
 const EVENT_IDS = Object.keys(EVENTS);
@@ -287,6 +297,7 @@ const ALIAS = Object.freeze({
 const NONE_ID = "none";
 
 let enabled = true, volume = .78, muted = Object.create(null);
+let masterMuted = false;
 /* BGM 的两项设置要和事件表一起持久化，所以声明必须早于下面的 localStorage 还原。 */
 let bgmEnabled = true, bgmVolume = .8;
 const chosen = Object.create(null), volumes = Object.create(null);
@@ -342,12 +353,12 @@ function versionedUrl(url) {
 }
 
 let ctx = null, bus = null, limiter = null;
-const buffers = new Map(), loading = new Map();
+const buffers = new Map(), loading = new Map(), unavailable = new Set();
 const voices = [], last = Object.create(null);
 const plays = Object.create(null), suppressed = Object.create(null), drops = Object.create(null);
 let errors = 0, lastError = null, silentDrops = 0;
 
-function setup() {
+function setup(unlock = true) {
   if (!ctx) {
     const C = window.AudioContext || window.webkitAudioContext;
     if (!C) return null;
@@ -364,7 +375,7 @@ function setup() {
       bus.connect(limiter); limiter.connect(ctx.destination);
     } catch (e) { errors++; lastError = String(e && e.message || e); return null; }
   }
-  if (ctx.state === "suspended") { const p = ctx.resume(); if (p && p.catch) p.catch(() => {}); }
+  if (unlock && (ctx.state === "suspended" || ctx.state === "interrupted")) { const p = ctx.resume(); if (p && p.catch) p.catch(() => {}); }
   return ctx;
 }
 
@@ -378,8 +389,9 @@ function load(eventId, variantId) {
   const key = bufferKey(eventId, variantId);
   if (buffers.has(key)) return Promise.resolve(buffers.get(key));
   if (loading.has(key)) return loading.get(key);
+  if (unavailable.has(key)) return Promise.reject(new Error("Unavailable audio " + key));
   const job = (async () => {
-    const audio = setup();
+    const audio = setup(false);
     if (!audio) throw new Error("Web Audio unsupported");
     const versioned = versionedUrl(variant.url);
     const response = await fetch(versioned, { cache: "default" });
@@ -405,14 +417,16 @@ function load(eventId, variantId) {
   job.catch(e => {
     errors++;
     lastError = String(e && e.message || e);
-    loading.delete(key);
+    unavailable.add(key);
     console.warn("[Audio QA V2.1] 素材加载失败", key, lastError);
-  });
+  }).finally(() => loading.delete(key));
   return job;
 }
 
 function loadAll() {
-  for (const id of EVENT_IDS) for (const v of EVENTS[id].variants) load(id, v.id).catch(() => {});
+  for (const id of EVENT_IDS) {
+    if (!muted[id] && !unavailable.has(bufferKey(id,chosen[id]))) load(id,chosen[id]).catch(() => {});
+  }
 }
 
 function currentVariant(eventId) {
@@ -458,6 +472,11 @@ function setVolume(value) {
   volume = next;
   if (bus && ctx) bus.gain.setTargetAtTime(volume * .86, ctx.currentTime, .02);
   else if (bus) bus.gain.value = volume * .86;
+  if(volume<=0) stopAll();
+  for(const el of [bgmEls?.intro,bgmEls?.loop]) if(el){
+    el.muted=masterMuted || volume<=0;
+    if(el===bgmActiveElement()) rampBgm(el,bgmTargetVolume(),100);
+  }
 }
 
 function setGroupVolume(eventId, value) {
@@ -499,7 +518,7 @@ function play(kind, master) {
   const event = EVENTS[eventId];
   if (!event) return false;
   if (typeof master === "number") setVolume(master);
-  if (!enabled) return true;
+  if (!enabled || masterMuted) return true;
   if (muted[eventId]) { suppressed[eventId] = (suppressed[eventId] || 0) + 1; return true; }
   if (volume <= 0 || volumes[eventId] <= 0) { suppressed[eventId] = (suppressed[eventId] || 0) + 1; return true; }
   const variant = currentVariant(eventId);
@@ -670,7 +689,7 @@ const BGM = Object.freeze({
   credit: "\"Cut and Run\" by Kevin MacLeod (incompetech.com) · Licensed under CC BY 4.0",
   license: "CC BY 4.0（需署名）",
   intro: null,
-  loop: "audio/bgm-cut-and-run.m4a",
+  loop: "audio/bgm-cut-and-run-80k.m4a",
   loopSeconds: 206.07,
   fadeIn: 1600,
   fadeOut: 1200,
@@ -689,7 +708,35 @@ let bgmDuck = 1;            // 音效触发时的临时压低系数
 let bgmDuckTimer = null;
 let bgmPlays = 0, bgmErrors = 0, bgmLastError = null;
 
-function bgmTargetVolume() { return clamp(bgmVolume * (BGM.trim || 1) * bgmDuck, 0, 1); }
+const mediaGains = new WeakMap();
+function connectMedia(el) {
+  if (!ctx?.createMediaElementSource) return;
+  try {
+    const gain = ctx.createGain();
+    gain.gain.value = 0;
+    ctx.createMediaElementSource(el).connect(gain);
+    gain.connect(limiter);
+    mediaGains.set(el,gain);
+    el.volume = 1;
+  } catch {}
+}
+function readMediaLevel(el) { return mediaGains.get(el)?.gain.value ?? el.volume; }
+function writeMediaLevel(el,level) {
+  const gain=mediaGains.get(el);
+  if(gain) gain.gain.value=level;
+  else el.volume=level;
+}
+function setMasterMuted(muted) {
+  masterMuted = !!muted;
+  if(masterMuted) stopAll();
+  for(const el of [bgmEls?.intro,bgmEls?.loop]) if(el){
+    el.muted=masterMuted || volume<=0;
+    if(el===bgmActiveElement()) rampBgm(el,bgmTargetVolume(),80);
+  }
+}
+function bgmTargetVolume() {
+  return masterMuted?0:clamp(volume * bgmVolume * (BGM.trim || 1) * bgmDuck, 0, 1);
+}
 
 let bgmRampTarget = null;
 
@@ -705,13 +752,13 @@ function rampBgm(el, to, ms) {
      重启淡入会把进度反复清零，音量等于永远不动。 */
   if (bgmTimer && bgmRampTarget !== null && Math.abs(bgmRampTarget - target) < .004) return;
   stopBgmRamp();
-  const from = Number(el.volume) || 0;
-  if (!(ms > 0)) { try { el.volume = target; } catch (e) {} return; }
+  const from = Number(readMediaLevel(el)) || 0;
+  if (!(ms > 0)) { try { writeMediaLevel(el,target); } catch (e) {} return; }
   const t0 = performance.now();
   bgmRampTarget = target;
   bgmTimer = setInterval(() => {
     const p = Math.min(1, (performance.now() - t0) / ms);
-    try { el.volume = clamp(from + (target - from) * p, 0, 1); } catch (e) {}
+    try { writeMediaLevel(el,clamp(from + (target - from) * p, 0, 1)); } catch (e) {}
     if (p >= 1) stopBgmRamp();
   }, 40);
 }
@@ -732,14 +779,14 @@ function bgmElements() {
       intro.src = versionedUrl(BGM.intro);
       intro.preload = "auto";
       intro.loop = false;
-      intro.volume = 0;
+      connectMedia(intro);writeMediaLevel(intro,0);
     }
 
     const loop = new window.Audio();
     loop.src = versionedUrl(BGM.loop);
     loop.preload = "auto";
     loop.loop = true;
-    loop.volume = 0;
+    connectMedia(loop);writeMediaLevel(loop,0);
 
     if (intro) {
       intro.addEventListener("ended", () => {
@@ -749,7 +796,7 @@ function bgmElements() {
         const p = loop.play();
         if (p && p.catch) p.catch(() => {});
         rampBgm(loop, bgmTargetVolume(), 600); /* 接点轻微淡入，避免硬起 */
-        try { intro.volume = 0; } catch (e) {}
+        try { writeMediaLevel(intro,0); } catch (e) {}
       });
       intro.addEventListener("error", () => { bgmErrors++; bgmLastError = "前奏加载失败：" + BGM.intro; });
     }
@@ -781,7 +828,7 @@ function bgmActiveElement() {
 }
 
 function startBgm() {
-  if (!bgmEnabled || bgmVolume <= 0) return false;
+  if (!enabled || !bgmEnabled || bgmVolume <= 0) return false;
   /* 先把音频上下文恢复起来，再启动媒体元素：
      同一手势里如果媒体元素先播，Chrome 有可能把手势消耗掉，
      导致上下文一直挂起 —— 那会让所有 WebAudio 音效静音而音乐照常响。 */
@@ -796,10 +843,11 @@ function startBgm() {
   /* 没有前奏的单曲：直接从 0 开始循环播放。 */
   if (!els.intro) {
     bgmPhase = "loop";
-    try { els.loop.currentTime = 0; els.loop.volume = 0; } catch (e) {}
+    try { els.loop.currentTime = 0; writeMediaLevel(els.loop,0); } catch (e) {}
+    els.loop.muted=masterMuted || volume<=0;
     const pl = els.loop.play();
     if (pl && pl.catch) pl.catch(e => {
-      bgmErrors++; bgmLastError = String(e && e.message || e); bgmPhase = "idle";
+      if(e?.name!=="AbortError"){bgmErrors++;bgmLastError=String(e?.message||e);bgmPhase="idle";}
     });
     rampBgm(els.loop, bgmTargetVolume(), BGM.fadeIn);
     return true;
@@ -807,7 +855,7 @@ function startBgm() {
 
   bgmPhase = "intro";
   try { els.loop.pause(); els.loop.currentTime = 0; } catch (e) {}
-  try { els.intro.currentTime = 0; els.intro.volume = 0; } catch (e) {}
+  try { els.intro.currentTime = 0; writeMediaLevel(els.intro,0); } catch (e) {}
   const p = els.intro.play();
   if (p && p.catch) p.catch(e => {
     bgmErrors++; bgmLastError = String(e && e.message || e); bgmPhase = "idle";
@@ -830,7 +878,7 @@ function stopBgm(fadeMs) {
       if (!el) continue;
       try { el.pause(); } catch (e) {}
       try { el.currentTime = 0; } catch (e) {}
-      try { el.volume = 0; } catch (e) {}
+      try { writeMediaLevel(el,0); } catch (e) {}
     }
   };
   if (!active || ms <= 0) { finish(); return true; }
@@ -843,7 +891,7 @@ function stopBgm(fadeMs) {
    这是游戏混音的常规做法——音乐不必永久调到很小，但战斗时必须给音效让位。 */
 function duckBgm(depth = .55, holdMs = 420) {
   if (!bgmEls || bgmPhase === "idle") return false;
-  bgmDuck = depth;
+  bgmDuck = Math.min(bgmDuck,depth);
   const el = bgmActiveElement();
   if (el) rampBgm(el, bgmTargetVolume(), 90);
   if (bgmDuckTimer) clearTimeout(bgmDuckTimer);
@@ -863,9 +911,10 @@ function pauseBgm() {
 }
 
 function resumeBgm() {
-  if (!bgmEnabled || bgmVolume <= 0) return false;
+  if (!enabled || !bgmEnabled || bgmVolume <= 0) return false;
   const el = bgmActiveElement();
   if (!el) return false;
+  setup();
   const p = el.play();
   if (p && p.catch) p.catch(() => {});
   return true;
@@ -893,7 +942,8 @@ function getBgmState() {
     paused: !!el.paused,
     currentTime: Math.round((Number(el.currentTime) || 0) * 100) / 100,
     duration: Math.round((Number(el.duration) || 0) * 100) / 100,
-    volume: Math.round((Number(el.volume) || 0) * 100) / 100,
+    volume: Math.round((Number(readMediaLevel(el)) || 0) * 100) / 100,
+    muted: el.muted,
     loop: !!el.loop
   } : null;
   return {
@@ -917,6 +967,7 @@ function getState() {
     revision: REVISION,
     enabled,
     master: volume,
+    masterMuted,
     muted: { ...muted },
     selected: { ...chosen },
     volumes: { ...volumes },
@@ -994,7 +1045,7 @@ document.addEventListener("visibilitychange", () => {
    其余素材延后 1.2s 再解码，避免首屏同时拉 400KB。 */
 function warmSystem() {
   try {
-    setup();
+    setup(false);
     for (const id of ["ui_start", "ui_click", "wall_bounce"]) load(id, EVENTS[id].variants[0].id).catch(() => {});
   } catch (e) {}
   setTimeout(() => { try { loadAll(); } catch (e) {} }, 1200);
@@ -1012,7 +1063,7 @@ window.PinballGameAudio = {
   revision: REVISION,
   EVENTS, EVENT_IDS, NONE_ID, BGM,
   play, prime, stop, stopAll,
-  setVolume, setGroupVolume, setMuted, setVariant, setEnabled,
+  setVolume, setMasterMuted, setGroupVolume, setMuted, setVariant, setEnabled,
   preview, previewLegacy, clearPreviewTimers,
   startBgm, stopBgm, pauseBgm, resumeBgm, duckBgm,
   setBgmVolume, setBgmEnabled, getBgmState,
