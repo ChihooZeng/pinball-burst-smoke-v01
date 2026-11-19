@@ -87,3 +87,17 @@ canvas{width:100%;height:100%;object-fit:contain}
 #qaBossPreview[hidden]{display:none!important}
 
 .bgm-credit{font-size:10px;line-height:1.45;color:#7fa3ba;margin:6px 0 0}
+
+#startTitle{font-size:clamp(28px,7.5vw,44px);line-height:1.08;margin:0;color:#f4faff;letter-spacing:-.04em}
+.cta,.start-options select,#soundTest{min-height:44px}
+.start-options{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:12px;font-size:12px;color:#bdd8e9}
+.start-options select{background:#173149;color:#e7f7ff;border:1px solid #4a7188;border-radius:8px;padding:0 8px}
+.start-options a,.pause-scroll a,.policy a{color:#8beee6}
+.start-options a{display:inline-flex;align-items:center;min-height:44px}
+.controls{color:#bdd8e9;font-size:12px}
+.controls summary{cursor:pointer;min-height:44px;align-content:center}
+#startOverlay .controls p{padding-block:4px;line-height:1.55}
+.pause-scroll .bgm-credit{display:block}
+#diagnostics:not([hidden]){margin-top:16px}
+#errorOverlay{z-index:25}
+.secondary{min-height:44px;padding:0 14px;border:1px solid #436783;border-radius:9px;color:#d3f4ff;background:#142c44}

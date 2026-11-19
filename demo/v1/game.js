@@ -3,6 +3,14 @@
 "use strict";
 (() => {
   const Build=window.PinballBuilds, CFG=Build.CONFIG;
+  const locale=window.PinballI18n, {t}=locale;
+  const qaMode=new URLSearchParams(location.search).get("qa")==="1";
+  const version="1.0.0-rc.1";
+  document.querySelector("#qaBossPreview").hidden=!qaMode;
+  document.querySelector("#diagnostics").hidden=!qaMode;
+  let lastMessage=null, failure=null, practiceRun=false;
+  const durationText=seconds=>t("time",{min:Math.floor(seconds/60),sec:Math.floor(seconds%60)});
+  const bossName=()=>t(wave===MAX_WAVES?"finalBossName":"bossName");
   const W = 360, MAX_WAVES = CFG.maxWaves;
   let H = 560, DANGER_Y=455, WAVE_START_Y=84;
   let pausedFrom=null, focusBeforePause=null, battleTime=0, waveMetrics=null, waveReports=[], bankDamage=0;
@@ -27,15 +35,60 @@
   function selectSeed(id){
     if(phase!=="seeding"||!Build.seed(build,id))return false;
     syncBuild();phase="playing";choiceSet=[];ui.choice.classList.add("hidden");shootClock=Build.tuning(build).interval-CFG.firstShot;
-    record("seed",{id});setState("第1波 · "+Build.DEFS[id].name);updateUI();return true;
+    record("seed",{id});setState("firstPower");updateUI();return true;
   }
   function showCards(seed=false){
-    $("choiceTitle").textContent=!build.seedAbility?"选一个新技能":"选择一次强化";
-    $("choiceWave").textContent=!build.seedAbility?"第1波完成 · 第一次升级":"WAVE "+wave+" CLEAR · LV."+level;
+    $("choiceTitle").textContent=t(!build.seedAbility?"selectSpecialty":"selectUpgrade");
+    $("choiceWave").textContent=!build.seedAbility?t("firstUpgrade"):t("upgradeHeader",{wave,level});
     for(let i=0;i<3;i++){const card=Build.card(build,choiceSet[i]);$("choiceTitle"+i).textContent=card.title;$("choiceDesc"+i).textContent=card.description;}
     ui.choice.classList.remove("hidden");
   }
-  function finishPrototype(){if(phase==="complete")return;playSfx("clear");phase="complete";balls=[];giant=null;ui.win.classList.remove("hidden");$("winLabel").textContent="RUN COMPLETE";$("winTitle").textContent="20波试玩 · 挑战完成";ui.final.textContent="构筑："+Build.DEFS[build.coreBranch||build.seedAbility].name+" · 用时 "+Math.round(elapsed)+" 秒 · 击碎 "+score+" 块。请反馈手感，后续内容等待验收。";record("complete");setState("Demo V1.0 · 20关挑战完成");updateUI();}
+  const bestRunKey="pinball-v1-best-runs";
+  const factions=["split","arc","gun"];
+  function readBestRuns(){
+    try {return JSON.parse(localStorage.getItem(bestRunKey))||{};} catch {return {};}
+  }
+  function saveBestRun(){
+    const id=build.growthFocus||build.seedAbility;
+    if(practiceRun||!factions.includes(id))return;
+    const records=readBestRuns();
+    const entry={cleared:screenClears,wave,seconds:Math.floor(elapsed)};
+    const previous=records[id];
+    if(!previous||entry.cleared>previous.cleared||
+      (entry.cleared===MAX_WAVES&&entry.seconds<previous.seconds)){
+      store(bestRunKey,JSON.stringify({...records,[id]:entry}));
+    }
+  }
+  function renderBestRuns(){
+    const records=readBestRuns(), list=$("bestRuns");
+    list.replaceChildren();
+    for(const id of factions){
+      const record=records[id];
+      if(!Number.isInteger(record?.wave)||!Number.isFinite(record.seconds))continue;
+      const item=document.createElement("li");
+      item.textContent=Build.DEFS[id].name+" · "+t(record.cleared===MAX_WAVES?"recordWin":"recordEntry",
+        {wave:record.wave,time:durationText(record.seconds)});
+      list.append(item);
+    }
+    $("runRecords").hidden=!list.childElementCount;
+  }
+  function renderResult(){
+    const outcome=phase==="paused"?pausedFrom:phase;
+    if(outcome!=="lost"&&outcome!=="complete")return;
+    const won=outcome==="complete";
+    $("winLabel").textContent=t(won?"wonLabel":"lostLabel");
+    $("winTitle").textContent=t(won?"winTitle":"lossTitle");
+    const time=durationText(elapsed);
+    const name=Build.DEFS[build.coreBranch||build.seedAbility]?.name||t("cannon");
+    ui.final.textContent=won?t("result",{build:name,time,score}):
+      t("lossStats",{wave,time,score,cause:t(failure?.key||"regularBrick"),hp:failure?.hp??0});
+  }
+  function finishPrototype(){
+    if(phase==="complete")return;
+    playSfx("clear");phase="complete";balls=[];giant=null;
+    ui.win.classList.remove("hidden");renderResult();
+    record("complete");saveBestRun();setState("winTitle");updateUI();
+  }
 
   const BOSS_INTERVAL=110, SURGE_INTERVAL=75, FALL_BASE=6.8, MAX_BRICKS=168;
   const START_ROWS=6, SPAWN_INTERVAL=3.5, PHYSICS_DT=1/120, MAX_FRAME_STEPS=6;
@@ -84,10 +137,10 @@
   // One playable class/active skill now. This registry can later add distinct
   // playable classes/skills without giving every cannon the same passive.
   const CANNON_CLASSES=Object.freeze({
-    free:Object.freeze({id:"free",label:"自由炮台",passive:"none"})
+    free:Object.freeze({id:"free",get label(){return t("cannon");},passive:"none"})
   });
   const ACTIVE_SKILLS=Object.freeze({
-    giant:Object.freeze({id:"giant",label:"超载冲锋",kind:"giant",maxCharge:MAX_CHARGE})
+    giant:Object.freeze({id:"giant",get label(){return t("overload");},kind:"giant",maxCharge:MAX_CHARGE})
   });
   // Numeric HP ramps by survival time, while keeping many light bricks for break chains.
   // The last profile repeats with a late multiplier instead of sticking at ~36 HP.
@@ -305,29 +358,36 @@
   });
   $("soundTest").addEventListener("click",()=>{unlockSound();playSfx("brick_hit");}); // V2.1: 试听按钮只验证砖甲受击这一路，不再借用已删除的技能选择音。
 
-  function setState(label) { ui.state.textContent = label; }
+  function setState(id, values={}){
+    lastMessage={id,values};ui.state.textContent=t(id,values);
+  }
   function updateUI(){
     const clock=Math.floor(elapsed),mm=String(Math.floor(clock/60)).padStart(2,"0"),ss=String(clock%60).padStart(2,"0");
-    ui.wave.textContent=mm+":"+ss;$("waveLabel").textContent="第"+wave+" / "+MAX_WAVES+"波";ui.score.textContent=String(score);
+    ui.wave.textContent=mm+":"+ss;$("waveLabel").textContent=t("waveCount",{wave,max:MAX_WAVES});ui.score.textContent=String(score);
     ui.rate.textContent="LV."+level;ui.balls.textContent=String(livingCount());
     ui.charge.textContent=Math.floor(charge)+"%";ui.fill.style.width=charge+"%";
     const cleared=Math.max(0,waveStartingTargets-livingCount());
-    $("xpLabel").textContent=bossVictory?"第"+wave+"波 · BOSS击破 · 连环终结":boss&&boss.alive?"第"+wave+"波 · 击败Boss即可胜利":("第"+wave+"波 · 已清理 "+cleared+"/"+waveStartingTargets+" · 清屏升级");
+    $("xpLabel").textContent=t(bossVictory?"waveBossVictory":boss?.alive?"waveBossObjective":"waveProgress",{wave,clear:cleared,total:waveStartingTargets});
     $("xpFill").style.width=(waveStartingTargets?Math.min(100,cleared/waveStartingTargets*100):0)+"%";
     $("pause").disabled=false;
     $("buffStatus").textContent=build.temporaryBuffs.map(b=>Build.BUFFS[b.id].name+" "+Math.ceil(b.remaining)+"s").join(" · ");
     const ready=phase==="playing"&&!emptyLatch&&!!build.seedAbility&&charge>=MAX_CHARGE&&!giant;
     ui.giant.parentElement.classList.toggle("hidden",!build.seedAbility);
-    ui.giant.disabled=!ready||autoSkill;ui.giant.textContent=giant?"超载中 "+Math.ceil(GIANT_LIFETIME-giant.life)+"s":autoSkill?"超载·自动 "+Math.floor(charge)+"%":ready?"超载冲锋 READY":"超载冲锋 "+Math.floor(charge)+"%";
+    ui.giant.disabled=!ready||autoSkill;ui.giant.textContent=t(giant?"overloadActive":autoSkill?"overloadAuto":ready?"overloadReady":"overloadCharge",{sec:giant?Math.ceil(GIANT_LIFETIME-giant.life):0,charge:Math.floor(charge)});
     const showGuide=ready&&!firstSkillUsed&&!autoSkill;$("skillGuide").classList.toggle("hidden",!showGuide);ui.giant.classList.toggle("guide-pulse",showGuide);
     $("giantLife").classList.toggle("hidden",!giant);
     $("giantTimeText").textContent=giant?Math.max(0,GIANT_LIFETIME-giant.life).toFixed(1)+"s":"0.0s";
     $("giantTimeFill").style.width=giant?Math.max(0,(GIANT_LIFETIME-giant.life)/GIANT_LIFETIME*100)+"%":"0%";
-    $("loadoutLabel").textContent=build.coreBranch?Build.DEFS[build.coreBranch].name:build.seedAbility?"尚未定主核心":"普通炮台";
-    const parts=[speedLevel?"球速+"+speedLevel:null,lifeLevel?"续航+"+lifeLevel:null,powerLevel?"火力+"+powerLevel:null,volleyLevel?"散射+"+volleyLevel:null,splitLevel?"裂变+"+splitLevel:null,arcLevel?"电弧+"+arcLevel:null,shockLevel?"震荡+"+shockLevel:null,drillLevel?"钻头+"+drillLevel:null,hunterLevel?"追猎+"+hunterLevel:null,ricochetLevel?"蓄能+"+ricochetLevel:null,rateLevel?"射速+"+rateLevel:null].filter(Boolean);
-    ui.build.textContent=parts.length?parts.join(" · ")+(build.ranks.gun?" · 供弹R"+build.ranks.gun:""):build.ranks.gun?"高速供弹 R"+build.ranks.gun:"清屏成长 · 20波候选";
+    $("loadoutLabel").textContent=Build.DEFS[build.coreBranch||build.seedAbility]?.name||t("cannon");
+    ui.build.textContent=Object.keys(build.ranks).map(id=>Build.DEFS[id].name+" R"+build.ranks[id]).join(" · ");
     $("bossHud").classList.toggle("hidden",!boss||!boss.alive);
-    if(boss&&boss.alive){const guarded=boss.isFinalBoss&&boss.hp<=finaleHpFloor();$("bossText").textContent=(isFinaleWave(wave)?"终局 "+finaleStage+"/3"+(guarded?" · 阶段护盾":"")+" · ":"")+boss.hp+" / "+boss.initialHp;$("bossFill").style.width=Math.max(0,boss.hp/boss.initialHp*100)+"%";}
+    if(boss&&boss.alive){
+      const guarded=boss.isFinalBoss&&boss.hp<=finaleHpFloor();
+      $("bossName").textContent=bossName();
+      const stage=isFinaleWave(wave)?t("stage",{stage:finaleStage})+(guarded?" · "+t("shield"):"")+" · ":"";
+      $("bossText").textContent=stage+boss.hp+" / "+boss.initialHp;
+      $("bossFill").style.width=Math.max(0,boss.hp/boss.initialHp*100)+"%";
+    }
   }
   function brickAt(x,y,hp,extra={}){
     const special=!!extra.special;
@@ -486,7 +546,7 @@
     waveStartingTargets=livingCount();
     clearPreview=[];clearPreviewShown=false;clearWindowActive=false;
     waveSpawnCount++;clearBurstCount=Math.max(0,n-1);clearBurstTiles=tiles.length;
-    setState(isFinaleWave(wave)?"最终关 · 888HP三阶段Boss · 击败即可胜利":"第 "+wave+" 波 · "+(boss?"击败BOSS即胜":"整波破坏")+" · 清屏后进入下一波");
+    setState(isFinaleWave(wave)?"startFinal":boss?"startBoss":"startWave");
     updateUI();
     return tiles.length;
   }
@@ -504,8 +564,7 @@
     counters={splitChildren:0,arcReleases:0,arcSingleDamage:0,budgetReclaims:0,suppressedShots:0,suppressedChildren:0,maxBallsAlive:0,wallBounces:0,shotsByBuild:{base:0,split:0,arc:0,gun:0}};
     collisionChecks=0;physicsCostMs=0;physicsSteps=0;maxPhysicsMs=0;
     wave=1;score=0;phase="ready";charge=0;elapsed=0;level=1;xp=0;xpGoal=34;
-    $("winLabel").textContent="RUN COMPLETE";
-    $("winTitle").textContent="砖阵触及警戒线";
+    failure=null;practiceRun=false;lastMessage=null;
     waveElapsed=0;waveTailSoftened=false;waveSpawnCount=0;bossSummonTotal=0;clearWindowActive=false;waveStartingTargets=0;waveUpgrades=0;
     choiceQueue=0;choiceSet=[];powerLevel=0;volleyLevel=0;rateLevel=0;speedLevel=0;lifeLevel=0;
     hunterLevel=0;ricochetLevel=0;splitLevel=0;shockLevel=0;drillLevel=0;arcLevel=0;
@@ -525,20 +584,21 @@
     juice.setMode("off");juice.setMode(impactMode.value);juice.setQuality("full");
     ui.choice.classList.add("hidden");ui.win.classList.add("hidden");$("startOverlay").classList.remove("hidden");
     $("finalRushLabel").classList.remove("active");
-    generateWave();updateUI();
+    generateWave();renderBestRuns();updateUI();
   }
   function begin(){
     if(phase!=="ready")return false;
     unlockSound();phase="playing";$("startOverlay").classList.add("hidden");choiceSet=[];
     window.PinballGameAudio?.startBgm?.();
     shootClock=Build.tuning(build).interval-CFG.firstShot;
-    record("intro_start");setState("第1波 · 滑动瞄准，普通炮台开始破坏");updateUI();return true;
+    record("intro_start");setState("introAim");updateUI();return true;
   }
 
   // Test-only entry on the isolated experiment page. Simulates nine legitimate
   // wave-end choices so Boss 10 is judged using a viable, readable build.
   function jumpToBoss10(){
-    reset();
+    if(!qaMode&&window.__PINBALL_TEST__!==true)return;
+    reset();practiceRun=true;
     const route=$("bossRoute").value;
     const loadouts={
       split:["split","split","power","split-a","split","rate","speed","power","life"],
@@ -555,12 +615,13 @@
     unlockSound();spawnWave(10);shootClock=Build.tuning(build).interval-CFG.firstShot;
     window.PinballGameAudio?.startBgm?.();
     record("debug_jump",{targetWave:10,route,simulatedUpgrades:picks});
-    setState("第10关 · BOSS弹射阵型 · 调试直达（已配成长Build）");
+    setState("qaBoss");
     updateUI();return true;
   }
 
   function jumpToFinalBoss(){
-    reset();
+    if(!qaMode&&window.__PINBALL_TEST__!==true)return;
+    reset();practiceRun=true;
     const route=$("bossRoute").value;
     const priorities=[route,route+"-a","power","rate","speed","life","shock","drill","hunter","bank","split","arc","gun"];
     const picks=[];
@@ -578,7 +639,7 @@
     phase="playing";$("startOverlay").classList.add("hidden");ui.choice.classList.add("hidden");
     unlockSound();spawnWave(20);shootClock=Build.tuning(build).interval-CFG.firstShot;
     record("debug_jump",{targetWave:20,route,simulatedUpgrades:picks,excludedFromNormalRecords:true});
-    setState("第20关 · 888HP最终Boss · 三阶段砖阵（调试直达）");
+    setState("qaFinal");
     updateUI();return true;
   }
   function livingCount(){return bricks.reduce((n,b)=>n+(b.alive?1:0),0);}
@@ -591,7 +652,7 @@
     electricStage=3;electricStageStarts[3]=elapsed;
     const marker=$("finalRushLabel");
     marker.classList.add("active");marker.classList.add("stage-3");
-    marker.textContent="FINAL RUSH · 最后清场";
+    marker.textContent=t("lastTargets");
     // V2.1: 爆雷/连锁爆破不再独立发声。
   }
   function markFinalRush(){
@@ -627,7 +688,7 @@
     for(const b of alive)if(!chosen.includes(b))b.alive=false;
     balls=[];giant=null;shootClock=.76;
     updateElectricStage();markFinalRush();
-    setState("阶段试玩 · "+targetCount+" 块 · 先命中任意一块");
+    setState("qaField",{count:targetCount});
     updateUI();
     return true;
   }
@@ -677,9 +738,9 @@
       const guard=b.isFinalBoss?finaleHpFloor():0;
       const taken=Math.min(Math.max(0,b.hp-guard),damage);
       b.hp-=taken;armorHits+=taken;damageDealt+=taken;
-      if(guard>0&&taken===0){setState("终局护盾 · 下一阶段砖阵即将入场");record("finale_guard",{stage:finaleStage,hp:b.hp});}
+      if(guard>0&&taken===0){setState("guard");record("finale_guard",{stage:finaleStage,hp:b.hp});}
       b.bonk=.12;impactVisual(b.x+b.w/2,b.y+b.h/2,b.hp===0);
-      numberPop(b.x+b.w/2,b.y-1,taken?"−"+taken:"阶段护盾",taken?"#ffdfb2":"#ffe0ab");
+      numberPop(b.x+b.w/2,b.y-1,taken?"−"+taken:t("shield"),taken?"#ffdfb2":"#ffe0ab");
       if(b.hp>0){
         if(!b.isFinalBoss)b.color=brickColor(b.hp,b.special);
         if(b.hp<=2&&!b.cracked){b.cracked=true;armorCracks++;}
@@ -700,14 +761,14 @@
     combo=elapsed-lastBreak<=1.25?combo+1:1;
     lastBreak=elapsed;maxCombo=Math.max(combo,maxCombo);comboVisibility=1;
     impactVisual(cx,cy,true);
-    if(combo>=3&&combo%3===0)numberPop(cx,cy-12,combo+" 连碎!","#a5f8df");
+    if(combo>=3&&combo%3===0)numberPop(cx,cy-12,t("breakCombo",{count:combo}),"#a5f8df");
     if(source==="giant")shake=Math.max(shake,.11);
     juice.onBreak(b,{combo,source,impact});tapHaptic(source==="giant"?"heavy":"break");
     flashBurst(cx,cy,b.color);
     burst(cx,cy,b.color,source==="giant"?19:12,true);
     // Secondary explosions and lightning cannot snowball the active-skill meter.
     if(source==="normal"||source==="drill")addCharge(b.special?34:8);
-    if(b.special&&(source==="normal"||source==="drill"))setState("能量砖！超载冲锋充能");
+    if(b.special&&(source==="normal"||source==="drill"))setState("energyHit");
     playSfx("break");
     const isDirect=source==="normal"||source==="drill";
     if(isDirect)directBreaks++;
@@ -719,7 +780,7 @@
         .sort((a,b)=>Math.hypot(a.x+a.w/2-cx,a.y+a.h/2-cy)-Math.hypot(b.x+b.w/2-cx,b.y+b.h/2-cy));
       targets.slice(0,maxTargets).forEach(t=>hitBrick(t,"shock",null,shockLevel===2?2:1));
       burst(cx,cy,"#ff996b",23);juice.onSplash({x:cx,y:cy}); // V2.1: 连锁爆破本身静音，被击破的砖各自播砖块击破音。
-      setState("震荡核！破坏引发范围冲击");
+      setState("shockHit");
     }
     if(b.isBoss)defeatBoss();
     return true;
@@ -744,7 +805,7 @@
       child.x=x;child.y=y;child.pursuitLeft=Math.max(0,splitLevel-1);child.guideAt=elapsed+.16;child.huntsLeft=hunterLevel+(branch==="split-b"?Build.effects(build).childTurns:0);child.huntChild=branch==="split-b";
       child.lastHitId=ball.lastHitId;child.lastHitLife=0;balls.push(child);made++;
     }
-    if(made){splitBursts++;bonusVolleyBalls+=made;counters.splitChildren+=made;record("split",{count:made});playSfx("split");setState("场内裂变 · +"+made+"颗真实弹球");}
+    if(made){splitBursts++;bonusVolleyBalls+=made;counters.splitChildren+=made;record("split",{count:made});playSfx("split");setState("splitHit",{count:made});}
     counters.maxBallsAlive=Math.max(counters.maxBallsAlive,balls.length);
   }
   function retargetBall(ball){
@@ -775,7 +836,7 @@
       if(!t.isGun){counters.suppressedShots++;return false;}
       let candidates=balls.filter(b=>b.mini);if(!candidates.length)candidates=balls;
       const oldest=candidates.reduce((a,b)=>b.life>a.life?b:a);balls.splice(balls.indexOf(oldest),1);
-      counters.budgetReclaims++;record("budget_reclaim",{mini:oldest.mini});setState("供弹优先 · 回收旧球继续射击");
+      counters.budgetReclaims++;record("budget_reclaim",{mini:oldest.mini});setState("gunRecycle");
     }
     const shotNumber=++shotsFired;let offset=0;
     if(build.coreBranch==="gun-a")offset=(shotNumber%2?1:-1)*.012;
@@ -798,7 +859,7 @@
       vx:Math.sin(shotAng)*GIANT_SPEED,vy:-Math.cos(shotAng)*GIANT_SPEED,
       r:14,life:0,collisions:0,bounces:0,pierceLeft:GIANT_PIERCE_LIMIT,lastBounceFx:-100,trail:[],lastHitId:null,lastHitLife:-99};
     burst(giant.x,giant.y,"#ffd482",24);
-    playSfx("giant");setState("超载冲锋：限时冲破 10 块，结束后散出追击球！");updateUI();
+    playSfx("giant");setState("overloadHit");updateUI();
     juice.onGiant(giant.x,giant.y);tapHaptic("heavy");
     return true;
   }
@@ -888,7 +949,7 @@
     });
     arcCharge=0;lastArcRelease=elapsed;counters.arcReleases++;lightningTriggers++;
     record("arc",{targets:chosen.map(b=>b.id),single,queued:true,cap:maxTargets});
-    setState(branch==="arc-b"?"雷霆聚能 · 单体蓄电":"电弧已锁定 · 即将逐个跳电");
+    setState(branch==="arc-b"?"arcFocus":"arcChain");
     return true;
   }
   function updateLightningChains(){
@@ -1087,15 +1148,15 @@
   function offerChoice(){
     if(phase!=="playing"||choiceQueue<=0)return false;
     choiceSet=Build.offer(build,screenClears);if(choiceSet.length!==3)throw Error("Upgrade pool must provide three distinct effective cards");
-    phase="choosing";choiceQueue--;showCards();record("offer",{cards:choiceSet.slice()});setState("清屏升级 · 选择期间暂停");updateUI();return true;
+    phase="choosing";choiceQueue--;showCards();record("offer",{cards:choiceSet.slice()});setState("clearChoice");updateUI();return true;
   }
   function chooseUpgrade(id){
     if(phase==="seeding")return selectSeed(id);
     if(phase!=="choosing"||!choiceSet.includes(id)||!Build.choose(build,id,screenClears))return false;
     syncBuild();record("choice",{id});phase="playing";choiceSet=[];ui.choice.classList.add("hidden"); // V2.1: 选卡确认不再另播技能选择音，清屏升级音已在清屏时播过一次。
-    if(build.choiceHistory.length===1&&build.seedAbility){record("first_upgrade",{id});setState("新技能已获得 · 充满能量后可以释放超载");}
+    if(build.choiceHistory.length===1&&build.seedAbility){record("first_upgrade",{id});setState("firstPower");}
     if(screenClears>=MAX_WAVES){finishPrototype();return true;}
-    if(choiceQueue>0)offerChoice();else{setState("强化完成 · 下一波验证构筑");updateUI();}return true;
+    if(choiceQueue>0)offerChoice();else{setState("upgradeDone");updateUI();}return true;
   }
   function addExperience(amount){
     // Bricks may still award score/energy, but never trigger an upgrade.
@@ -1108,7 +1169,7 @@
     const hp=isFinaleWave(wave)?FINALE_HP:isBossWave(wave)?128:52+Math.floor(Math.max(0,wave-4)/4)*24+bossDefeats*6;
     const r=isFinaleWave(wave)?finalBossRect():featuredRect();boss=brickAt(r.x,r.y,hp,{w:r.w,h:r.h,isBoss:true,color:isFinaleWave(wave)?"#cf668f":"#ab66f5",isFinalBoss:isFinaleWave(wave)});
     bricks.push(boss);bossSummonClock=0;bossSummonTotal=0;bossSupportXP=0;summonSignals=[];
-    alertUntil=elapsed+2.5;setState("第 "+wave+" 波 · BOSS 核心已降临！");
+    alertUntil=elapsed+2.5;setState("bossAppears",{wave,boss:bossName()});
     if(phase==="playing")playSfx("giant");return true;
   }
 
@@ -1160,7 +1221,7 @@
     finaleDamageCheckpoints.push({stage,hp:boss.hp,elapsed:waveElapsed,count});
     record("finale_stage",{from:previous,to:stage,bossHp:boss.hp,queued:count});
     alertUntil=elapsed+3.2;
-    setState("终局第 "+stage+"/3 阶段 · 新砖阵预警 "+count+" 块");
+    setState("newStage",{stage,count});
     // V2.1: 终局阶段警报不再占独立音效位。
     return count;
   }
@@ -1218,7 +1279,7 @@
       bossSummonTotal+=queued;
       record("boss_summon",{wave,batch:queued,total:bossSummonTotal,assault:ordinal,
         pendingPhysicalBricks:pending.length+queued});
-      setState("Boss 第"+ordinal+"波增援 · "+queued+"块真实数字砖预警");
+      setState("summon",{ordinal,count:queued});
     }
     return queued;
   }
@@ -1296,7 +1357,7 @@
     }
     if(queued){
       ambientSummonBursts++;
-      setState(source==="ambient"?"召唤砖潮 · 标准砖阵正在凝聚":"砖潮增援 · 战场重新填满");
+      setState("ambient");
     }
     return queued;
   }
@@ -1334,7 +1395,7 @@
     burst(x,y,"#ffe7ae",reducedMotion?9:38);juice.onSplash({x,y});
     record("boss_finisher_start",{wave:finishedWave,targets:pending.length});
     // V2.1: Boss 终结爆炸不再播连锁爆破音，避免与砖块击破音重叠。
-    setState("BOSS击破！核心向外连环爆炸");
+    setState("bossBreak");
     updateUI();
   }
   function updateBossFinisher(dt){
@@ -1354,7 +1415,7 @@
     record("boss_finisher_complete",{wave:v.wave,visualExplosions:exploded,
       awardedNormalBreaks:0,seconds:+v.t.toFixed(2)});
     bossVictory=null;
-    setState("BOSS胜利！终结爆炸完成");
+    setState("bossBreak");
     return false; // let ordinary wave-clear reward/ending execute THIS frame
   }
   function zoneCounts(){
@@ -1397,7 +1458,7 @@
     if(queued){
       bridgeBursts++;bridgeTiles+=queued;lastBridgeTime=elapsed;
       if(upperOnly)upperOnlyBridgeCount++;
-      setState(upperOnly?"连击承接 · 中耐久桥接砖凝聚":"连击承接 · 中下层反弹砖凝聚");
+      setState("bridge");
     }
     return queued;
   }
@@ -1422,15 +1483,15 @@
       for(const brick of bricks)if(brick.alive)brick.y+=speed*dt;
       const danger=bricks.find(b=>b.alive&&b.y+b.h>=DANGER_Y);
       if(danger){
-        const dangerSource=danger.isBoss?"BOSS":danger.summonSource==="boss"?"Boss召唤砖":danger.summonSource==="finale"?"终局增援砖":"初始砖";
+        const dangerSource=danger.isBoss?"boss":danger.summonSource==="boss"?"boss_support":
+          danger.summonSource==="finale"?"final_support":"regular";
+        const cause=dangerSource==="boss"?(danger.isFinalBoss?"finalBossName":"bossName"):
+          dangerSource==="boss_support"?"bossSupport":dangerSource==="final_support"?"finalSupport":"regularBrick";
+        failure={key:cause,hp:danger.hp};
         record("touchline",{wave,source:dangerSource,brickId:danger.id,hp:danger.hp,elapsed:+waveElapsed.toFixed(2),bossHp:boss?.hp??null,bossSupportBorn:bossSummonTotal});
         phase="lost";balls=[];giant=null;ui.win.classList.remove("hidden");
-        $("winLabel").textContent="RUN OVER";
-        const seconds=Math.floor(elapsed);
-        ui.final.textContent="生存 "+Math.floor(seconds/60)+"分"+seconds%60+
-          "秒 · 击碎 "+score+" 块 · 到达第 "+wave+" 波 · LV."+level+
-          " · 清屏 "+screenClears+" 次 · Boss "+bossDefeats+" 个 · 触线："+dangerSource+"("+danger.hp+"HP)";
-        setState("砖阵触线 · 第 "+wave+" 波失败");
+        renderResult();saveBestRun();
+        setState("lostWave",{wave});
         playSfx("fail");window.PinballGameAudio?.stopBgm?.(1500);updateUI();return;
       }
       if(boss&&boss.alive){
@@ -1458,14 +1519,14 @@
         replenishClock=CLEAR_CELEBRATE+CLEAR_WARNING;
         clearPreview=[];clearPreviewShown=false;ambientSignals=[];summonSignals=[];
         alertUntil=elapsed+replenishClock;
-        setState("PERFECT CLEAR · 第 "+wave+" 波完成，升级 LV."+level);
+        setState("perfect",{wave});
         playSfx("clear");
       }
     }else{
       replenishClock-=dt;
       if(replenishClock<=CLEAR_WARNING&&!clearPreviewShown){
         clearPreview=planClearBurst();clearPreviewShown=true;
-        setState("第 "+(wave+1)+" 波 · 大规模砖阵预警");
+        setState("upcoming",{wave:wave+1});
       }
       if(replenishClock<=0){
         spawnClearBurst();
@@ -1507,9 +1568,9 @@
       bricks=bricks.filter(b=>b.alive);
     if(choiceQueue>0)offerChoice();
     const message=$("finalRushLabel");
-    if(elapsed<alertUntil){message.classList.add("active");message.textContent=emptyLatch?"PERFECT CLEAR · 第 "+wave+" 波清屏":boss&&boss.alive?"BOSS · 第 "+wave+" 波":"WAVE "+wave;}
-    else if(boss&&boss.alive&&livingCount()===1&&waveElapsed%6>=4){message.classList.add("active");message.textContent="核心弱点 · 命中额外充能 +4";}
-    else if(livingCount()>0&&livingCount()<=5&&waveElapsed>12){message.classList.add("active");message.textContent="残局追击 · 精准弹道";}
+    if(elapsed<alertUntil){message.classList.add("active");message.textContent=t(emptyLatch?"perfect":boss?.alive?"bossWaveLabel":"waveOnly",{wave,boss:bossName()});}
+    else if(boss&&boss.alive&&livingCount()===1&&waveElapsed%6>=4){message.classList.add("active");message.textContent=t("weak");}
+    else if(livingCount()>0&&livingCount()<=5&&waveElapsed>12){message.classList.add("active");message.textContent=t("tail");}
     else message.classList.remove("active");
     uiClock+=dt;
     if(uiClock>=.10){uiClock=0;updateUI();}
@@ -1666,7 +1727,7 @@
     }
     if(b.isFinalBoss){
       ctx.save();ctx.font="bold 8px system-ui";ctx.textAlign="center";ctx.fillStyle="#ffd9f2";
-      ctx.globalAlpha=.95;ctx.fillText("FINAL BOSS · "+stage+"/3",cx,b.y+13.5);ctx.restore();
+      ctx.globalAlpha=.95;ctx.fillText(t("finalStage",{stage}),cx,b.y+13.5);ctx.restore();
     }
     brickText(b.x,b.y+(b.isFinalBoss?6:2),b.w,b.h-(b.isFinalBoss?8:4),String(b.hp),"#fff6ff",b.isFinalBoss?21:17);
   }
@@ -1689,7 +1750,7 @@
     ctx.save();
     ctx.setLineDash([8,5]);ctx.strokeStyle="#ff667c";ctx.lineWidth=2;
     ctx.beginPath();ctx.moveTo(0,DANGER_Y);ctx.lineTo(W,DANGER_Y);ctx.stroke();ctx.setLineDash([]);
-    ctx.fillStyle="#ffb3bd";ctx.font="bold 10px system-ui";ctx.textAlign="left";ctx.fillText("DANGER LINE",7,DANGER_Y-8);
+    ctx.fillStyle="#ffb3bd";ctx.font="bold 10px system-ui";ctx.textAlign="left";ctx.fillText(t("danger"),7,DANGER_Y-8);
     if(clearFlash>0){ctx.fillStyle="rgba(80,246,216,"+(clearFlash*.12)+")";ctx.fillRect(0,0,W,H);}
     ctx.restore();
     // Lightweight telegraph: a flickering outline appears before a Boss brick
@@ -1857,7 +1918,7 @@
       ctx.beginPath();ctx.arc(v.x,v.y,10+t*(v.farthest+30),0,Math.PI*2);ctx.stroke();
       ctx.shadowBlur=0;ctx.globalAlpha=Math.min(1,.9*(1-t)+.25);
       ctx.font="900 19px system-ui";ctx.textAlign="center";ctx.fillStyle="#fff3dc";
-      ctx.fillText("BOSS 击破！",W/2,Math.min(H-150,220));ctx.restore();
+      ctx.fillText(t("bossBreak"),W/2,Math.min(H-150,220));ctx.restore();
     }
     if(!reducedMotion){
       for(const e of impactRings){
@@ -1885,7 +1946,7 @@
       ctx.font="900 18px system-ui";
       ctx.shadowColor="#ffb347";ctx.shadowBlur=renderQuality==="full"?10:0;
       ctx.fillStyle=combo>=5?"#ffd08a":"#a6efd9";
-      ctx.fillText(combo+" COMBO",0,0);
+      ctx.fillText(t("combo",{count:combo}),0,0);
       ctx.restore();
       ctx.globalAlpha=1;
     }
@@ -1913,14 +1974,29 @@
     ctx.restore();
   }
   function renderBuildPanel(){
-    const q=Build.summary(build),t=q.stats,m=q.modifiers;
-    $("pauseSubtitle").textContent="第 "+wave+" / "+MAX_WAVES+"波 · "+(q.focus?Build.DEFS[q.focus].name:"自由方向")+(q.branch?" · "+Build.DEFS[q.branch].name:"");
-    $("buildStats").textContent="普通球伤害 "+t.damage+"   当前射速 "+(m.rate/t.interval).toFixed(2)+"发/秒\n球速 "+(t.speed*m.speed).toFixed(0)+"   留场 "+t.ttl.toFixed(1)+"秒   场上 "+balls.length+" / "+MAX_BALLS+"球";
-    $("buildSkills").textContent=q.skills.map(k=>k.name+" · R"+k.rank+"\n"+k.effect).join("\n\n");
-    const last=q.history.at(-1);
-    $("lastUpgrade").textContent=last?Build.DEFS[last.id].name+"\n"+last.deltas.map(d=>d.text).join("；")+"\n伤害 "+last.before.damage+" → "+last.after.damage+"；射速 "+(1/last.before.interval).toFixed(2)+" → "+(1/last.after.interval).toFixed(2)+"发/秒":"尚未升级";
-    $("buildHistory").textContent=q.history.map(c=>(c.wave?"清第"+c.wave+"波":"初始能力")+" · "+Build.DEFS[c.id].name+"\n"+c.deltas.map(d=>d.text).join("；")).join("\n\n");
-    $("buildBuffs").textContent=q.buffs.length?q.buffs.map(b=>b.name+" · 剩余"+b.remaining.toFixed(1)+"秒有效战斗时间\n"+b.description).join("\n"):"暂无临时增幅";
+    const q=Build.summary(build),stats=q.stats,mods=q.modifiers;
+    $("pauseSubtitle").textContent=[t("waveCount",{wave,max:MAX_WAVES}),Build.DEFS[q.focus]?.name,Build.DEFS[q.branch]?.name].filter(Boolean).join(" · ");
+    $("buildStats").textContent=t("buildStats",{damage:stats.damage,rate:(mods.rate/stats.interval).toFixed(2),
+      speed:(stats.speed*mods.speed).toFixed(0),ttl:stats.ttl.toFixed(1),balls:balls.length,max:MAX_BALLS});
+    $("buildSkills").textContent=q.skills.map(skill=>skill.name+" · R"+skill.rank+"\n"+skill.effect).join("\n\n");
+    const last=q.history.at(-1),deltas=entry=>Build.describeDeltas(entry).map(delta=>delta.text).join(" · ");
+    $("lastUpgrade").textContent=last?Build.DEFS[last.id].name+"\n"+deltas(last)+"\n"+
+      t("upgradeStats",{before:last.before.damage,after:last.after.damage,rateBefore:(1/last.before.interval).toFixed(2),
+        rateAfter:(1/last.after.interval).toFixed(2)}):t("noUpgrade");
+    $("buildHistory").textContent=q.history.map(entry=>t(entry.wave?"perfect":"seed",{wave:entry.wave})+
+      " · "+Build.DEFS[entry.id].name+"\n"+deltas(entry)).join("\n\n");
+    $("buildBuffs").textContent=q.buffs.length?q.buffs.map(buff=>t("buffTime",{name:buff.name,sec:buff.remaining.toFixed(1),description:buff.description})).join("\n"):t("noBuffs");
+    $("resume").textContent=t(pausedFrom==="ready"||pausedFrom==="lost"||pausedFrom==="complete"?"resume":"continue");
+  }
+  function applyLanguage(){
+    locale.apply(document);
+    if(lastMessage)setState(lastMessage.id,lastMessage.values);
+    if(phase==="choosing"||pausedFrom==="choosing")showCards();
+    if(phase==="paused")renderBuildPanel();
+    renderResult();renderBestRuns();updateUI();
+  }
+  for(const selector of document.querySelectorAll("[data-language]")){
+    selector.addEventListener("change",()=>{if(locale.set(selector.value))applyLanguage();});
   }
   function lockBackground(locked){
     for(const element of document.querySelectorAll?.(".topbar,.hud,.footer,.combat-status,#game,#choiceOverlay,#startOverlay,#winOverlay,.ult-wrap")||[])element.inert=locked;
@@ -1937,8 +2013,8 @@
   $("pause").addEventListener("click",()=>phase==="paused"?resume():pause());
   $("resume").addEventListener("click",resume);
   $("exportRun").addEventListener("click",()=>{
-    const data=JSON.stringify({version:"DemoV1-20261101",state:snapshot(),events,config:CFG},null,2);
-    const url=URL.createObjectURL(new Blob([data],{type:"application/json"}));const link=document.createElement("a");link.href=url;link.download="pinball-demo-v1-"+build.seed+".json";link.click();URL.revokeObjectURL(url);
+    const data=JSON.stringify({version,state:snapshot(),events,config:CFG},null,2);
+    const url=URL.createObjectURL(new Blob([data],{type:"application/json"}));const link=document.createElement("a");link.href=url;link.download="marble-overload-v1-"+build.seed+".json";link.click();URL.revokeObjectURL(url);
   });
   function setAim(e) {
     const box = canvas.getBoundingClientRect();
@@ -1975,6 +2051,7 @@
   $("jumpBoss").addEventListener("click",jumpToBoss10);
   $("jumpFinalBoss").addEventListener("click",jumpToFinalBoss);
   for(let i=0;i<3;i++)$("choice"+i).addEventListener("click",()=>{unlockSound();chooseUpgrade(choiceSet[i]);});
+  $("home").addEventListener("click",reset);
   $("again").addEventListener("click",()=>{unlockSound();reset();begin();});
   $("reset").addEventListener("click",()=>{unlockSound();reset();begin();});
   document.addEventListener?.("visibilitychange",()=>{if(document.hidden)pause();accumulator=0;lastFrame=performance.now();});
@@ -2116,5 +2193,8 @@
     };
   }
   function makeBallTest(mini=false){return makeBall(0,mini);}
-  reset();lastFrame=performance.now();requestAnimationFrame(frame);
+  reset();applyLanguage();
+  $("loading").hidden=true;$("start").disabled=false;
+  $("reload").addEventListener("click",()=>location.reload());
+  lastFrame=performance.now();requestAnimationFrame(frame);
 })();
