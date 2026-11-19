@@ -12,6 +12,7 @@
     "canvas": ["战斗场地，拖动以瞄准炮台", "Playfield. Drag to aim the cannon."],
     "loading": ["正在载入游戏…", "Loading game…"],
     "fault": ["游戏运行中断。请重新开始，或刷新页面。", "The game was interrupted. Start a new run or reload the page."],
+    "recover": ["回到首页", "Return to title"],
     "reload": ["重新载入", "Reload"],
     "ready": ["准备开始", "Ready"],
     "selectSpecialty": ["选择你的流派", "Choose your build"],

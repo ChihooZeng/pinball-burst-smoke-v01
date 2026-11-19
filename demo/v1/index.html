@@ -117,8 +117,9 @@
         <button class="secondary" id="home" type="button" data-i18n="home"></button>
       </div>
       <div class="overlay hidden" id="errorOverlay" role="alert">
-        <p data-i18n="fault"></p>
-        <button class="cta" id="reload" type="button" data-i18n="reload"></button>
+        <p data-i18n="fault">游戏运行中断。请刷新页面。 / Game interrupted. Please reload.</p>
+        <button class="cta" id="recover" type="button" hidden data-i18n="recover">回到首页</button>
+        <button class="cta" id="reload" type="button" data-i18n="reload">刷新 / Reload</button>
       </div>
     </section>
     <div class="combat-status"><span id="buffStatus"></span><span id="stateText"></span></div>
@@ -129,10 +130,12 @@
       <div id="hunterDetails"></div><div id="bounceDetails"></div><div id="splitDetails"></div><div id="chainDetails"></div><div id="pierceDetails"></div><div id="arcDetails"></div>
     </div>
   </main>
+  <noscript>请启用 JavaScript 后刷新。 / Enable JavaScript and reload to play.</noscript>
+  <script src="./boot.js?v=1.0.0-rc.1" defer></script>
   <script src="./i18n.js?v=1.0.0-rc.1" defer></script>
   <script src="./juice-fx.js?v=1.0.0-rc.1" defer></script>
   <script src="./builds.js?v=1.0.0-rc.1" defer></script>
-  <script src="./sound-pack.js?v=1.0.0-rc.1" defer></script>
+  <script data-optional src="./sound-pack.js?v=1.0.0-rc.1" defer></script>
   <script src="./game.js?v=1.0.0-rc.1" defer></script>
 </body>
 </html>

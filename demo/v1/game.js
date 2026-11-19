@@ -4,6 +4,7 @@
 (() => {
   const Build=window.PinballBuilds, CFG=Build.CONFIG;
   const locale=window.PinballI18n, {t:translate}=locale;
+  const boot=window.PinballBoot;
   const qaMode=new URLSearchParams(location.search).get("qa")==="1";
   const version="1.0.0-rc.1";
   document.querySelector("#qaBossPreview").hidden=!qaMode;
@@ -202,12 +203,13 @@
   let renderScale=1;
   function fitCanvas(){
     const box=canvas.getBoundingClientRect();
-    const cssW=box.width>0?box.width:W;
+    const cssW=box.width>0&&box.height>0?Math.min(box.width,box.height*W/H):W;
     const dpr=Math.max(1,Math.min(window.devicePixelRatio||1,RENDER_DPR_MAX));
     const bw=Math.max(1,Math.round(cssW*dpr));
     renderScale=bw/W;
-    canvas.width=bw;
-    canvas.height=Math.max(1,Math.round(H*renderScale));
+    const bh=Math.max(1,Math.round(H*renderScale));
+    if(canvas.width!==bw)canvas.width=bw;
+    if(canvas.height!==bh)canvas.height=bh;
   }
   fitCanvas();
   const $ = id => document.querySelector("#" + id);
@@ -1545,7 +1547,17 @@
     counters.maxBallsAlive=Math.max(counters.maxBallsAlive,balls.length);
     const cost=performance.now()-stepStart;physicsCostMs+=cost;physicsSteps++;maxPhysicsMs=Math.max(maxPhysicsMs,cost);
   }
-  function rounded(x,y,w,h,r) {ctx.beginPath();ctx.roundRect(x,y,w,h,r);}
+  function rounded(x,y,w,h,r){
+    ctx.beginPath();
+    if(ctx.roundRect){ctx.roundRect(x,y,w,h,r);return;}
+    const corner=Math.min(r,w/2,h/2);
+    ctx.moveTo(x+corner,y);
+    ctx.arcTo(x+w,y,x+w,y+h,corner);
+    ctx.arcTo(x+w,y+h,x,y+h,corner);
+    ctx.arcTo(x,y+h,x,y,corner);
+    ctx.arcTo(x,y,x+w,y,corner);
+    ctx.closePath();
+  }
 
   /* —— 砖块绘制基础件：所有砖块共用同一套"深色底 + 霓虹边 + 数字"语言 —— */
   function withAlpha(hex,a){
@@ -2022,9 +2034,17 @@
   $("home").addEventListener("click",reset);
   $("again").addEventListener("click",()=>{unlockSound();reset();begin();});
   $("reset").addEventListener("click",()=>{unlockSound();reset();begin();});
-  document.addEventListener?.("visibilitychange",()=>{if(document.hidden)pause();accumulator=0;lastFrame=performance.now();});
-  window.addEventListener("resize",()=>{fitCanvas();pause();accumulator=0;lastFrame=performance.now();});
-  window.addEventListener("pagehide",()=>{pause();accumulator=0;lastFrame=performance.now();});
+  function resetFrameClock(){accumulator=0;lastFrame=performance.now();}
+  function suspendBattle(){
+    if(["playing","choosing","seeding"].includes(phase))pause();
+    resetFrameClock();
+  }
+  document.addEventListener("visibilitychange",()=>{
+    if(document.hidden)suspendBattle();
+    else resetFrameClock();
+  });
+  window.addEventListener("resize",()=>{fitCanvas();activePointer=null;resetFrameClock();});
+  window.addEventListener("pagehide",suspendBattle);
   window.addEventListener("keydown",e=>{
     if(phase==="paused"&&e.code==="Tab"){
       const focusable=Array.from($("pauseOverlay").querySelectorAll("button,input,select,[tabindex='0'],summary")).filter(el=>!el.disabled);
@@ -2039,9 +2059,12 @@
     if(e.code==="ArrowRight"){aim=clamp(aim+.09,-1.08,1.08);e.preventDefault();}
     if(e.code==="Space"){fireGiant();e.preventDefault();}
   });
-  function frame(now) {
-    if(document.hidden&&["playing","choosing"].includes(phase))pause();
-    const delta=document.hidden||phase==="paused"?0:clamp((now-lastFrame)/1000,0,.06);
+  let frameRequest=0;
+  function scheduleFrame(){if(!frameRequest)frameRequest=requestAnimationFrame(frame);}
+  function tickFrame(now) {
+    if(document.hidden)return;
+    const uncapped=Math.max(0,(now-lastFrame)/1000);
+    const delta=phase==="paused"?0:clamp(uncapped,0,.06);
     lastFrame=now;
     // 120Hz fixed physics; rAF draws on each display refresh (60/90/120Hz if supported).
     accumulator=Math.min(.06,accumulator+delta);
@@ -2051,16 +2074,24 @@
     }
     if(steps>=MAX_FRAME_STEPS&&accumulator>=PHYSICS_DT)accumulator=0;
     if(delta>0){
-      metricsClock+=delta;frameSamples++;
+      metricsClock+=uncapped;frameSamples++;
       if(metricsClock>=1){
         fpsNow=Math.round(frameSamples/metricsClock);
-        renderQuality=fpsNow<48?"lite":"full";
+        if(fpsNow<48)renderQuality="lite";
+        else if(fpsNow>=55)renderQuality="full";
         juice.setQuality(renderQuality);
         $("fpsStat").textContent="FPS "+fpsNow;
         metricsClock=0;frameSamples=0;
       }
     }
-    draw();requestAnimationFrame(frame);
+    draw();
+  }
+  function frame(now){
+    frameRequest=0;
+    if(boot.failed){sound?.stopBgm(0);return;}
+    try {tickFrame(now);}
+    catch(error){sound?.stopBgm(0);boot.report(error);return;}
+    scheduleFrame();
   }
   function snapshot() {
     return {damageDealt,shotsWithContact,currentWaveMetrics:waveMetrics?{...waveMetrics,longestNoBreak:Math.max(waveMetrics.longestNoBreak,waveElapsed-waveMetrics.lastBreak)}:null,precisionTurns,focusDamage,gunBonusDamage,weakpointDamage,weakpointCharge,waveFallMultiplier,worldWidth:W,worldHeight:H,dangerY:DANGER_Y,shooterY:shooter.y,growthFocus:build.growthFocus,pausedFrom,battleTime,bankDamage,temporaryBuffs:build.temporaryBuffs.map(b=>({...b})),buildSummary:Build.summary(build),waveReports:waveReports.map(r=>({...r})),seed:build.seed,seedAbility:build.seedAbility,coreFocus:build.coreFocus,coreBranch:build.coreBranch,ranks:{...build.ranks},routeWeights:{...build.routeWeights},
@@ -2161,8 +2192,9 @@
     };
   }
   function makeBallTest(mini=false){return makeBall(0,mini);}
-  reset();applyLanguage();
-  $("loading").hidden=true;$("start").disabled=false;
-  $("reload").addEventListener("click",()=>location.reload());
-  lastFrame=performance.now();requestAnimationFrame(frame);
+  reset();applyLanguage();resetFrameClock();scheduleFrame();
+  boot.markReady(()=>{
+    canvas.width=canvas.width; // Clears the Canvas save stack after an interrupted draw.
+    reset();applyLanguage();resetFrameClock();scheduleFrame();
+  });
 })();

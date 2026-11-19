@@ -37,7 +37,7 @@ await p.eval(`window.__ro={layout:__pinballTest.brickLayout};delete window.__pin
 const hooksGone=await p.eval(`typeof window.__pinballTest`);
 console.log("qa hooks removed:",hooksGone);
 
-const S=`(()=>{const s=__pinballState();return {phase:s.phase,wave:s.wave,elapsed:+s.elapsed.toFixed(2),
+const S=`(()=>{const s=__pinballState();return {phase:s.phase,bootFailed:window.PinballBoot?.failed===true,wave:s.wave,elapsed:+s.elapsed.toFixed(2),
  brick:s.brickCount,bossActive:s.bossActive,bossHp:s.bossHp,finaleStage:s.finaleStage,bossDefeats:s.bossDefeats,
  charge:Math.round(s.charge),balls:s.activeBalls,giant:s.giantActive,fps:s.fpsNow,q:s.renderQuality,
  physMean:+(s.physicsMeanMs||0).toFixed(3),physMax:+(s.maxPhysicsMs||0).toFixed(2),
@@ -107,6 +107,7 @@ while(Date.now()-t0<MAXMIN*60000){
     lastPhase=s.phase;
     continue;
   }
+  if(s.bootFailed){stopReason="runtime_failure";break;}
   if(s.phase==="complete"||s.phase==="lost"){stopReason=s.phase;console.log("GAME END:",s.phase,"wave",s.wave);break;}
   if(s.phase==="playing"){
     const lay=await p.eval(LAYOUT).catch(()=>null);
@@ -121,7 +122,7 @@ while(Date.now()-t0<MAXMIN*60000){
   }
   if(s.wave===10&&s.bossActive&&lastPhase==="playing"&&!log.boss10Shot){log.boss10Shot=true;await shot("boss10");}
   if(s.wave===20&&s.bossActive&&!log.boss20Shot){log.boss20Shot=true;await shot("boss20");}
-  if(s.wave===20&&s.finaleStage&&s.finaleStage!==log.finaleSeen){log.finaleSeen=s.finaleStage;await shot("finale-stage"+s.finaleStage);}
+  if(s.wave===20&&s.finaleStage&&s.finaleStage!==log.finaleSeen){log.finaleSeen=s.finaleStage;(log.finaleStages??=[]).push(s.finaleStage);await shot("finale-stage"+s.finaleStage);}
   lastPhase=s.phase;
   await sleep(140);
 }
@@ -144,6 +145,8 @@ assert.equal(hooksGone,"undefined");
 assert.deepEqual(errors,[]);
 assert.equal(stopReason,"complete","the route must complete all 20 waves");
 assert.equal(finalState.clears,20);
+assert.equal(finalState.bossDefeats,2);
+assert.deepEqual(log.finaleStages,[1,2,3]);
 
 function pickTarget(lay,st){
   const W=360,H=st.worldHeight||640;
