@@ -53,7 +53,7 @@ try{
       return draw.apply(this,args);
     };
   `});
-  for(const [width,height] of [[360,640],[390,844],[1440,900]]){
+  for(const [width,height] of [[360,640],[390,844],[412,915],[1440,900]]){
     await page.viewport(width,height,2,width<500);
     await page.goto(url);
     await page.eval("__pinballTest.begin();__pinballTest.spawnWave(19);__pinballTest.fillBallBudget()");

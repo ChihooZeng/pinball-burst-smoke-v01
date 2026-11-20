@@ -8,6 +8,7 @@ const SEED=+arg("seed",20261118);
 const LABEL=arg("label","run");
 const FACTION=arg("faction","split");
 const MAXMIN=+arg("minutes",30);
+const TOUCH=arg("touch","0")==="1";
 const SHOTS=arg("shots","1")==="1";
 const PORT=+arg("port",9342), URL=arg("url","http://127.0.0.1:4178/demo/v1/");
 const OUTDIR=arg("out",process.cwd());
@@ -28,7 +29,7 @@ await p.send("Page.addScriptToEvaluateOnNewDocument",{source:
   `(function tick(){const now=performance.now();const g=now-window.__frames.last;`+
   `if(g>0){if(g>window.__frames.maxGap)window.__frames.maxGap=g;if(g>50)window.__frames.long++;window.__frames.n++;}`+
   `window.__frames.last=now;requestAnimationFrame(tick);})();`});
-await p.viewport(VW,VH,DPR,true);
+await p.viewport(VW,VH,DPR,TOUCH);
 await p.goto(URL);
 await sleep(600);
 
@@ -43,12 +44,17 @@ const S=`(()=>{const s=__pinballState();return {phase:s.phase,bootFailed:window.
  physMean:+(s.physicsMeanMs||0).toFixed(3),physMax:+(s.maxPhysicsMs||0).toFixed(2),
  score:s.score,clears:s.screenClears,choice:s.choiceSet,aim:+s.aim.toFixed(3),level:s.level,
  skillsUsed:s.skillsUsed,giantHits:s.giantHits,bossSummon:s.bossSummonTotal,summonWarn:s.summonWarningCount,
- worldHeight:s.worldHeight,shooterY:s.shooterY,
+ worldHeight:s.worldHeight,shooterY:s.shooterY,dangerY:s.dangerY,ranks:s.ranks,
  remainingHp:s.remainingHp,maxBallsEver:s.maxBallsAlive,label:document.getElementById('winLabel').textContent};})()`;
 const LAYOUT=`(()=>{const c=document.querySelector('#game').getBoundingClientRect();const l=__ro.layout();
  return {rect:{l:c.left,t:c.top,w:c.width,h:c.height},bricks:l.filter(b=>b.alive).map(b=>({x:b.x,y:b.y,w:b.w,h:b.h}))};})()`;
 
 async function clickAt(x,y){
+  if(TOUCH){
+    await p.send("Input.dispatchTouchEvent",{type:"touchStart",touchPoints:[{x,y}]});
+    await p.send("Input.dispatchTouchEvent",{type:"touchEnd",touchPoints:[]});
+    return;
+  }
   await p.send("Input.dispatchMouseEvent",{type:"mousePressed",x,y,button:"left",clickCount:1});
   await p.send("Input.dispatchMouseEvent",{type:"mouseReleased",x,y,button:"left",clickCount:1});
 }
@@ -67,7 +73,7 @@ const POLICY=arg("policy","faction");
 const PRIORITY=POLICY==="damage"
   ? [FACTION,"power","rate","speed","life",FACTION+"-a",FACTION+"-b","split","arc","gun","shock","drill","hunter","bank"]
   : [FACTION,FACTION+"-a",FACTION+"-b","power","rate","speed","life","split","arc","gun","shock","drill","hunter","bank"];
-const log={label:LABEL,viewport:[VW,VH],dpr:DPR,seed:SEED,faction:FACTION,started:new Date().toISOString(),
+const log={label:LABEL,viewport:[VW,VH],dpr:DPR,seed:SEED,faction:FACTION,input:TOUCH?"touch":"pointer",started:new Date().toISOString(),
   qaHooksAfterSetup:hooksGone,picks:[],waves:[],samples:[],shots:[],errors,choiceSets:[]};
 let lastWave=0,lastPhase="",waveStart=0,shotIdx=0,lastState=null;
 const t0=Date.now();
@@ -99,7 +105,7 @@ while(Date.now()-t0<MAXMIN*60000){
   if(s.phase==="choosing"&&lastPhase!=="choosing"){
     const idx=chooseIdx(s.choice);
     log.choiceSets.push({wave:s.wave,set:s.choice,pick:String(s.choice||"").split(",")[idx]});
-    await sleep(120);
+    await sleep(240);
     const r=await clickEl(`#choice${idx}`);
     log.picks.push({wave:s.wave,pick:String(s.choice||"").split(",")[idx],clicked:!!r});
     console.log(`  choice w${s.wave}: [${s.choice}] -> ${String(s.choice||"").split(",")[idx]} (clicked ${!!r})`);
@@ -145,6 +151,8 @@ assert.equal(hooksGone,"undefined");
 assert.deepEqual(errors,[]);
 assert.equal(stopReason,"complete","the route must complete all 20 waves");
 assert.equal(finalState.clears,20);
+assert.equal(log.picks[0]?.pick,FACTION,"the requested route must be deliberately chosen first");
+assert.equal(finalState.ranks[FACTION],5,"the requested route must reach mastery");
 assert.equal(finalState.bossDefeats,2);
 assert.deepEqual(log.finaleStages,[1,2,3]);
 
@@ -158,7 +166,8 @@ function pickTarget(lay,st){
     if(a<-1.08)a=-1.08; if(a>1.08)a=1.08;
     const key=Math.round(a/0.05);
     const depth=(b.y+b.h)/H;
-    const w=(0.5+1.6*depth)*(b.w>40?1.6:1);
+    const urgency=1+3*Math.max(0,1-(st.dangerY-b.y-b.h)/38);
+    const w=urgency*(0.5+1.6*depth)*(b.w>40?1.6:1);
     const cur=bins.get(key)||{w:0,sum:0,n:0};
     cur.w+=w;cur.sum+=a;cur.n++;
     bins.set(key,cur);

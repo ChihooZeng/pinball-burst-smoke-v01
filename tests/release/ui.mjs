@@ -22,7 +22,8 @@ try {
     window.__PINBALL_SEED__=20261118;
     Object.defineProperty(navigator,"language",{value:"en-US"});
   `});
-  for(const [width,height] of [[360,640],[390,844],[1440,920]]){
+  const sizes=[[360,640],[390,844],[412,915],[1440,900]];
+  for(const [width,height] of sizes){
     await page.viewport(width,height,2,width<500);
     await page.goto(url);
     assert.equal(await page.eval("document.documentElement.lang"),"en");
@@ -55,15 +56,35 @@ try {
   assert.match(await page.eval("document.querySelector('#buildSkills').textContent"),/电弧印记.*R1/s);
   assert.match(await page.eval("document.querySelector('#lastUpgrade').textContent"),/次撞砖/);
   await shot("settings-360-zh");
+  await page.eval("document.querySelector('#resume').click()");
+  assert.equal(await page.eval("__pinballState().phase"),"playing");
+  await page.eval("document.querySelector('#pauseQuick').click()");
+  assert.equal(await page.eval("__pinballState().phase"),"paused");
+  await shot("pause-360-zh");
+  await page.eval("document.querySelector('#reset').click()");
+  assert.equal(await page.eval("__pinballState().wave"),1);
+  await page.eval("__pinballTest.setTestField([{x:12,y:__pinballState().dangerY-10,hp:7}])");
+  for(let i=0;i<24&&await page.eval("__pinballState().phase")!=="lost";i++)await sleep(100);
+  assert.equal(await page.eval("__pinballState().phase"),"lost");
+  assert.match(await page.eval("document.querySelector('#winTitle').textContent"),/警戒线/);
+  await shot("loss-360-zh");
+  await page.eval("document.querySelector('#again').click()");
+  assert.equal(await page.eval("__pinballState().phase"),"playing");
+  for(const [width,height] of sizes){
+    await page.viewport(width,height,2,width<500);
+    await page.goto(url);
+    assert.equal(await page.eval("document.documentElement.lang"),"zh-CN");
+    assert.equal(await page.eval("document.title"),"弹珠超载");
+    assert.equal(await page.eval("document.documentElement.scrollWidth"),width);
+    await shot(`home-${width}-zh`);
+  }
+  await page.viewport(360,640,2,true);
   await page.goto(url);
-  assert.equal(await page.eval("document.documentElement.lang"),"zh-CN");
-  assert.equal(await page.eval("document.title"),"弹珠超载");
-  await shot("home-360-zh");
   await page.eval("__pinballTest.jumpToFinalBoss()");
   assert.equal(await page.eval("document.querySelector('#bossName').textContent"),"终局核心");
   await shot("boss20-360-zh");
   assert.deepEqual(errors,[]);
-  console.log("PASS English default, 3 viewports, real touch aim, upgrade, live language change, persistence and boss localization");
+  console.log("PASS four viewports in both languages, real touch aim, upgrade, pause/resume, restart, loss and boss localization");
 } finally {
   await page.close();
   chrome.kill();

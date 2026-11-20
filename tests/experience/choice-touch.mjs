@@ -23,6 +23,18 @@ try{
   const state=await page.eval("__pinballState()");
   assert.equal(state.phase,"playing");
   assert.equal(state.seedAbility,"arc");
+  await page.goto(url);
+  await page.eval(`(()=>{
+    __pinballTest.begin();
+    __pinballTest.clearWave();
+    advanceGame(2);
+    document.querySelector("#choice0").focus();
+  })()`);
+  assert.equal(await page.eval("document.activeElement.id"),"choice0");
+  const enter={key:"Enter",code:"Enter",windowsVirtualKeyCode:13,nativeVirtualKeyCode:13};
+  await page.send("Input.dispatchKeyEvent",{...enter,type:"keyDown",text:"\r",unmodifiedText:"\r"});
+  await page.send("Input.dispatchKeyEvent",{...enter,type:"keyUp"});
+  assert.equal(await page.eval("__pinballState().seedAbility"),"split","Keyboard activation remains immediate");
   assert.deepEqual(errors,[]);
-  console.log("PASS protected touch transition and subsequent deliberate upgrade");
+  console.log("PASS protected touch transition, deliberate upgrade, and immediate keyboard activation");
 }finally{await close();}
