@@ -38,6 +38,9 @@
   --frame-glow: inset 0 0 14px #249fff48, 0 0 16px #278dff50;
   --main-fill: linear-gradient(113deg, #a0f6ff, #43e2f0);
   --control-fill: linear-gradient(145deg, #0e3460, #091d3f);
+  --dock-fill: linear-gradient(transparent, #0b28537a);
+  --court-wall: #65cdf174;
+  --court-wall-fade: #65cdf125;
   --screen-grid: linear-gradient(var(--grid) 1px, transparent 1px),
     linear-gradient(90deg, var(--grid) 1px, transparent 1px);
   --screen-fill: radial-gradient(ellipse at 50% 98%, #0a2854, var(--canvas) 67%);

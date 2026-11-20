@@ -17,7 +17,7 @@ try{
       advanceGame(45);
       const rect=selector=>document.querySelector(selector)?.getBoundingClientRect().toJSON();
       const c=document.querySelector("#game"),state=__pinballState();
-      return {arena:rect(".arena"),slot:rect(".playfield"),frame:rect(".battle-rim"),canvas:rect("#game"),
+      return {arena:rect(".arena"),slot:rect(".playfield"),field:q.fieldGeometry?.(),canvas:rect("#game"),
         backing:[c.width,c.height],world:[state.worldWidth,state.worldHeight],danger:state.dangerY,
         shooter:state.shooterY,dpr:devicePixelRatio,palette:["--cyan","--blue","--periwinkle","--purple","--pink"].map(
           name=>{const css=getComputedStyle(document.documentElement);return (css.getPropertyValue(name==="--purple"?"--brick-purple":name)||css.getPropertyValue(name)).trim();})};
@@ -33,9 +33,13 @@ try{
         bricks:layout.length,hp:q.hpDistribution().reduce((sum,b)=>sum+b.hp,0)};
     })`);
     if(mode==="assert"){
-      assert.ok(capture.frame,"A real battle rim must be present");
-      for(const key of ["x","width","bottom"])assert.ok(Math.abs(capture.frame[key]-capture.canvas[key])<.05,key);
-      assert.ok(Math.abs(capture.frame.y-capture.canvas.y-4*capture.canvas.height/capture.world[1])<.05,"actual upper wall");
+      assert.ok(capture.field,"The shared display transform must be present");
+      for(const [fieldKey,domKey] of [["left","left"],["top","top"],["width","width"],["height","height"]]){
+        assert.ok(Math.abs(capture.field[fieldKey]-capture.canvas[domKey])<.05,fieldKey);
+      }
+      assert.deepEqual(capture.field.walls,{left:0,right:360,top:4});
+      assert.ok(Math.abs(capture.field.walls.right*capture.field.scale-capture.canvas.width)<.05,"real right wall");
+      assert.ok(Math.abs(capture.field.walls.top*capture.field.scale-4*capture.canvas.height/capture.world[1])<.05,"actual upper wall");
       const [w,h]=capture.world;
       assert.equal(w,360);
       assert.ok(Math.abs(capture.canvas.width/w-capture.canvas.height/h)<.0002);
@@ -72,10 +76,10 @@ try{
       assert.equal(await page.eval("__pinballState().phase"),"lost");
       await page.viewport(width,height-38,3,width<500);
       const resized=await page.eval(`new Promise(resolve=>setTimeout(()=>{
-        const c=document.querySelector("#game"),b=c.getBoundingClientRect(),field=document.querySelector(".battle-rim").getBoundingClientRect();
-        resolve({view:[b.x,b.width,b.height],rim:[field.x,field.width],px:[c.width,c.height],world:__pinballState().worldHeight,dpr:devicePixelRatio});
+        const c=document.querySelector("#game"),b=c.getBoundingClientRect(),field=__pinballTest.fieldGeometry();
+        resolve({view:[b.x,b.width,b.height],mapped:[field.left,field.width],px:[c.width,c.height],world:__pinballState().worldHeight,dpr:devicePixelRatio});
       },100))`);
-      assert.deepEqual(resized.view.slice(0,2),resized.rim);
+      assert.deepEqual(resized.view.slice(0,2),resized.mapped);
       assert.deepEqual(resized.px,resized.view.slice(1).map(axis=>Math.round(axis*2)));
       assert.equal(resized.world,capture.world[1]);
       runtimeChecks.resized=resized;

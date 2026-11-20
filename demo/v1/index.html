@@ -8,37 +8,33 @@
   <link rel="apple-touch-icon" href="./assets/icon-192.png"/>
   <meta name="description" content="弹珠超载 · Marble Overload. Aim, build your cannon, and clear 20 waves in a neon arcade browser game."/>
   <title>弹珠超载</title>
-  <link rel="stylesheet" href="./neon-tokens.css?v=2.1"/>
-  <link rel="stylesheet" href="./style.css?v=2.1"/>
+  <link rel="stylesheet" href="./neon-tokens.css?v=immersive-c"/>
+  <link rel="stylesheet" href="./style.css?v=immersive-c"/>
 </head>
 <body>
   <main class="shell">
     <div class="masthead">
       <span data-i18n="title">弹珠超载</span>
-      <div id="finalRushLabel" class="floating-label" role="status"></div>
     </div>
-    <header class="topbar">
-      <button id="pauseQuick" class="icon-btn" type="button" aria-label="暂停 / Pause" aria-controls="pauseOverlay" aria-keyshortcuts="P Escape"><span class="ui-icon" aria-hidden="true"></span></button>
-      <div class="combat-summary">
-        <span id="waveLabel"></span><span id="xpLabel"></span>
-        <div class="progress-track" aria-hidden="true"><span id="xpFill"></span></div>
-      </div>
-      <div class="charge-pill">
-        <span id="energyFill" aria-hidden="true"></span>
-        <span class="ui-icon" aria-hidden="true"></span><span id="chargeText"></span>
-      </div>
-      <button id="pause" class="icon-btn" data-i18n-label="settings" aria-label="设置与暂停" type="button"><span class="ui-icon" aria-hidden="true"></span></button>
-    </header>
     <section class="arena">
-      <div class="playfield">
-        <div class="battle-surface">
-          <canvas id="game" width="360" height="560" data-i18n-label="canvas"></canvas>
-          <div class="battle-rim" aria-hidden="true"></div>
+      <header class="topbar">
+        <button id="pauseQuick" class="icon-btn" type="button" aria-label="暂停 / Pause" aria-controls="pauseOverlay" aria-keyshortcuts="P Escape"><span class="ui-icon" aria-hidden="true"></span></button>
+        <div class="combat-summary">
+          <span id="waveLabel"></span><span id="xpLabel"></span>
+          <div class="progress-track" aria-hidden="true"><span id="xpFill"></span></div>
         </div>
-      </div>
+        <div class="charge-pill">
+          <span id="energyFill" aria-hidden="true"></span>
+          <span class="ui-icon" aria-hidden="true"></span><span id="chargeText"></span>
+        </div>
+        <button id="pause" class="icon-btn" data-i18n-label="settings" aria-label="设置与暂停" type="button"><span class="ui-icon" aria-hidden="true"></span></button>
+      </header>
       <div class="boss-hud hidden" id="bossHud">
         <div><span id="bossName"></span><strong id="bossText"></strong></div>
         <div class="boss-track"><div id="bossFill"></div></div>
+      </div>
+      <div class="playfield">
+        <canvas id="game" width="360" height="560" data-i18n-label="canvas"></canvas>
       </div>
       <div class="control-dock">
         <ul class="skill-slots">
@@ -50,7 +46,7 @@
           <div id="skillGuide" class="skill-guide hidden" role="status" data-i18n="manualGuide"></div>
           <button id="giant" type="button" disabled></button>
         </div>
-        <div class="combat-status"><span id="buffStatus"></span><span id="stateText"></span></div>
+        <div class="combat-status"><span id="buffStatus"></span><span id="stateText"></span><span id="finalRushLabel" class="floating-label" role="status"></span></div>
       </div>
       <div class="overlay" id="startOverlay" role="dialog" aria-labelledby="startTitle">
         <div class="home-decor" aria-hidden="true">
@@ -194,6 +190,6 @@
   <script src="./juice-fx.js?v=2.1" defer></script>
   <script src="./builds.js?v=2.1" defer></script>
   <script data-optional src="./sound-pack.js?v=2.1" defer></script>
-  <script src="./game.js?v=2.1" defer></script>
+  <script src="./game.js?v=immersive-c" defer></script>
 </body>
 </html>

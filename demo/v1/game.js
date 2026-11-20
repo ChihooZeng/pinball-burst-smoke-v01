@@ -188,6 +188,7 @@
   const readToken=name=>visualTokens.getPropertyValue(name).trim();
   const [cyan,blue,periwinkle,purple,pink]=["--cyan","--blue","--periwinkle","--brick-purple","--pink"].map(readToken);
   const dangerInk=readToken("--danger");
+  const wallInk=readToken("--court-wall"),wallFade=readToken("--court-wall-fade");
   function brickPaint(edge,top=.98,bottom=.82){
     return {edge,ft:withAlpha(edge,top),fb:withAlpha(edge,bottom)};
   }
@@ -237,29 +238,29 @@
   }
   function brickColor(hp,special){return brickStyle(hp,special).edge;}
   const canvas = document.querySelector("#game"), ctx = canvas.getContext("2d");
-  const playfield=document.querySelector(".playfield"), battleSurface=canvas.parentElement;
+  const playfield=document.querySelector(".playfield"), shell=document.querySelector(".shell");
   const RENDER_DPR_MAX=2;
-  function availableScale(){
-    const slot=playfield.getBoundingClientRect();
-    return Math.min(slot.width/W,slot.height/H);
-  }
+  let fieldTransform=null;
   function fitCanvas(){
-    const scale=availableScale();
-    if(!(scale>0))return;
-    battleSurface.style.setProperty("--battle-width",W*scale+"px");
-    battleSurface.style.setProperty("--battle-height",H*scale+"px");
-    battleSurface.style.setProperty("--ceiling-inset",CEILING_Y*scale+"px");
+    const slot=playfield.getBoundingClientRect();
+    const availableScale=Math.min(slot.width/W,slot.height/H);
+    if(!(availableScale>0)){fieldTransform=null;return;}
+    canvas.style.width=W*availableScale+"px";
+    canvas.style.height=H*availableScale+"px";
     const box=canvas.getBoundingClientRect();
+    const scale=Math.min(box.width/W,box.height/H);
+    if(!(scale>0)){fieldTransform=null;return;}
+    fieldTransform={left:box.left,top:box.top,width:box.width,height:box.height,scale};
     const dpr=Math.max(1,Math.min(window.devicePixelRatio||1,RENDER_DPR_MAX));
-    const bw=Math.max(1,Math.round(box.width*dpr)),bh=Math.max(1,Math.round(box.height*dpr));
+    const bw=Math.max(1,Math.round(fieldTransform.width*dpr)),bh=Math.max(1,Math.round(fieldTransform.height*dpr));
     if(canvas.width!==bw)canvas.width=bw;
     if(canvas.height!==bh)canvas.height=bh;
   }
   function resetWorldSize(){
-    const slot=playfield.getBoundingClientRect();
-    // Keep a single logical height for a run; rotating or changing browser
-    // chrome only fits that same world into the new available CSS rectangle.
-    const ratio=slot.width>0?W*slot.height/slot.width:MIN_WORLD_HEIGHT;
+    // The compact display must not change the V2.1 dimensions at the start of a run.
+    const reference=getComputedStyle(shell,"::before");
+    const width=parseFloat(reference.width),height=parseFloat(reference.height);
+    const ratio=width>0?W*height/width:MIN_WORLD_HEIGHT;
     H=Math.round(Math.max(MIN_WORLD_HEIGHT,Math.min(MAX_WORLD_HEIGHT,ratio)));
     DANGER_Y=H-105;SUMMON_SAFE_BOTTOM=DANGER_Y-88;shooter.y=H-37;
     fitCanvas();
@@ -1803,15 +1804,12 @@
     brickText(b.x,b.y+(b.isFinalBoss?6:2),b.w,b.h-(b.isFinalBoss?8:4),String(b.hp),"#fff6ff",b.isFinalBoss?21:17);
   }
   function draw() {
-    ctx.setTransform(canvas.width/W,0,0,canvas.height/H,0,0);
-    ctx.clearRect(0,0,W,H);
+    if(!fieldTransform)return;
+    const {scale,width,height}=fieldTransform;
+    ctx.setTransform(canvas.width/width*scale,0,0,canvas.height/height*scale,0,0);
+    ctx.clearRect(0,0,width/scale,height/scale);
     ctx.save();
-    // Existing v0.5 giant-only shake remains when additional effects are off.
-    if(juice.mode==="off"&&shake>0&&!reducedMotion){
-      const amp=2.1*Math.min(1,shake/.09);
-      ctx.translate((Math.random()-.5)*amp*2,(Math.random()-.5)*amp*2);
-    }
-    juice.applyCamera(ctx);
+    drawCourtWalls();
     ctx.save();
     ctx.setLineDash([8,5]);ctx.strokeStyle=dangerInk;ctx.lineWidth=1.6;
     ctx.beginPath();ctx.moveTo(0,DANGER_Y);ctx.lineTo(W,DANGER_Y);ctx.stroke();ctx.setLineDash([]);
@@ -1957,6 +1955,14 @@
       }
       ctx.restore();
     }
+    // Keep the actors, collision rails and danger line fixed to the court.
+    // Shake is confined to the impact and victory effects.
+    ctx.save();
+    if(juice.mode==="off"&&shake>0&&!reducedMotion){
+      const amp=2.1*Math.min(1,shake/.09);
+      ctx.translate((Math.random()-.5)*amp*2,(Math.random()-.5)*amp*2);
+    }
+    juice.applyCamera(ctx);
     for(const f of breakFlashes){
       const t=clamp(f.age/.18,0,1),r=9+27*t;
       const fg=ctx.createRadialGradient(f.x,f.y,0,f.x,f.y,r);
@@ -1985,6 +1991,7 @@
       ctx.font="900 19px system-ui";ctx.textAlign="center";ctx.fillStyle="#fff3dc";
       ctx.fillText(translate("bossBreak"),W/2,Math.min(H-150,220));ctx.restore();
     }
+    ctx.restore();
     if(!reducedMotion){
       for(const e of impactRings){
         const duration=e.hard?.24:.15, t=clamp(e.age/duration,0,1);
@@ -2018,6 +2025,18 @@
     drawTurret(cannonAim);
     ctx.restore();
     if(boundsQA)drawBattleBounds();
+  }
+  function drawCourtWalls(){
+    const ink=ctx.createLinearGradient(0,CEILING_Y,0,H);
+    ink.addColorStop(0,wallInk);
+    ink.addColorStop(.78,wallFade);
+    ink.addColorStop(1,"transparent");
+    ctx.save();
+    ctx.strokeStyle=ink;ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.moveTo(0,H);ctx.lineTo(0,CEILING_Y);ctx.lineTo(W,CEILING_Y);ctx.lineTo(W,H);
+    ctx.stroke();
+    ctx.restore();
   }
   function drawBattleBounds(){
     ctx.save();
@@ -2122,9 +2141,8 @@
     const url=URL.createObjectURL(new Blob([data],{type:"application/json"}));const link=document.createElement("a");link.href=url;link.download="marble-overload-v1-"+build.seed+".json";link.click();URL.revokeObjectURL(url);
   });
   function setAim(e) {
-    const box = canvas.getBoundingClientRect();
-    if(!box.width)return;
-    const x=clamp((e.clientX-box.left)*W/box.width,0,W);
+    if(!fieldTransform)return;
+    const x=clamp((e.clientX-fieldTransform.left)/fieldTransform.scale,0,W);
     aim = clamp((x-W/2)/(W/2)*1.08,-1.08,1.08);
   }
   canvas.addEventListener("pointerdown",e=>{
@@ -2139,6 +2157,7 @@
   function stopAim(e){if(e.pointerId===activePointer) activePointer=null;}
   canvas.addEventListener("pointerup",stopAim);
   canvas.addEventListener("pointercancel",stopAim);
+  canvas.addEventListener("lostpointercapture",stopAim);
   ui.giant.addEventListener("click",e=>{e.stopPropagation();activateEquippedSkill();});
   $("skillSide").value=skillSide;$("autoSkill").checked=autoSkill;applySkillSide();
   $("skillSide").addEventListener("change",e=>{skillSide=e.target.value==="left"?"left":"right";store(SIDE_KEY,skillSide);applySkillSide();});
@@ -2184,7 +2203,8 @@
     else resetFrameClock();
   });
   function resizeBattle(){
-    fitCanvas();activePointer=null;resetFrameClock();
+    if(activePointer!==null&&canvas.hasPointerCapture(activePointer))canvas.releasePointerCapture(activePointer);
+    activePointer=null;fitCanvas();resetFrameClock();
   }
   window.addEventListener("resize",resizeBattle);
   if(window.ResizeObserver)new ResizeObserver(resizeBattle).observe(playfield);
@@ -2284,6 +2304,7 @@
       directContact(id,ball){const b=bricks.find(b=>b.id===id);return b?directContact(b,ball):false;},
       fillBallBudget(){balls=Array.from({length:MAX_BALLS},(_,i)=>{const b=makeBall(0,i%2===0);b.life=i*.01;return b;});},
       exportData(){return JSON.parse(JSON.stringify({state:snapshot(),events,config:CFG}));},
+      fieldGeometry(){return fieldTransform&&{...fieldTransform,walls:{left:0,right:W,top:CEILING_Y},danger:DANGER_Y,pivot:{x:shooter.x,y:shooter.y-TUR_PIVOT_LIFT},angle:cannonAngle()};},
       setAimAngle(value){aim=clamp(value,-1.08,1.08);},
 
       clearWave(){

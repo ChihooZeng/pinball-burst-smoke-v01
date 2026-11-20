@@ -1,5 +1,6 @@
 :root {
-  background: var(--base);
+  background: var(--screen-grid), var(--screen-fill);
+  background-size: var(--grid-cell) var(--grid-cell), var(--grid-cell) var(--grid-cell), auto;
   color: var(--ink);
   font-family: Inter, system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
 }
@@ -16,6 +17,7 @@ a { color: var(--cyan) }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap }
 
 .shell {
+  --reference-shell-width: min(100%, 540px, 68dvh);
   --frame-top: calc(env(safe-area-inset-top) + clamp(36px, 5.7dvh, 54px));
   --frame-bottom: max(10px, env(safe-area-inset-bottom));
   --frame-left: max(10px, env(safe-area-inset-left));
@@ -25,11 +27,23 @@ a { color: var(--cyan) }
   --field-top: 76px;
   --field-bottom: calc(var(--dock-height) + 16px);
   position: relative;
-  width: min(100%, 540px, 68dvh);
+  width: var(--reference-shell-width);
   height: 100vh;
   height: 100dvh;
   margin-inline: auto;
   isolation: isolate;
+}
+/* Measure the V2.1 slot independently of the current presentation. It sets
+   the initial world height, including the original safe-area contribution. */
+.shell::before {
+  content: "";
+  position: absolute;
+  inset-inline: calc(var(--frame-left) + var(--frame-stroke)) auto;
+  inset-block: calc(var(--frame-top) + var(--frame-stroke) + var(--field-top))
+    calc(var(--frame-bottom) + var(--frame-stroke) + var(--field-bottom));
+  width: max(0px, calc(var(--reference-shell-width) - var(--frame-left) - var(--frame-right) - 2 * var(--frame-stroke)));
+  visibility: hidden;
+  pointer-events: none;
 }
 .masthead {
   position: absolute;
@@ -60,36 +74,27 @@ a { color: var(--cyan) }
   overflow: hidden;
   border: var(--frame-stroke) solid transparent;
   border-radius: var(--frame-radius);
-  background: var(--base);
 }
 .arena:has(:is(#startOverlay, #choiceOverlay, #pauseOverlay, #winOverlay, #errorOverlay):not(.hidden)) {
   background: var(--screen-fill) padding-box,
     linear-gradient(154deg, var(--rim-cyan) 6%, #49cfff 45%, var(--rim-violet) 85%, #80faff) border-box;
   box-shadow: var(--frame-glow);
 }
-.playfield { position: absolute; inset: var(--field-top) 0 var(--field-bottom); display: grid; place-items: center }
-.battle-surface {
-  position: relative;
-  width: var(--battle-width, 100%);
-  height: var(--battle-height, 100%);
-  background: var(--screen-grid), var(--screen-fill);
-  background-size: var(--grid-cell) var(--grid-cell), var(--grid-cell) var(--grid-cell), auto;
-}
-#game { display: block; width: 100%; height: 100%; touch-action: none; user-select: none }
-.battle-rim {
+.playfield {
   position: absolute;
-  inset: var(--ceiling-inset, 0px) 0 0;
-  box-shadow: inset 1px 0 var(--rim-cyan), inset -1px 0 var(--rim-cyan), inset 0 1px var(--rim-cyan),
-    inset 0 -1px var(--rim-violet), 0 0 11px #278dff60;
-  pointer-events: none;
+  inset: var(--field-top) 0 var(--field-bottom);
+  display: grid;
+  grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+  place-items: center;
 }
+#game { display: block; touch-action: none; user-select: none }
 .ui-icon { width: 24px; height: 24px; flex: none; display: block; background: currentColor;
   -webkit-mask: var(--icon) center / contain no-repeat; mask: var(--icon) center / contain no-repeat }
 
 .topbar {
   position: absolute;
-  top: calc(var(--frame-top) + var(--frame-stroke) + 5px);
-  inset-inline: calc(var(--frame-left) + 9px) calc(var(--frame-right) + 9px);
+  top: 5px;
+  inset-inline: 7px;
   height: calc(max(6px, env(safe-area-inset-top)) + 48px);
   z-index: 3;
   display: grid;
@@ -139,14 +144,14 @@ a { color: var(--cyan) }
 .topbar .icon-btn { pointer-events: auto }
 #pauseQuick { --icon: var(--pause-icon) }
 #pause { --icon: var(--settings-icon) }
-.topbar:has(~ .arena :is(#startOverlay, #choiceOverlay, #winOverlay, #errorOverlay):not(.hidden)) > :not(#pause) { visibility: hidden }
+.arena:has(:is(#startOverlay, #choiceOverlay, #winOverlay, #errorOverlay):not(.hidden)) .topbar > :not(#pause) { visibility: hidden }
 body:has(#errorOverlay:not(.hidden)) #pause { visibility: hidden }
 body:has(#pauseOverlay:not(.hidden)) .topbar { visibility: hidden }
 body:has(#startOverlay:not(.hidden)) .masthead { visibility: hidden }
 
 .boss-hud {
   position: absolute;
-  top: 54px;
+  top: 59px;
   left: var(--gap);
   right: var(--gap);
   z-index: 1;
@@ -157,6 +162,9 @@ body:has(#startOverlay:not(.hidden)) .masthead { visibility: hidden }
   box-shadow: var(--panel-glow);
   pointer-events: none;
 }
+.arena:has(.boss-hud:not(.hidden)) .playfield {
+  inset-block: calc(var(--field-top) + 16px) calc(var(--field-bottom) - 16px);
+}
 .boss-hud > div:first-child { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1px 7px; font-size: 11px; color: #eee5ff }
 .boss-track { height: 4px; margin-top: 3px; border-radius: 5px; overflow: hidden; background: #423b6e }
 #bossFill { width: 100%; height: 100%; background: linear-gradient(90deg, var(--periwinkle), var(--pink)) }
@@ -165,7 +173,6 @@ body:has(#startOverlay:not(.hidden)) .masthead { visibility: hidden }
 .masthead:lang(zh-CN) > span::after { content: "》" }
 .floating-label {
   min-width: 0;
-  margin-inline-start: auto;
   color: var(--muted);
   font-size: 10px;
   font-weight: 720;
@@ -174,23 +181,14 @@ body:has(#startOverlay:not(.hidden)) .masthead { visibility: hidden }
   text-shadow: none;
 }
 .floating-label:not(.active) { display: none }
-.masthead:has(.floating-label.active)::after { display: none }
 
 .control-dock {
   position: absolute;
   inset: auto 0 0;
   height: var(--dock-height);
   z-index: 2;
-  background: linear-gradient(#09254c,#0b2853);
-  box-shadow: inset 0 -8px 24px #209dff32;
+  background: var(--dock-fill);
   pointer-events: none;
-}
-.control-dock::before {
-  content: "";
-  position: absolute;
-  inset: -13px 0 auto;
-  height: 14px;
-  background: url("./assets/neon/dock-edge.svg") center/100% 100% no-repeat;
 }
 .skill-slots {
   position: absolute;
@@ -426,11 +424,49 @@ noscript { position: fixed; z-index: 30; inset: auto 12px 12px; padding: 12px; b
   #choiceOverlay { padding-block: 55px 13px }
 }
 @media (max-height: 530px) and (orientation: landscape) {
-  .shell { width: min(100%,600px,104dvh); --frame-top: calc(env(safe-area-inset-top) + 30px); --dock-height: 58px; --field-top: 72px }
+  .shell { --reference-shell-width: min(100%,600px,104dvh); --frame-top: calc(env(safe-area-inset-top) + 30px); --dock-height: 58px; --field-top: 72px }
   .home-brand { min-height: 100px }
   .home-decor { display: none }
   .upgrade-card { min-height: 68px }
   .combat-status { font-size: 9px }
 }
 
-.topbar:has(~ .arena :is(#startOverlay, #choiceOverlay, #winOverlay):not(.hidden)) { z-index: 6 }
+.arena:has(:is(#startOverlay, #choiceOverlay, #winOverlay):not(.hidden)) .topbar { z-index: 6 }
+
+@media (max-width: 600px), (max-height: 530px) and (orientation: landscape) {
+  .shell { width: 100% }
+  .masthead { display: none }
+  .arena {
+    inset: max(4px, env(safe-area-inset-top)) var(--frame-right)
+      max(4px, env(safe-area-inset-bottom)) var(--frame-left);
+    display: grid;
+    grid-template: "hud" auto "boss" auto "court" minmax(0, 1fr) "dock" auto / minmax(0, 1fr);
+  }
+  .topbar {
+    position: relative;
+    inset: auto;
+    grid-area: hud;
+    height: auto;
+    min-height: var(--touch);
+    padding: 0 4px;
+    align-items: center;
+  }
+  .combat-summary { overflow: hidden }
+  #xpLabel { overflow: hidden; text-overflow: ellipsis }
+  .boss-hud { position: static; grid-area: boss; margin-block: 4px 2px }
+  .playfield { position: static; grid-area: court; margin-block: 2px 1px }
+  .control-dock {
+    position: relative;
+    inset: auto;
+    grid-area: dock;
+    height: auto;
+    min-height: 56px;
+    display: grid;
+    grid-template: "skills" minmax(var(--touch), auto) "status" auto / minmax(0, 1fr);
+  }
+  .skill-slots { position: static; grid-area: skills; align-items: start }
+  .skill-emblem { height: 29px }
+  .combat-status { position: static; grid-area: status; min-height: 12px }
+  .control-dock:has(.skill-guide:not(.hidden)) { padding-top: 48px }
+  .control-dock:has(.skill-guide:not(.hidden)) .ult-wrap { top: 48px }
+}
