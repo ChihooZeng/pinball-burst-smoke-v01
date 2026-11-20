@@ -3,16 +3,22 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-  <meta name="theme-color" content="#08182f"/>
+  <meta name="theme-color" content="#030c23"/>
   <link rel="icon" type="image/png" href="./assets/icon-192.png"/>
   <link rel="apple-touch-icon" href="./assets/icon-192.png"/>
   <meta name="description" content="弹珠超载 · Marble Overload. Aim, build your cannon, and clear 20 waves in a neon arcade browser game."/>
   <title>弹珠超载</title>
-  <link rel="stylesheet" href="./style.css?v=neon-a1-1"/>
+  <link rel="stylesheet" href="./neon-tokens.css?v=2"/>
+  <link rel="stylesheet" href="./style.css?v=neon-ring-v2"/>
 </head>
 <body>
   <main class="shell">
+    <div class="masthead">
+      <span data-i18n="title">弹珠超载</span>
+      <div id="finalRushLabel" class="floating-label" role="status"></div>
+    </div>
     <header class="topbar">
+      <button id="pauseQuick" class="icon-btn" type="button" aria-label="暂停 / Pause" aria-controls="pauseOverlay" aria-keyshortcuts="P Escape"><span class="ui-icon" aria-hidden="true"></span></button>
       <div class="combat-summary">
         <span id="waveLabel"></span><span id="xpLabel"></span>
         <div class="progress-track" aria-hidden="true"><span id="xpFill"></span></div>
@@ -24,15 +30,24 @@
       <button id="pause" class="icon-btn" data-i18n-label="settings" aria-label="设置与暂停" type="button"><span class="ui-icon" aria-hidden="true"></span></button>
     </header>
     <section class="arena">
-      <canvas id="game" width="360" height="560" data-i18n-label="canvas"></canvas>
-      <div id="finalRushLabel" class="floating-label" role="status"></div>
+      <div class="playfield">
+        <canvas id="game" width="360" height="560" data-i18n-label="canvas"></canvas>
+      </div>
       <div class="boss-hud hidden" id="bossHud">
         <div><span id="bossName"></span><strong id="bossText"></strong></div>
         <div class="boss-track"><div id="bossFill"></div></div>
       </div>
-      <div class="ult-wrap">
-        <div id="skillGuide" class="skill-guide hidden" role="status" data-i18n="manualGuide"></div>
-        <button id="giant" type="button" disabled></button>
+      <div class="control-dock">
+        <ul class="skill-slots">
+          <li data-skill="gun"><span class="skill-emblem"><span class="ui-icon" aria-hidden="true"></span></span><span class="sr-only" data-i18n="skill.gun"></span><span class="skill-rank">—</span></li>
+          <li data-skill="arc"><span class="skill-emblem"><span class="ui-icon" aria-hidden="true"></span></span><span class="sr-only" data-i18n="skill.arc"></span><span class="skill-rank">—</span></li>
+          <li data-skill="split"><span class="skill-emblem"><span class="ui-icon" aria-hidden="true"></span></span><span class="sr-only" data-i18n="skill.split"></span><span class="skill-rank">—</span></li>
+        </ul>
+        <div class="ult-wrap">
+          <div id="skillGuide" class="skill-guide hidden" role="status" data-i18n="manualGuide"></div>
+          <button id="giant" type="button" disabled></button>
+        </div>
+        <div class="combat-status"><span id="buffStatus"></span><span id="stateText"></span></div>
       </div>
       <div class="overlay" id="startOverlay" role="dialog" aria-labelledby="startTitle">
         <div class="home-decor" aria-hidden="true">
@@ -67,8 +82,8 @@
             <option value="arc" data-i18n="skill.arc"></option>
             <option value="gun" data-i18n="skill.gun"></option>
           </select>
-          <button id="jumpBoss" type="button" data-i18n="qaBoss"></button>
-          <button id="jumpFinalBoss" class="final-boss-jump" type="button" data-i18n="qaFinal"></button>
+          <button id="jumpBoss" class="secondary" type="button" data-i18n="qaBoss"></button>
+          <button id="jumpFinalBoss" class="secondary" type="button" data-i18n="qaFinal"></button>
           <small data-i18n="qaNote"></small>
         </div>
       </div>
@@ -93,9 +108,14 @@
       </div>
       <div class="overlay hidden" id="pauseOverlay" role="dialog" aria-modal="true" aria-labelledby="pauseTitle">
         <div class="pause-heading">
-          <div><h2 id="pauseTitle" data-i18n="settingsTitle"></h2><p id="pauseSubtitle"></p></div>
+          <div>
+            <h2 id="pauseTitle" data-i18n="settingsTitle"></h2>
+            <h2 id="quickPauseTitle"><span class="zh-copy">暂停</span><span class="en-copy">Paused</span></h2>
+            <p id="pauseSubtitle"></p>
+          </div>
           <button id="resume" class="cta" type="button" data-i18n="resume"></button>
         </div>
+        <button id="pauseSettings" class="secondary" type="button" data-i18n="settingsTitle"></button>
         <div class="pause-scroll" tabindex="0">
           <label><span data-i18n="language"></span>
             <select data-language><option value="zh-CN">简体中文</option><option value="en">English</option></select>
@@ -145,7 +165,7 @@
         <div class="result-icon" aria-hidden="true"><span class="ui-icon"></span></div>
         <small class="label" id="winLabel"></small>
         <h2 id="winTitle"></h2>
-        <p id="finalStats"></p>
+        <div class="settlement"><p id="finalStats"></p></div>
         <button class="cta" id="again" type="button" data-i18n="again"></button>
         <button class="secondary" id="home" type="button" data-i18n="home"></button>
       </div>
@@ -155,7 +175,6 @@
         <button class="cta" id="reload" type="button" data-i18n="reload">刷新 / Reload</button>
       </div>
     </section>
-    <div class="combat-status"><span id="buffStatus"></span><span id="stateText"></span></div>
     <div class="legacy-hidden" aria-hidden="true"><span id="wave"></span><span id="score"></span><span id="rate"></span><span id="balls"></span><span id="buildText"></span><span id="loadoutLabel"></span>
       <div id="giantLife" class="hidden"><span id="giantTimeText"></span><div id="giantTimeFill"></div></div>
       <div id="previewBox" class="hidden"><select id="previewStage"><option value="finale"></option></select><button id="previewFinale"></button></div>
@@ -172,6 +191,6 @@
   <script src="./juice-fx.js?v=1.0.0-rc.1" defer></script>
   <script src="./builds.js?v=1.0.0-rc.1" defer></script>
   <script data-optional src="./sound-pack.js?v=1.0.0-rc.1" defer></script>
-  <script src="./game.js?v=neon-a1-1" defer></script>
+  <script src="./game.js?v=neon-ring-v2" defer></script>
 </body>
 </html>

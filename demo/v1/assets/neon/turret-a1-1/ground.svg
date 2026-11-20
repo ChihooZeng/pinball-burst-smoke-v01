@@ -1,8 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 50">
   <defs>
-    <linearGradient id="ring" x1="0" y1="0" x2="0" y2="1">
-      <stop stop-color="#50CEFF" stop-opacity=".26"/><stop offset="1" stop-color="#62F2FF"/>
+    <filter id="glow" x="-20%" y="-100%" width="140%" height="300%">
+      <feGaussianBlur stdDeviation="3.2"/>
+    </filter>
+    <linearGradient id="rim" x2="0" y2="100%">
+      <stop stop-color="#45caff" stop-opacity=".65"/>
+      <stop offset=".5" stop-color="#28e9ff"/>
+      <stop offset="1" stop-color="#cefaff"/>
     </linearGradient>
   </defs>
-  <ellipse cx="80" cy="25" rx="69" ry="12" fill="#4BDCFF" fill-opacity=".08" stroke="url(#ring)" stroke-width="2"/>
+  <ellipse cx="80" cy="25" rx="66" ry="12" fill="#159aff" fill-opacity=".38" stroke="#19dfff" stroke-width="7" filter="url(#glow)"/>
+  <ellipse cx="80" cy="25" rx="67" ry="11.5" fill="#2198dc" fill-opacity=".19" stroke="url(#rim)" stroke-width="3.3"/>
 </svg>

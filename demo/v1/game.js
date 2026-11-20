@@ -181,36 +181,34 @@
     {cut:[.23,.55,.89],tiers:[[1,1],[9,21],[25,43],[46,62]]},
     {cut:[.23,.55,.88],tiers:[[1,1],[11,24],[30,50],[53,72]]}
   ];
-  // Rendering colors share the CSS tokens. HP bands and the early color index stay unchanged.
+  // Canvas follows the same palette and edge weight as the DOM.
   const visualTokens=getComputedStyle(document.documentElement);
-  const readColor=name=>visualTokens.getPropertyValue(name).trim();
-  const [cyan,blue,periwinkle,purple,pink]=["--cyan","--blue","--periwinkle","--purple","--pink"].map(readColor);
-  const arenaArt={base:readColor("--base"),canvas:readColor("--canvas"),lit:readColor("--canvas-lit"),grid:readColor("--grid"),danger:readColor("--danger")};
-  function brickPaint(edge,top,bottom){
+  const readToken=name=>visualTokens.getPropertyValue(name).trim();
+  const [cyan,blue,periwinkle,purple,pink]=["--cyan","--blue","--periwinkle","--purple","--pink"].map(readToken);
+  const dangerInk=readToken("--danger");
+  function brickPaint(edge,top=.98,bottom=.82){
     return {edge,ft:withAlpha(edge,top),fb:withAlpha(edge,bottom)};
   }
+  const numberedBlue={edge:blue,ft:"#43a9f6",fb:"#257cd6"};
   const BRICK_ART={
     ramp:[
-      {max:1,        ...brickPaint(cyan,.96,.81)},
-      {max:2,        ...brickPaint(blue,.84,.65)},
-      {max:6,        ...brickPaint(periwinkle,.81,.61)},
-      {max:12,       ...brickPaint(purple,.79,.58)},
-      {max:24,       ...brickPaint(pink,.75,.53)},
-      {max:48,       ...brickPaint(purple,.65,.43)},
-      {max:Infinity, ...brickPaint(pink,.64,.40)}
+      {max:1,        ...brickPaint(cyan)},
+      {max:2,        ...numberedBlue},
+      {max:6,        ...brickPaint(periwinkle,.90,.71)},
+      {max:12,       ...brickPaint(purple,.88,.69)},
+      {max:24,       ...brickPaint(pink,.86,.68)},
+      {max:48,       ...brickPaint(purple,.83,.64)},
+      {max:Infinity, ...brickPaint(pink,.82,.63)}
     ],
-    special:{...brickPaint(cyan,.65,.39),blur:3},
-    elite:{...brickPaint(blue,.52,.29),border:1.6,blur:4},
-    summon:{...brickPaint(periwinkle,.56,.34),blur:3},
-    boss:{edge:purple,glow:periwinkle,base:"#221b4d"},
-    finalBoss:{edge:pink,glow:pink,base:"#2e163d"},
-    radius:4
+    special:brickPaint(cyan,.81,.59),
+    elite:{...brickPaint(blue,.86,.66),border:1.6},
+    summon:brickPaint(periwinkle,.81,.60),
+    boss:{edge:purple,glow:periwinkle,base:"#171f55"},
+    finalBoss:{edge:pink,glow:pink,base:"#251b52"},
+    radius:Number(readToken("--brick-radius")),
+    glow:Number(readToken("--brick-glow"))
   };
-  const EARLY_ONE_HP_ART=[
-    BRICK_ART.ramp[0],
-    brickPaint(pink,.95,.80),
-    brickPaint(purple,.94,.79)
-  ];
+  const EARLY_ONE_HP_ART=[periwinkle,pink,cyan,purple,blue].map(color=>brickPaint(color));
   function earlyOneHpStyle(brick){
     if(wave>4||brick.hp!==1||brick.special||brick.isElite||brick.bossSupport||brick.isBoss)return null;
     const column=Math.round((brick.x-12)/BRICK_STEP_X);
@@ -243,6 +241,7 @@
   const RENDER_DPR_MAX=2;
   let renderScale=1;
   function fitCanvas(){
+    canvas.style.setProperty("--world-ratio",W/H);
     const box=canvas.getBoundingClientRect();
     const cssW=box.width>0&&box.height>0?Math.min(box.width,box.height*W/H):W;
     const dpr=Math.max(1,Math.min(window.devicePixelRatio||1,RENDER_DPR_MAX));
@@ -265,9 +264,9 @@
   const TUR_PIVOT_LIFT=8, TUR_MUZZLE=23.33, TUR_RECOIL=2;
   // All offsets are relative to the existing physical pivot. The barrel's
   // outer stroke starts at SVG y=1.8 and lands exactly at the resting muzzle.
-  const barrelScale=.46;
+  const barrelScale=.49;
   const turretParts={
-    ground:{x:-42,y:29,w:84,h:19},
+    ground:{x:-59,y:26,w:118,h:26},
     barrel:{x:-22*barrelScale,y:-TUR_MUZZLE-1.8*barrelScale,w:44*barrelScale,h:78*barrelScale},
     body:{x:-28,y:-12,w:56,h:56},
     core:{x:-28,y:-12,w:56,h:56}
@@ -357,6 +356,18 @@
   function setState(id, values={}){
     lastMessage={id,values};ui.state.textContent=translate(id,values);
   }
+  const skillSlots=Array.from(document.querySelectorAll(".skill-slots [data-skill]"),slot=>({
+    slot,id:slot.dataset.skill,label:slot.querySelector(".skill-rank")
+  }));
+  function renderSkillRanks(){
+    for(const {slot,id,label} of skillSlots){
+      const rank=Build.effectiveRank(build,id);
+      const text=rank?"Lv."+rank:"—";
+      if(label.textContent===text)continue;
+      label.textContent=text;
+      slot.dataset.acquired=String(rank>0);
+    }
+  }
   function updateUI(){
     const clock=Math.floor(elapsed),mm=String(Math.floor(clock/60)).padStart(2,"0"),ss=String(clock%60).padStart(2,"0");
     ui.wave.textContent=mm+":"+ss;$("waveLabel").textContent=translate("waveCount",{wave,max:MAX_WAVES});ui.score.textContent=String(score);
@@ -376,6 +387,7 @@
     $("giantTimeFill").style.width=giant?Math.max(0,(GIANT_LIFETIME-giant.life)/GIANT_LIFETIME*100)+"%":"0%";
     $("loadoutLabel").textContent=Build.DEFS[build.coreBranch||build.seedAbility]?.name||translate("cannon");
     ui.build.textContent=Object.keys(build.ranks).map(id=>Build.DEFS[id].name+" R"+build.ranks[id]).join(" · ");
+    renderSkillRanks();
     $("bossHud").classList.toggle("hidden",!boss||!boss.alive);
     if(boss&&boss.alive){
       const guarded=boss.isFinalBoss&&boss.hp<=finaleHpFloor();
@@ -1604,19 +1616,40 @@
     const n=parseInt(hex.slice(1),16);
     return "rgba("+((n>>16)&255)+","+((n>>8)&255)+","+(n&255)+","+a+")";
   }
-  function brickTile(x,y,w,h,r,style,blur){
+  // Bake each resting halo once. Geometry, HP labels and hit effects stay live.
+  const brickHalos=new Map();
+  function brickHalo(color){
+    if(brickHalos.has(color))return brickHalos.get(color);
+    const image=document.createElement("canvas");
+    const pad=BRICK_ART.glow, density=3;
+    image.width=(BRICK_W+pad*2)*density;
+    image.height=(BRICK_H+pad*2)*density;
+    const art=image.getContext("2d");
+    art.scale(density,density);
+    art.shadowBlur=pad*density;
+    art.shadowColor=withAlpha(color,.78);
+    art.fillStyle=withAlpha(color,.44);
+    art.beginPath();
+    if(art.roundRect)art.roundRect(pad,pad,BRICK_W,BRICK_H,BRICK_ART.radius);
+    else art.rect(pad,pad,BRICK_W,BRICK_H);
+    art.fill();
+    brickHalos.set(color,image);
+    return image;
+  }
+  function brickTile(x,y,w,h,r,style,glow){
+    if(glow){
+      const pad=BRICK_ART.glow;
+      ctx.drawImage(brickHalo(style.edge),x-pad,y-pad,w+pad*2,h+pad*2);
+    }
     const g=ctx.createLinearGradient(0,y,0,y+h);
     g.addColorStop(0,style.ft);g.addColorStop(1,style.fb);
     ctx.fillStyle=g;
-    rounded(x,y,w,h,r);
-    if(blur){
-      ctx.save();
-      ctx.shadowColor=withAlpha(style.edge,.32);ctx.shadowBlur=blur;
-      ctx.fill();ctx.restore();
-    }else ctx.fill();
+    rounded(x,y,w,h,r);ctx.fill();
     const bw=style.border||1.3;
     ctx.strokeStyle=style.edge;ctx.lineWidth=bw;
     rounded(x+bw*.5,y+bw*.5,w-bw,h-bw,r);ctx.stroke();
+    ctx.strokeStyle="#ffffff66";ctx.lineWidth=.65;
+    ctx.stroke();
   }
   function brickText(x,y,w,h,text,ink,size){
     // 参考图的数字是纯白 + 极轻投影，没有黑描边。
@@ -1759,17 +1792,10 @@
       ctx.translate((Math.random()-.5)*amp*2,(Math.random()-.5)*amp*2);
     }
     juice.applyCamera(ctx);
-    const bg=ctx.createLinearGradient(0,0,0,H);
-    bg.addColorStop(0,arenaArt.lit);bg.addColorStop(.7,arenaArt.canvas);bg.addColorStop(1,arenaArt.base);
-    ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
-    ctx.strokeStyle=arenaArt.grid;ctx.lineWidth=1;ctx.beginPath();
-    for(let x=0;x<W;x+=30){ctx.moveTo(x+.5,0);ctx.lineTo(x+.5,H);}
-    for(let y=0;y<H;y+=30){ctx.moveTo(0,y+.5);ctx.lineTo(W,y+.5);}
-    ctx.stroke();
     ctx.save();
-    ctx.setLineDash([8,5]);ctx.strokeStyle=arenaArt.danger;ctx.lineWidth=1.6;
+    ctx.setLineDash([8,5]);ctx.strokeStyle=dangerInk;ctx.lineWidth=1.6;
     ctx.beginPath();ctx.moveTo(0,DANGER_Y);ctx.lineTo(W,DANGER_Y);ctx.stroke();ctx.setLineDash([]);
-    ctx.fillStyle=arenaArt.danger;ctx.font="bold 11px system-ui";ctx.textAlign="left";ctx.fillText(translate("danger"),10,DANGER_Y-8);
+    ctx.fillStyle=dangerInk;ctx.font="bold 11px system-ui";ctx.textAlign="left";ctx.fillText(translate("danger"),10,DANGER_Y-8);
     if(clearFlash>0){ctx.fillStyle="rgba(80,246,216,"+(clearFlash*.12)+")";ctx.fillRect(0,0,W,H);}
     ctx.restore();
     // Lightweight telegraph: a flickering outline appears before a Boss brick
@@ -1846,8 +1872,7 @@
       // 特殊砖使用独立配色和图标。
       const style=brick.special?BRICK_ART.special:
         (brick.isElite?BRICK_ART.elite:(brick.bossSupport?BRICK_ART.summon:earlyOneHpStyle(brick)||brickStyle(brick.hp,false)));
-      const blur=renderQuality==="full"?(style.blur||0):0;
-      brickTile(brick.x,brick.y,brick.w,brick.h,brick.isElite?5:BRICK_ART.radius,style,blur);
+      brickTile(brick.x,brick.y,brick.w,brick.h,brick.isElite?5:BRICK_ART.radius,style,renderQuality==="full");
       if(brick.cracked)brickCracks(brick);
       brickFlash(brick);
       // 精英砖内发光：3s 周期，只叠加径向光，不改外形
@@ -1875,22 +1900,12 @@
       }
       ctx.restore();
     }
-    const railY=H-26;
-    ctx.fillStyle=withAlpha(blue,.08);ctx.strokeStyle=withAlpha(blue,.38);ctx.lineWidth=1;
-    ctx.beginPath();ctx.moveTo(0,railY);ctx.lineTo(W*.29,railY);
-    ctx.quadraticCurveTo(W*.32,railY,W*.35,railY-11);
-    ctx.quadraticCurveTo(W*.37,railY-17,W*.40,railY-17);
-    ctx.lineTo(W*.60,railY-17);
-    ctx.quadraticCurveTo(W*.63,railY-17,W*.65,railY-11);
-    ctx.quadraticCurveTo(W*.68,railY,W*.71,railY);ctx.lineTo(W,railY);
-    ctx.stroke();ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.closePath();ctx.fill();
     const cannonAim=cannonAngle();
     if(phase==="playing"){
-      const guideLength=Math.max(218,H*.52);
+      const guideLength=Math.max(218,H*.51);
       ctx.save();ctx.translate(shooter.x,shooter.y-TUR_PIVOT_LIFT);ctx.rotate(cannonAim);
-      ctx.setLineDash([6,6]);ctx.lineWidth=1.45;ctx.strokeStyle=withAlpha(cyan,.8);
-      ctx.beginPath();ctx.moveTo(0,-TUR_MUZZLE-3);ctx.lineTo(0,-guideLength);ctx.stroke();
-      ctx.fillStyle=cyan;ctx.beginPath();ctx.moveTo(0,-guideLength-8);ctx.lineTo(4,-guideLength);ctx.lineTo(-4,-guideLength);ctx.fill();
+      ctx.setLineDash([8,6]);ctx.lineWidth=1.75;ctx.strokeStyle=withAlpha(cyan,.94);
+      ctx.beginPath();ctx.moveTo(0,-TUR_MUZZLE-2);ctx.lineTo(0,-guideLength);ctx.stroke();
       ctx.restore();
     }
     for(const b of balls){
@@ -2038,8 +2053,14 @@
   function lockBackground(locked){
     for(const element of document.querySelectorAll?.(".topbar,.hud,.footer,.combat-status,#game,#choiceOverlay,#startOverlay,#winOverlay,.ult-wrap")||[])element.inert=locked;
   }
-  function pause(reason="settings"){
+  function showPausePanel(compact){
+    const panel=$("pauseOverlay");
+    panel.dataset.view=compact?"compact":"settings";
+    panel.setAttribute("aria-labelledby",compact?"quickPauseTitle":"pauseTitle");
+  }
+  function pause(reason="settings",compact=false){
     if(!["ready","seeding","playing","choosing","lost","complete"].includes(phase))return false;
+    showPausePanel(compact||reason==="keyboard");
     pausedFrom=phase;phase="paused";activePointer=null;accumulator=0;
     if(pausedFrom==="playing"||pausedFrom==="choosing")record("paused",{reason});
     focusBeforePause=document.activeElement;lockBackground(true);renderBuildPanel();$("pauseOverlay").classList.remove("hidden");$("resume").focus?.();window.PinballGameAudio?.pauseBgm?.();updateUI();return true;
@@ -2051,6 +2072,11 @@
     updateUI();return true;
   }
   $("pause").addEventListener("click",()=>phase==="paused"?resume():pause());
+  $("pauseQuick").addEventListener("click",()=>pause("settings",true));
+  $("pauseSettings").addEventListener("click",()=>{
+    showPausePanel(false);
+    $("resume").focus();
+  });
   $("resume").addEventListener("click",resume);
   $("exportRun").addEventListener("click",()=>{
     const data=JSON.stringify({version,state:snapshot(),events,config:CFG},null,2);
@@ -2114,7 +2140,7 @@
   });
   window.addEventListener("keydown",e=>{
     if(phase==="paused"&&e.code==="Tab"){
-      const focusable=Array.from($("pauseOverlay").querySelectorAll("button,input,select,[tabindex='0'],summary")).filter(el=>!el.disabled);
+      const focusable=Array.from($("pauseOverlay").querySelectorAll("button,input,select,a[href],[tabindex='0'],summary")).filter(el=>!el.disabled&&el.getClientRects().length);
       const first=focusable[0],last=focusable.at(-1);
       if(e.shiftKey&&document.activeElement===first){last?.focus();e.preventDefault();}
       else if(!e.shiftKey&&document.activeElement===last){first?.focus();e.preventDefault();}

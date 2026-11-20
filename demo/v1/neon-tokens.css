@@ -1,0 +1,50 @@
+:root {
+  color-scheme: dark;
+  --base: #030c23;
+  --canvas: #061636;
+  --canvas-lit: #071d44;
+  --panel: #0a2247;
+  --panel-raised: #102f57;
+  --grid: #4a8ed91a;
+  --ink: #f2faff;
+  --muted: #a9cbe8;
+  --on-light: #062646;
+
+  --cyan: #6ee7ff;
+  --blue: #7cc8ff;
+  --periwinkle: #a1a8ff;
+  --purple: #c68aff;
+  --pink: #ff8aef;
+  --danger: #ff79a9;
+  --charge: #ffe3a0;
+  --outline: #399cdb;
+  --outline-soft: #276092;
+  --focus: #aaf3ff;
+  --rim-cyan: #23e9fa;
+  --rim-violet: #baa4ff;
+
+  --brick-radius: 4;
+  --brick-glow: 5;
+  --control-radius: 12px;
+  --card-radius: 17px;
+  --frame-radius: clamp(18px, 5vw, 29px);
+  --touch: 44px;
+  --space: 8px;
+  --gap: 12px;
+  --grid-cell: 22px;
+
+  --panel-glow: inset 0 0 13px #26a2ff24, 0 0 10px #178bfd20;
+  --frame-glow: inset 0 0 14px #249fff48, 0 0 16px #278dff50;
+  --main-fill: linear-gradient(113deg, #a0f6ff, #43e2f0);
+  --control-fill: linear-gradient(145deg, #0e3460, #091d3f);
+  --screen-grid: linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  --screen-fill: radial-gradient(ellipse at 50% 98%, #0a2854, var(--canvas) 67%);
+
+  --settings-icon: url("./assets/neon/icons/settings.svg");
+  --pause-icon: url("./assets/neon/icons/pause.svg");
+  --bolt-icon: url("./assets/neon/icons/bolt.svg");
+  --trophy-icon: url("./assets/neon/icons/trophy.svg");
+  --split-icon: url("./assets/neon/icons/split.svg");
+  --gun-icon: url("./assets/neon/icons/gun.svg");
+}
