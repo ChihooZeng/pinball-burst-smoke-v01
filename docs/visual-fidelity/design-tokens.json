@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "name": "Pinball Overload · pastel neon minimal · handoff 1.0",
+  "source": "approved visual concept board uploaded by user, not a pixel-exact Figma file",
+  "colors": {
+    "surface": {
+      "base": "#08182F",
+      "canvas": "#0A1D37",
+      "panel": "#122B4B",
+      "panelRaised": "#193B64",
+      "grid": "#6E9CC41A"
+    },
+    "text": {
+      "primary": "#F2FAFF",
+      "secondary": "#A9C6E4",
+      "muted": "#7294B8",
+      "onLight": "#082B4A"
+    },
+    "interaction": {
+      "primary": "#6EE7FF",
+      "secondary": "#7CC8FF",
+      "special": "#C68AFF",
+      "highlight": "#FF8AEF",
+      "danger": "#F172B8"
+    },
+    "outline": {
+      "default": "#6291C9",
+      "focus": "#99ECFF",
+      "hud": "#74B8EE"
+    },
+    "brickPalette": [
+      {
+        "color": "#6EE7FF",
+        "label": "cyan"
+      },
+      {
+        "color": "#7CC8FF",
+        "label": "blue"
+      },
+      {
+        "color": "#A1A8FF",
+        "label": "periwinkle"
+      },
+      {
+        "color": "#C68AFF",
+        "label": "purple"
+      },
+      {
+        "color": "#FF8AEF",
+        "label": "pink"
+      }
+    ],
+    "brickPalettePolicy": "Five-color approved style family; do not assume one color per absolute HP. Preserve game color-index logic until a separate, approved gameplay-color task."
+  },
+  "shape": {
+    "brick": {
+      "w": 29,
+      "h": 22,
+      "stepX": 38.5,
+      "stepY": 33,
+      "gapX": 9.5,
+      "gapY": 9,
+      "cornerRadius": 4,
+      "notes": "BRICK_W=29, BRICK_H=22, BRICK_STEP_X=38.5, WAVE_ROW_GAP=31 for formal waves; other procedural spawn steps remain source-defined. Geometry is read-only in visual task."
+    },
+    "buttons": {
+      "radius": 14,
+      "minHeight": 46,
+      "stroke": 1.5
+    },
+    "card": {
+      "radius": 17,
+      "stroke": 1.5
+    }
+  },
+  "effects": {
+    "restingGlow": "none to subtle, at most 0-5px soft spread on game UI",
+    "impactGlow": "transient, only hit/skill/Boss events",
+    "gridOpacity": 0.055,
+    "maxUiBorderLayers": 1,
+    "gradientLayers": "one fill layer only"
+  },
+  "layout": {
+    "referenceViewport": {
+      "width": 390,
+      "height": 844
+    },
+    "secondaryViewport": {
+      "width": 360,
+      "height": 640
+    },
+    "canvasLogicalWidth": 360,
+    "canvasLogicalHeight": "derived by current game fitCanvas, never hardcode from concept",
+    "safeArea": "env(safe-area-inset-*)"
+  },
+  "turret": {
+    "style": "A1-1, rounded square body with centered luminous circle and short centered barrel",
+    "parts": [
+      "ground.svg",
+      "barrel.svg",
+      "body.svg",
+      "core.svg"
+    ],
+    "colorCore": "#30E7EF",
+    "separateBarrelRotation": true
+  },
+  "content": {
+    "locale": [
+      "zh-CN",
+      "en"
+    ],
+    "hp1HasNumber": false,
+    "upgradeCardsDynamic": true,
+    "fakeButtonsForbidden": true
+  }
+}
