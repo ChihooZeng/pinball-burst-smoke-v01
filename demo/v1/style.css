@@ -8,7 +8,7 @@
 html, body { width: 100%; height: 100%; overflow: hidden; margin: 0 }
 body { overscroll-behavior: none }
 button, input, select { font: inherit }
-button, summary { cursor: pointer; touch-action: manipulation }
+button, summary { cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent }
 button:disabled { cursor: default }
 [hidden], .hidden, .legacy-hidden { display: none !important }
 a { color: var(--cyan) }
@@ -284,7 +284,7 @@ li[data-acquired="true"] .skill-rank { color: var(--ink) }
 }
 .cta { border-color: #a4f6ff; background: var(--main-fill); color: var(--on-light); box-shadow: 0 0 11px #28d9f23b }
 .cta:disabled { opacity: .55 }
-.cta:active:not(:disabled), .secondary:active, .upgrade-card:active { filter: brightness(1.13) }
+.cta:active:not(:disabled), .secondary:active, .upgrade-card:active, .icon-btn:active { filter: brightness(1.13) }
 
 #startOverlay { gap: 9px; padding-top: 52px }
 .home-brand { position: relative; isolation: isolate; width: min(100%, 370px); min-height: clamp(116px, 22dvh, 185px);
