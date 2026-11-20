@@ -154,7 +154,7 @@
       const y=Math.cos(shakeAge*141)*shakeStrength*decay*.62;
       ctx.translate(x,y);
     }
-    function draw(ctx){
+    function draw(ctx,fieldHeight=H){
       if(!intensity())return;
       ctx.save();
       for(const g of ghosts){if(quality==="lite")continue;
@@ -187,7 +187,7 @@
       }
       if(screenFlash>0){
         ctx.globalAlpha=Math.min(.075,screenFlash*.8);
-        ctx.fillStyle="#f0ffff";ctx.fillRect(0,0,W,H);
+        ctx.fillStyle="#f0ffff";ctx.fillRect(0,0,W,fieldHeight);
       }
       for(const e of shards){
         const t=e.age/e.duration;

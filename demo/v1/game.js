@@ -20,7 +20,8 @@
   const durationText=seconds=>translate("time",{min:Math.floor(seconds/60),sec:Math.floor(seconds%60)});
   const bossName=()=>translate(wave===MAX_WAVES?"finalBossName":"bossName");
   const W = 360, MAX_WAVES = CFG.maxWaves;
-  let H = 560, DANGER_Y=455, WAVE_START_Y=84;
+  const MIN_WORLD_HEIGHT=560, MAX_WORLD_HEIGHT=900, WAVE_START_Y=84, CEILING_Y=4;
+  let H=MIN_WORLD_HEIGHT, DANGER_Y=455;
   let pausedFrom=null, focusBeforePause=null, battleTime=0, waveMetrics=null, waveReports=[], bankDamage=0;
   let precisionTurns=0,focusDamage=0,gunBonusDamage=0,weakpointDamage=0,weakpointCharge=0,damageDealt=0,shotsWithContact=0;
   let waveFallMultiplier=1;
@@ -57,6 +58,7 @@
     record("seed",{id});setState("firstPower");updateUI();return true;
   }
   function showCards(seed=false){
+    if(ui.choice.classList.contains("hidden"))choicePointerUnlockAt=performance.now()+200;
     $("choiceTitle").textContent=translate(!build.seedAbility?"selectSpecialty":"selectUpgrade");
     $("choiceWave").textContent=!build.seedAbility?translate("firstUpgrade"):translate("upgradeHeader",{wave,level});
     for(let i=0;i<3;i++){
@@ -235,23 +237,34 @@
   }
   function brickColor(hp,special){return brickStyle(hp,special).edge;}
   const canvas = document.querySelector("#game"), ctx = canvas.getContext("2d");
-  /* 后备像素 = CSS 实际显示宽 × 有效 DPR（上限 2），逻辑坐标仍是 360×H。
-     之前用 W×dpr 充当后备宽，CSS 把 360 宽拉到 390/430 时整块画面还要再放大 8%~19%，细节被二次插值。
-     这里每次都从 getBoundingClientRect() 重新换算，resize 多次也不会累积放大。 */
+  const playfield=document.querySelector(".playfield"), battleSurface=canvas.parentElement;
   const RENDER_DPR_MAX=2;
-  let renderScale=1;
+  function availableScale(){
+    const slot=playfield.getBoundingClientRect();
+    return Math.min(slot.width/W,slot.height/H);
+  }
   function fitCanvas(){
-    canvas.style.setProperty("--world-ratio",W/H);
+    const scale=availableScale();
+    if(!(scale>0))return;
+    battleSurface.style.setProperty("--battle-width",W*scale+"px");
+    battleSurface.style.setProperty("--battle-height",H*scale+"px");
+    battleSurface.style.setProperty("--ceiling-inset",CEILING_Y*scale+"px");
     const box=canvas.getBoundingClientRect();
-    const cssW=box.width>0&&box.height>0?Math.min(box.width,box.height*W/H):W;
     const dpr=Math.max(1,Math.min(window.devicePixelRatio||1,RENDER_DPR_MAX));
-    const bw=Math.max(1,Math.round(cssW*dpr));
-    renderScale=bw/W;
-    const bh=Math.max(1,Math.round(H*renderScale));
+    const bw=Math.max(1,Math.round(box.width*dpr)),bh=Math.max(1,Math.round(box.height*dpr));
     if(canvas.width!==bw)canvas.width=bw;
     if(canvas.height!==bh)canvas.height=bh;
   }
-  fitCanvas();
+  function resetWorldSize(){
+    const slot=playfield.getBoundingClientRect();
+    // Keep a single logical height for a run; rotating or changing browser
+    // chrome only fits that same world into the new available CSS rectangle.
+    const ratio=slot.width>0?W*slot.height/slot.width:MIN_WORLD_HEIGHT;
+    H=Math.round(Math.max(MIN_WORLD_HEIGHT,Math.min(MAX_WORLD_HEIGHT,ratio)));
+    DANGER_Y=H-105;SUMMON_SAFE_BOTTOM=DANGER_Y-88;shooter.y=H-37;
+    fitCanvas();
+  }
+  const boundsQA=window.__PINBALL_TEST__===true&&qaMode&&new URLSearchParams(location.search).get("bounds")==="1";
   const $ = id => document.querySelector("#" + id);
   const ui = {
     wave: $("wave"), score: $("score"), rate: $("rate"), balls: $("balls"),
@@ -279,6 +292,7 @@
   const palette = ["#498cc2", "#518eae", "#8475c9", "#ba8e5a", "#637ab0"];
   const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
   let bricks, balls, particles, giant, aim, activePointer, wave, score;
+  let choicePointerUnlockAt=0;
   let level=1,xp=0,xpGoal=34,choiceQueue=0,choiceSet=[],powerLevel=0,volleyLevel=0,rateLevel=0,speedLevel=0,lifeLevel=0;
   let serial=0,rowIndex=0,rowTimer=0,nearClearClock=0,replenishClock=0,screenClears=0,lastClearTime=-100,emptyLatch=false,clearFlash=0;
   let ambientSignals=[],ambientSummonClock=0,ambientSummonBursts=0,ambientSummonTiles=0,overlapSummonCount=0,clearBurstCount=0,clearBurstTiles=0;
@@ -573,9 +587,7 @@
   }
   function reset(){
     sound?.stopBgm(0);
-    H=Math.round(Math.max(560,Math.min(900,360*(window.innerHeight||560)/(window.innerWidth||360))));
-    DANGER_Y=H-105;SUMMON_SAFE_BOTTOM=DANGER_Y-88;fitCanvas();shooter.y=H-37;
-    WAVE_START_Y=window.innerWidth?Math.max(84,Math.ceil((document.querySelector(".topbar").getBoundingClientRect().height+28)*W/window.innerWidth)):84;
+    resetWorldSize();
     pausedFrom=null;battleTime=0;waveReports=[];bankDamage=0;lockBackground(false);$("pauseOverlay").classList.add("hidden");
     window.PinballGameAudio?.stopBgm?.(0);
     precisionTurns=focusDamage=gunBonusDamage=weakpointDamage=weakpointCharge=damageDealt=shotsWithContact=0;build=Build.createState(initialSeed===null?Math.floor(Math.random()*4294967296):initialSeed);events=[];arcCharge=0;lastArcRelease=-99;fanClock=0;gunFlash=0;turretRecoil=0;brickClock=0;
@@ -1069,7 +1081,7 @@
       let wall=false,bounced=false;
       if(ball.x<ball.r){ball.x=ball.r;ball.vx=Math.abs(ball.vx);wall=true;bounced=true;}
       if(ball.x>W-ball.r){ball.x=W-ball.r;ball.vx=-Math.abs(ball.vx);wall=true;bounced=true;}
-      if(ball.y<ball.r+4){ball.y=ball.r+4;ball.vy=Math.abs(ball.vy);bounced=true;}
+      if(ball.y<ball.r+CEILING_Y){ball.y=ball.r+CEILING_Y;ball.vy=Math.abs(ball.vy);bounced=true;}
       if(wall){
         counters.wallBounces++;
         if(ricochetLevel){ball.chargeStacks=Math.min(ricochetLevel===1?2:4,ball.chargeStacks+ricochetLevel);ricochetTriggers++;}
@@ -1121,7 +1133,7 @@
       giant.x+=giant.vx*step;giant.y+=giant.vy*step;
       if(giant.x<giant.r){giant.x=giant.r;giant.vx=Math.abs(giant.vx);recordGiantBounce("wall");}
       if(giant.x>W-giant.r){giant.x=W-giant.r;giant.vx=-Math.abs(giant.vx);recordGiantBounce("wall");}
-      if(giant.y<giant.r+4){giant.y=giant.r+4;giant.vy=Math.abs(giant.vy);recordGiantBounce("wall");}
+      if(giant.y<giant.r+CEILING_Y){giant.y=giant.r+CEILING_Y;giant.vy=Math.abs(giant.vy);recordGiantBounce("wall");}
       // A short-lived force-field floor keeps the ultimate circulating in the brick arena.
       if(giant.y>H-83-giant.r){giant.y=H-83-giant.r;giant.vy=-Math.abs(giant.vy);recordGiantBounce("wall");}
       for(const block of bricks){
@@ -1783,7 +1795,7 @@
     brickText(b.x,b.y+(b.isFinalBoss?6:2),b.w,b.h-(b.isFinalBoss?8:4),String(b.hp),"#fff6ff",b.isFinalBoss?21:17);
   }
   function draw() {
-    ctx.setTransform(renderScale,0,0,renderScale,0,0);
+    ctx.setTransform(canvas.width/W,0,0,canvas.height/H,0,0);
     ctx.clearRect(0,0,W,H);
     ctx.save();
     // Existing v0.5 giant-only shake remains when additional effects are off.
@@ -1953,7 +1965,7 @@
       }else ctx.fillRect(p.x-2,p.y-2,4,4);
     }
     ctx.globalAlpha=1;
-    juice.draw(ctx);
+    juice.draw(ctx,H);
     // Boss shockwave expands with the real victory timer. No combat collision.
     if(bossVictory){
       const v=bossVictory,t=clamp(v.t/BOSS_FINISH_DURATION,0,1);
@@ -1996,6 +2008,25 @@
       ctx.globalAlpha=1;
     }
     drawTurret(cannonAim);
+    ctx.restore();
+    if(boundsQA)drawBattleBounds();
+  }
+  function drawBattleBounds(){
+    ctx.save();
+    ctx.lineWidth=1;ctx.font="11px monospace";ctx.textAlign="left";
+    ctx.strokeStyle="#ffe483";ctx.setLineDash([5,3]);ctx.strokeRect(0,0,W,H);
+    ctx.fillStyle="#ffe483";ctx.fillText("Canvas "+W+"×"+H,7,CEILING_Y+16);
+    ctx.strokeStyle="#77f5ff";
+    ctx.beginPath();ctx.moveTo(0,H);ctx.lineTo(0,CEILING_Y);ctx.lineTo(W,CEILING_Y);ctx.lineTo(W,H);ctx.stroke();
+    ctx.strokeStyle="#ff78ad";ctx.beginPath();ctx.moveTo(0,DANGER_Y);ctx.lineTo(W,DANGER_Y);ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.translate(shooter.x,shooter.y-TUR_PIVOT_LIFT);
+    ctx.strokeStyle="#cdb7ff";
+    ctx.beginPath();ctx.moveTo(-8,0);ctx.lineTo(8,0);ctx.moveTo(0,-8);ctx.lineTo(0,8);ctx.stroke();
+    ctx.restore();
+    ctx.save();
+    ctx.strokeStyle="#9ad77f";ctx.lineWidth=1;
+    for(const ball of balls){ctx.beginPath();ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2);ctx.stroke();}
     ctx.restore();
   }
   function drawTurret(angle){
@@ -2084,8 +2115,8 @@
   });
   function setAim(e) {
     const box = canvas.getBoundingClientRect();
-    const scale=Math.min(box.width/W,box.height/H),offset=(box.width-W*scale)/2;
-    const x = clamp((e.clientX-box.left-offset)/scale,0,W);
+    if(!box.width)return;
+    const x=clamp((e.clientX-box.left)*W/box.width,0,W);
     aim = clamp((x-W/2)/(W/2)*1.08,-1.08,1.08);
   }
   canvas.addEventListener("pointerdown",e=>{
@@ -2116,7 +2147,19 @@
   },true);
   $("jumpBoss").addEventListener("click",jumpToBoss10);
   $("jumpFinalBoss").addEventListener("click",jumpToFinalBoss);
-  for(let i=0;i<3;i++)$("choice"+i).addEventListener("click",()=>{unlockSound();chooseUpgrade(choiceSet[i]);});
+  for(let i=0;i<3;i++){
+    const card=$("choice"+i);
+    let pointerOffer=null;
+    card.addEventListener("pointerdown",()=>{
+      pointerOffer=performance.now()>=choicePointerUnlockAt?choicePointerUnlockAt:null;
+    });
+    card.addEventListener("click",event=>{
+      const deliberateTap=pointerOffer===choicePointerUnlockAt;
+      pointerOffer=null;
+      if(event.detail>0&&!deliberateTap)return;
+      unlockSound();chooseUpgrade(choiceSet[i]);
+    });
+  }
   $("home").addEventListener("click",reset);
   function restartRun(){
     unlockSound();record("restart",{reason:"restart"});reset();begin();
@@ -2132,7 +2175,11 @@
     if(document.hidden){suspendBattle();analytics?.close();}
     else resetFrameClock();
   });
-  window.addEventListener("resize",()=>{fitCanvas();activePointer=null;resetFrameClock();});
+  function resizeBattle(){
+    fitCanvas();activePointer=null;resetFrameClock();
+  }
+  window.addEventListener("resize",resizeBattle);
+  if(window.ResizeObserver)new ResizeObserver(resizeBattle).observe(playfield);
   window.addEventListener("pagehide",()=>{
     const active=phase==="paused"?pausedFrom:phase;
     const exit=!practiceRun&&["playing","choosing"].includes(active)?{...analyticsState(),reason:"exit"}:null;

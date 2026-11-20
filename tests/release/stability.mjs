@@ -58,9 +58,8 @@ try{
     await page.goto(url);
     await page.eval("__pinballTest.begin();__pinballTest.spawnWave(19);__pinballTest.fillBallBudget()");
     const canvas=await page.eval(`(()=>{
-      const c=document.querySelector("#game"),r=c.getBoundingClientRect(),s=__pinballState();
-      const backingWidth=Math.round(Math.min(r.width,r.height*s.worldWidth/s.worldHeight)*2);
-      return {actual:[c.width,c.height],expected:[backingWidth,Math.round(backingWidth*s.worldHeight/s.worldWidth)]};
+      const c=document.querySelector("#game"),r=c.getBoundingClientRect();
+      return {actual:[c.width,c.height],expected:[Math.round(r.width*2),Math.round(r.height*2)]};
     })()`);
     assert.deepEqual(canvas.actual,canvas.expected);
     await metrics(`dense-${width}x${height}`);

@@ -22,9 +22,8 @@ a { color: var(--cyan) }
   --frame-right: max(10px, env(safe-area-inset-right));
   --frame-stroke: 2px;
   --dock-height: clamp(69px, 10dvh, 96px);
-  --field-top: clamp(23px, calc(23px + (100dvh - 640px) * .065), 39px);
+  --field-top: 76px;
   --field-bottom: calc(var(--dock-height) + 16px);
-  --field-height: calc(100dvh - var(--frame-top) - var(--frame-bottom) - 2 * var(--frame-stroke) - var(--field-top) - var(--field-bottom));
   position: relative;
   width: min(100%, 540px, 68dvh);
   height: 100vh;
@@ -61,24 +60,28 @@ a { color: var(--cyan) }
   overflow: hidden;
   border: var(--frame-stroke) solid transparent;
   border-radius: var(--frame-radius);
-  background:
-    var(--screen-grid) padding-box,
-    var(--screen-fill) padding-box,
+  background: var(--base);
+}
+.arena:has(:is(#startOverlay, #choiceOverlay, #pauseOverlay, #winOverlay, #errorOverlay):not(.hidden)) {
+  background: var(--screen-fill) padding-box,
     linear-gradient(154deg, var(--rim-cyan) 6%, #49cfff 45%, var(--rim-violet) 85%, #80faff) border-box;
-  background-size: var(--grid-cell) var(--grid-cell), var(--grid-cell) var(--grid-cell), auto, auto;
   box-shadow: var(--frame-glow);
 }
 .playfield { position: absolute; inset: var(--field-top) 0 var(--field-bottom); display: grid; place-items: center }
-#game {
-  --world-ratio: .642857;
-  display: block;
-  width: min(100%, calc(var(--field-height) * var(--world-ratio)));
-  height: auto;
-  aspect-ratio: var(--world-ratio);
-  object-fit: contain;
-  touch-action: none;
-  user-select: none;
-  box-shadow: -1px 0 #6ee7ff12, 1px 0 #6ee7ff12;
+.battle-surface {
+  position: relative;
+  width: var(--battle-width, 100%);
+  height: var(--battle-height, 100%);
+  background: var(--screen-grid), var(--screen-fill);
+  background-size: var(--grid-cell) var(--grid-cell), var(--grid-cell) var(--grid-cell), auto;
+}
+#game { display: block; width: 100%; height: 100%; touch-action: none; user-select: none }
+.battle-rim {
+  position: absolute;
+  inset: var(--ceiling-inset, 0px) 0 0;
+  box-shadow: inset 1px 0 var(--rim-cyan), inset -1px 0 var(--rim-cyan), inset 0 1px var(--rim-cyan),
+    inset 0 -1px var(--rim-violet), 0 0 11px #278dff60;
+  pointer-events: none;
 }
 .ui-icon { width: 24px; height: 24px; flex: none; display: block; background: currentColor;
   -webkit-mask: var(--icon) center / contain no-repeat; mask: var(--icon) center / contain no-repeat }
@@ -423,7 +426,7 @@ noscript { position: fixed; z-index: 30; inset: auto 12px 12px; padding: 12px; b
   #choiceOverlay { padding-block: 55px 13px }
 }
 @media (max-height: 530px) and (orientation: landscape) {
-  .shell { width: min(100%,600px,104dvh); --frame-top: calc(env(safe-area-inset-top) + 30px); --dock-height: 58px; --field-top: 10px }
+  .shell { width: min(100%,600px,104dvh); --frame-top: calc(env(safe-area-inset-top) + 30px); --dock-height: 58px; --field-top: 72px }
   .home-brand { min-height: 100px }
   .home-decor { display: none }
   .upgrade-card { min-height: 68px }
