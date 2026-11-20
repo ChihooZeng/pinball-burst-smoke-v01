@@ -3,7 +3,7 @@
   "use strict";
   const copy = {
     "title": ["弹珠超载", "Marble Overload"],
-    "version": ["V1.0 · 20 波挑战", "V1.0 · 20-wave challenge"],
+    "version": ["V2.1 · 20 波挑战", "V2.1 · 20-wave challenge"],
     "play": ["开始挑战", "Start run"],
     "intro": ["拖动瞄准，炮台会自动发射。清空第一波后选择裂变、电弧或机枪。击败第 10 波中枢和第 20 波终局核心。", "Drag to aim as the cannon fires automatically. Clear wave 1 to choose Split, Arc, or Rapid Fire. Defeat the Nexus in wave 10 and the Final Core in wave 20."],
     "controls": ["拖动或用方向键瞄准。P 或 Esc 暂停。关闭自动超载后，点技能按钮或按空格释放。", "Drag or use the arrow keys to aim. Pause with P or Esc. With Auto Overload off, press the skill button or Space to fire it."],
@@ -181,7 +181,9 @@
     "ability.split": ["每 {every} 次撞砖生成 {count} 颗子球。少量目标时，子球可追踪 {turns} 次。", "Every {every} hits, create {count} split marbles. They can home {turns} times when few targets remain."],
     "ability.arc": ["每 {every} 次撞砖攻击附近 {count} 个目标，伤害 {damage}。对装甲额外 +{armor}。击碎可续传。", "Every {every} hits, arc to {count} nearby targets for {damage} damage. +{armor} against armor. Breaks can extend the chain."],
     "ability.arcFocus": ["集中放电 {damage} 伤害，对装甲额外 +{armor}。", "Focused discharge deals {damage} damage and +{armor} to armor."],
-    "ability.gun": ["每秒 {rate} 发，留场 {ttl} 秒。同一目标每连中 3 次提高伤害，最多 +{bonus}。", "Fires {rate}/s with a {ttl}s lifetime. Every 3 consecutive hits on one target increase damage, up to +{bonus}."],
+    "delta.childTTL": ["子球留场秒数", "Split marble lifetime (s)"],
+    "delta.gunHitsPerBonus": ["压制所需连中数", "Hits per pressure stack"],
+    "ability.gun": ["每秒 {rate} 发，留场 {ttl} 秒。同一目标每连中 {streak} 次提高伤害，最多 +{bonus}。", "Fires {rate}/s with a {ttl}s lifetime. Every {streak} consecutive hits on one target increase damage, up to +{bonus}."],
     "ability.bank": ["侧墙反弹蓄势 +{step}，上限 +{cap}。命中消耗。", "Wall bounces store +{step} damage, up to +{cap}. Consumed on hit."],
     "ability.hunter": ["每球最多 {count} 次撞墙追猎。", "Up to {count} homing turns per marble after wall bounces."],
     "ability.drill": ["每 {every} 发一颗钻头，可穿透 {pierces} 次，额外伤害 +{damage}。", "Every {every} shots, launch a drill with {pierces} pierces and +{damage} damage."],

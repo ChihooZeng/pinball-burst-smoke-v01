@@ -7,16 +7,17 @@
  'use strict';
  const {t}=locale;
  const CONFIG={maxBalls:48,maxWaves:20,productWaves:50,baseDamage:1,firstShot:.12,
-  arcCooldown:.30,arcEvery:[0,2,1,1],arcTargets:[0,2,3,4],arcRange:[0,145,165,180],arcDamage:[0,2,4,6],focusDamage:6,bossArcDamage:4,
-  splitEvery:[0,2,2,1],splitCount:[0,2,3,3],splitSpread:.45,stormSpread:.8,huntTurns:2,childTTL:4.1,
-  gunInterval:[0,.35,.27,.20],gunTTL:4.1,lineInterval:.17,fanInterval:.18,fanAngle:.28,fanPeriod:1.8,gunMinInterval:.12,gunRateStep:.012,auxGunInterval:.70,auxGunMinInterval:.55,
+  arcCooldown:.30,arcEvery:[0,2,1,1,1,1],arcTargets:[0,2,3,4,5,6],arcRange:[0,145,165,180,196,214],arcDamage:[0,2,4,6,7,9],focusDamage:6,bossArcDamage:4,
+  splitEvery:[0,2,2,1,1,1],splitCount:[0,2,3,3,4,5],splitSpread:.45,stormSpread:.8,huntTurns:2,childTTL:4.1,
+  gunInterval:[0,.35,.27,.20,.18,.16],gunPressureHits:[0,3,3,3,3,2],gunTTL:4.1,lineInterval:.17,fanInterval:.18,fanAngle:.28,fanPeriod:1.8,gunMinInterval:.12,gunRateStep:.012,auxGunInterval:.70,auxGunMinInterval:.55,
   normalInterval:.86,normalMinInterval:.55,normalRateStep:.075,normalTTL:8.4,speed:330,speedStep:15,lifeStep:.7,gunLifeStep:.2,fallScale:.84,
   flags:{earlyBonus:false,bossBonus:false,rareEffects:false,ultimate:false,temporaryBuffs:true},rarityWeights:{common:1,rare:0,epic:0,legendary:0}};
  const DEFS={};
  function def(id,family,role,maxRank,extra={}){
   DEFS[id]={id,get name(){return t('skill.'+id);},family,role,maxRank,rarity:'common',prerequisites:[],minClearedWave:0,excludedWith:[],...extra};
  }
- for(const id of ['split','arc','gun'])def(id,id,'core',3);
+ const masteryWave=[9,14];
+ for(const id of ['split','arc','gun'])def(id,id,'core',5);
  for(const [id,cap] of [['rate',5],['power',3],['speed',3],['life',3]])def(id,'base','base',cap);
  for(const id of ['hunter','drill','shock','bank'])def(id,'auxiliary','auxiliary',2);
  for(const family of ['split','arc','gun']){
@@ -31,15 +32,20 @@
  function random(s){s.rng=(s.rng+0x6D2B79F5)>>>0;let t=s.rng;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return ((t^(t>>>14))>>>0)/4294967296;}
  function preferred(s){return s.coreFocus||s.growthFocus||s.seedAbility;}
  function effectiveRank(s,id){return s.ranks[id]||0;}
+ const mastery=rank=>Math.max(0,rank-3);
  function tuning(s){const gun=effectiveRank(s,'gun'),isGun=gun>0&&preferred(s)==='gun',branch=s.coreBranch;
   let interval=isGun?(branch==='gun-a'?(CONFIG.lineInterval-(s.ranks['gun-a']>1?.02:0)):branch==='gun-b'?(CONFIG.fanInterval-(s.ranks['gun-b']>1?.02:0)):CONFIG.gunInterval[gun]):gun?CONFIG.auxGunInterval:CONFIG.normalInterval;
-  interval=Math.max(isGun?CONFIG.gunMinInterval:gun?CONFIG.auxGunMinInterval:CONFIG.normalMinInterval,interval-(s.ranks.rate||0)*(gun?CONFIG.gunRateStep:CONFIG.normalRateStep));
-  return {interval,isGun,ttl:(isGun?CONFIG.gunTTL:CONFIG.normalTTL)+(s.ranks.life||0)*(isGun?CONFIG.gunLifeStep:CONFIG.lifeStep),speed:CONFIG.speed+(s.ranks.speed||0)*CONFIG.speedStep,damage:CONFIG.baseDamage+(s.ranks.power||0),splitRank:effectiveRank(s,'split'),arcRank:effectiveRank(s,'arc')};
+  const gunMastery=isGun?mastery(gun):0;
+  if(isGun&&branch)interval-=gunMastery*.008;
+  interval=Math.max(isGun?CONFIG.gunMinInterval-gunMastery*.006:gun?CONFIG.auxGunMinInterval:CONFIG.normalMinInterval,interval-(s.ranks.rate||0)*(gun?CONFIG.gunRateStep:CONFIG.normalRateStep));
+  return {interval,isGun,ttl:(isGun?CONFIG.gunTTL+gunMastery*.2:CONFIG.normalTTL)+(s.ranks.life||0)*(isGun?CONFIG.gunLifeStep:CONFIG.lifeStep),speed:CONFIG.speed+(s.ranks.speed||0)*CONFIG.speedStep,damage:CONFIG.baseDamage+(s.ranks.power||0),splitRank:effectiveRank(s,'split'),arcRank:effectiveRank(s,'arc'),
+    childTTL:CONFIG.childTTL+mastery(effectiveRank(s,'split'))*.3,gunHitsPerBonus:gun?CONFIG.gunPressureHits[gun]:3};
  }
  function effects(s){const t=tuning(s),r=s.ranks,b=s.coreBranch,split=t.splitRank,arc=t.arcRank;
   return {interval:t.interval,damage:t.damage,speed:t.speed,ttl:t.ttl,
-   splitCount:split?(b==='split-a'?(s.ranks['split-a']>1?5:4):b==='split-b'?3:CONFIG.splitCount[split]):0,splitEvery:CONFIG.splitEvery[split],splitSpread:split?(b==='split-a'?CONFIG.stormSpread:CONFIG.splitSpread):0,childTurns:b==='split-b'?CONFIG.huntTurns+(s.ranks['split-b']>1?1:0):0,splitPursuit:Math.max(0,split-1),gunPressure:preferred(s)==='gun'?Math.max(0,(r.gun||0)-1):0,
-   arcEvery:CONFIG.arcEvery[arc],arcTargets:arc?(b==='arc-b'?0:b==='arc-a'?(s.ranks['arc-a']>1?5:4):CONFIG.arcTargets[arc]):0,arcRange:arc&&b!=='arc-b'?CONFIG.arcRange[arc]:0,arcDamage:arc&&b!=='arc-b'?CONFIG.arcDamage[arc]:0,arcArmorBonus:arc?arc+1:0,arcSolo:arc?(b==='arc-b'?CONFIG.focusDamage:CONFIG.bossArcDamage)+(b==='arc-a'?(s.ranks['arc-a']>1?5:4):CONFIG.arcTargets[arc])*arc+(b==='arc-b'&&s.ranks['arc-b']>1?3:0):0,arcNet:b==='arc-a',arcFocus:b==='arc-b',
+   splitCount:split?(b==='split-a'?(s.ranks['split-a']>1?5:4)+mastery(split):b==='split-b'?3+mastery(split):CONFIG.splitCount[split]):0,
+   childTTL:split?t.childTTL:0,splitEvery:CONFIG.splitEvery[split],splitSpread:split?(b==='split-a'?CONFIG.stormSpread:CONFIG.splitSpread):0,childTurns:b==='split-b'?CONFIG.huntTurns+(s.ranks['split-b']>1?1:0):0,splitPursuit:Math.max(0,split-1),gunPressure:preferred(s)==='gun'?Math.max(0,(r.gun||0)-1):0,gunHitsPerBonus:t.gunHitsPerBonus,
+   arcEvery:CONFIG.arcEvery[arc],arcTargets:arc?(b==='arc-b'?0:b==='arc-a'?(s.ranks['arc-a']>1?5:4)+mastery(arc):CONFIG.arcTargets[arc]):0,arcRange:arc&&b!=='arc-b'?CONFIG.arcRange[arc]:0,arcDamage:arc&&b!=='arc-b'?CONFIG.arcDamage[arc]:0,arcArmorBonus:arc?arc+1:0,arcSolo:arc?(b==='arc-b'?CONFIG.focusDamage:CONFIG.bossArcDamage)+(b==='arc-a'?(s.ranks['arc-a']>1?5:4)+mastery(arc):CONFIG.arcTargets[arc])*arc+(b==='arc-b'&&s.ranks['arc-b']>1?3:0):0,arcNet:b==='arc-a',arcFocus:b==='arc-b',
    hunter:r.hunter||0,drillEvery:r.drill?(r.drill===1?4:3):0,drillPierces:r.drill?(r.drill===1?3:5):0,drillDamage:r.drill?r.drill+1:0,
    shockEvery:r.shock?(r.shock===1?4:3):0,shockTargets:r.shock?(r.shock===1?2:4):0,shockDamage:r.shock||0,shockRadius:r.shock?(r.shock===1?75:95):0,
    bankStep:r.bank||0,bankCap:(r.bank||0)*2,fan:b==='gun-b',line:b==='gun-a'};
@@ -48,8 +54,8 @@
   if(d.role==='core'){s.routeWeights[id]++;if(s.ranks[id]===2&&!s.growthFocus)s.growthFocus=id;}
   if(d.role==='branch'){s.coreFocus=d.family;s.coreBranch=id;}
  }
- const labeledEffects=['damage','speed','ttl','splitCount','splitEvery','splitSpread','splitPursuit','childTurns',
-  'gunPressure','arcEvery','arcTargets','arcRange','arcDamage','arcArmorBonus','arcSolo','hunter','drillEvery',
+ const labeledEffects=['damage','speed','ttl','splitCount','splitEvery','splitSpread','splitPursuit','childTurns','childTTL',
+  'gunPressure','gunHitsPerBonus','arcEvery','arcTargets','arcRange','arcDamage','arcArmorBonus','arcSolo','hunter','drillEvery',
   'drillPierces','drillDamage','shockEvery','shockTargets','shockDamage','shockRadius','bankStep','bankCap'];
  const percentEffects=new Set(['damage','speed','ttl','splitSpread','arcRange','shockRadius']);
  const fmt=n=>Number(n.toFixed(1)).toString();
@@ -75,7 +81,7 @@
   if(id==='split')return t('ability.split',{every:e.splitEvery,count:e.splitCount,turns:e.splitPursuit});
   if(id==='arc')return e.arcFocus?t('ability.arcFocus',{damage:e.arcSolo,armor:e.arcArmorBonus}):
    t('ability.arc',{every:e.arcEvery,count:e.arcTargets,damage:e.arcDamage,armor:e.arcArmorBonus});
-  if(id==='gun')return t('ability.gun',{rate:fmt(1/e.interval),ttl:fmt(e.ttl),bonus:e.gunPressure});
+  if(id==='gun')return t('ability.gun',{rate:fmt(1/e.interval),ttl:fmt(e.ttl),bonus:e.gunPressure,streak:e.gunHitsPerBonus});
   if(id==='bank')return t('ability.bank',{step:e.bankStep,cap:e.bankCap});
   if(id==='hunter')return t('ability.hunter',{count:e.hunter});
   if(id==='drill')return t('ability.drill',{every:e.drillEvery,pierces:e.drillPierces,damage:e.drillDamage});
@@ -103,14 +109,18 @@
   if(d.role==='core'){
    if(!n&&['split','arc','gun'].filter(id=>s.ranks[id]).length>=2)return false;
    if(n&&s.growthFocus&&d.id!==s.growthFocus)return false;
+   if(n>=3&&(d.id!==preferred(s)||wave<masteryWave[n-3]))return false;
   }
   return preview(s,d.id).deltas.length>0;
  }).map(d=>d.id);}
  function seed(s,id,wave=0){if(s.seedAbility||!has(id)||DEFS[id].role!=='core')return false;const before=effects(s),previous=copy(s);s.seedAbility=id;apply(s,id);const after=effects(s);s.choiceHistory.push({wave,id,kind:wave>0?'upgrade':'seed',before,after,deltas:deltasFor(previous,id,before,after)});return true;}
  function choose(s,id,wave){if(!s.seedAbility)return wave>=1&&['split','arc','gun'].includes(id)?seed(s,id,wave):false;if(!has(id)||!eligible(s,wave).includes(id))return false;const p=preview(s,id);apply(s,id);s.choiceHistory.push({wave,id,kind:'upgrade',...p});return true;}
  function offer(s,wave){if(!s.seedAbility)return ['split','arc','gun'];const pool=eligible(s,wave),out=[],add=id=>{if(pool.includes(id)&&!out.includes(id))out.push(id);},pick=list=>list.length?list[Math.floor(random(s)*list.length)]:null;
-  const branches=pool.filter(id=>DEFS[id].role==='branch');if(branches.length)branches.forEach(add);else add(preferred(s));
-  add(pick(pool.filter(id=>DEFS[id].role==='base')));
+  const core=preferred(s),branches=pool.filter(id=>DEFS[id].role==='branch');
+  // Once mastery unlocks, both pending specializations must not crowd it out.
+  if((s.ranks[core]||0)>=3||!branches.length)add(core);
+  branches.forEach(add);
+  if(out.length<3)add(pick(pool.filter(id=>DEFS[id].role==='base')));
   if(out.length<3)add(pick(pool.filter(id=>['core','auxiliary'].includes(DEFS[id].role)&&!out.includes(id))));
   while(out.length<3){const left=pool.filter(id=>!out.includes(id));if(!left.length)break;add(pick(left));}return out;
  }

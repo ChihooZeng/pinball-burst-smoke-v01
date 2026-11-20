@@ -830,21 +830,21 @@
   function makeBall(angle,mini=false){
     const t=Build.tuning(build),buffSpeed=Build.buffModifiers(build).speed,speed=t.speed*buffSpeed;
     return {x:shooter.x+Math.sin(angle)*TUR_MUZZLE,y:shooter.y-TUR_PIVOT_LIFT-Math.cos(angle)*TUR_MUZZLE,vx:Math.sin(angle)*speed,vy:-Math.cos(angle)*speed,r:mini?SHOT_HIT_RADIUS*.83:SHOT_HIT_RADIUS,visualR:mini?SHOT_RADIUS*.83:SHOT_RADIUS,
-      life:0,maxLife:mini?Math.min(CFG.childTTL,t.ttl):t.ttl,trail:[],contacts:0,mini,splitDone:false,drill:false,
+      life:0,maxLife:mini?Math.min(t.childTTL,t.ttl):t.ttl,trail:[],contacts:0,mini,splitDone:false,drill:false,
       drillLeft:0,chargeStacks:0,huntsLeft:hunterLevel,damage:t.damage,
       buffSpeed,lastHitId:null,lastHitLife:-99,lastArcAt:-99};
   }
   function splitAt(ball,x,y){
     if(!splitLevel||ball.mini||ball.splitDone||ball.contacts<CFG.splitEvery[splitLevel])return;
     ball.splitDone=true;
-    const branch=build.coreBranch,count=Build.effects(build).splitCount;
+    const branch=build.coreBranch,effects=Build.effects(build),count=effects.splitCount;
     const solo=boss&&boss.alive&&livingCount()===1;
     const spread=solo?.15:branch==="split-a"?CFG.stormSpread:CFG.splitSpread;
     const theta=Math.atan2(ball.vx,-ball.vy);let made=0;
     for(let i=0;i<count;i++){
       if(balls.length>=MAX_BALLS){counters.suppressedChildren+=count-i;break;}
       const delta=count===1?.22:((i/(count-1))*2-1)*spread,child=makeBall(theta+delta,true);
-      child.x=x;child.y=y;child.pursuitLeft=Math.max(0,splitLevel-1);child.guideAt=elapsed+.16;child.huntsLeft=hunterLevel+(branch==="split-b"?Build.effects(build).childTurns:0);child.huntChild=branch==="split-b";
+      child.x=x;child.y=y;child.pursuitLeft=Math.max(0,splitLevel-1);child.guideAt=elapsed+.16;child.huntsLeft=hunterLevel+(branch==="split-b"?effects.childTurns:0);child.huntChild=branch==="split-b";
       child.lastHitId=ball.lastHitId;child.lastHitLife=0;balls.push(child);made++;
     }
     if(made){splitBursts++;bonusVolleyBalls+=made;counters.splitChildren+=made;record("split",{count:made});playSfx("split");setState("splitHit",{count:made});}
@@ -982,7 +982,7 @@
     if(branch!=="arc-b"&&origin.alive&&(origin.isBoss||origin.ringArmor||origin.isElite||origin.bossSupport)){
       if(!chosen.includes(origin)){chosen.unshift(origin);if(chosen.length>limit)chosen.pop();}
     }
-    const maxTargets=branch==="arc-b"?1:Math.min(6,limit+Math.min(2,arcLevel)+(branch==="arc-a"?1:0));
+    const maxTargets=branch==="arc-b"?1:Math.min(6+Math.max(0,arcLevel-3),limit+Math.min(2,arcLevel)+(branch==="arc-a"?1:0));
     if(lightningChains.length>=ARC_CHAIN_CAP)lightningChains.shift();
     lightningChains.push({
       originId:origin.id,branch,used:new Set(chosen.map(b=>b.id).concat(origin.id)),
@@ -1056,7 +1056,7 @@
     if(!ball.mini&&gunRank>1&&Build.preferred(build)==="gun"){
       block.gunStreak=elapsed-(block.gunLast??-Infinity)<=2?block.gunStreak+1:1;
       block.gunLast=elapsed;
-      pressure=Math.min(gunRank-1,Math.floor((block.gunStreak-1)/3));
+      pressure=Math.min(gunRank-1,Math.floor((block.gunStreak-1)/CFG.gunPressureHits[gunRank]));
     }
     const weak=block.isBoss&&livingCount()===1&&waveElapsed%6>=4;
     if(weak){addCharge(4);weakpointCharge+=4;} // Boss weakpoint grants extra charge, not +1 hidden damage.
