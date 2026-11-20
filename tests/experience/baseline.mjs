@@ -20,7 +20,7 @@ try{
       return {arena:rect(".arena"),slot:rect(".playfield"),frame:rect(".battle-rim"),canvas:rect("#game"),
         backing:[c.width,c.height],world:[state.worldWidth,state.worldHeight],danger:state.dangerY,
         shooter:state.shooterY,dpr:devicePixelRatio,palette:["--cyan","--blue","--periwinkle","--purple","--pink"].map(
-          name=>getComputedStyle(document.documentElement).getPropertyValue(name).trim())};
+          name=>{const css=getComputedStyle(document.documentElement);return (css.getPropertyValue(name==="--purple"?"--brick-purple":name)||css.getPropertyValue(name)).trim();})};
     })()`);
     await page.shot(path.join(output,`battle-${width}x${height}.png`));
     const pressure=await page.eval(`Array.from({length:20},(_,i)=>{

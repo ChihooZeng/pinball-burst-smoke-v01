@@ -186,7 +186,7 @@
   // Canvas follows the same palette and edge weight as the DOM.
   const visualTokens=getComputedStyle(document.documentElement);
   const readToken=name=>visualTokens.getPropertyValue(name).trim();
-  const [cyan,blue,periwinkle,purple,pink]=["--cyan","--blue","--periwinkle","--purple","--pink"].map(readToken);
+  const [cyan,blue,periwinkle,purple,pink]=["--cyan","--blue","--periwinkle","--brick-purple","--pink"].map(readToken);
   const dangerInk=readToken("--danger");
   function brickPaint(edge,top=.98,bottom=.82){
     return {edge,ft:withAlpha(edge,top),fb:withAlpha(edge,bottom)};
@@ -205,7 +205,7 @@
     special:brickPaint(cyan,.81,.59),
     elite:{...brickPaint(blue,.86,.66),border:1.6},
     summon:brickPaint(periwinkle,.81,.60),
-    boss:{edge:purple,glow:periwinkle,base:"#171f55"},
+    boss:{edge:readToken("--purple"),glow:periwinkle,base:"#171f55"},
     finalBoss:{edge:pink,glow:pink,base:"#251b52"},
     radius:Number(readToken("--brick-radius")),
     glow:Number(readToken("--brick-glow"))
