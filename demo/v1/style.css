@@ -22,7 +22,7 @@ a { color: var(--cyan) }
   --frame-right: max(10px, env(safe-area-inset-right));
   --frame-stroke: 2px;
   --dock-height: clamp(69px, 10dvh, 96px);
-  --field-top: 12px;
+  --field-top: clamp(23px, calc(23px + (100dvh - 640px) * .065), 39px);
   --field-bottom: calc(var(--dock-height) + 16px);
   --field-height: calc(100dvh - var(--frame-top) - var(--frame-bottom) - 2 * var(--frame-stroke) - var(--field-top) - var(--field-bottom));
   position: relative;
@@ -158,6 +158,8 @@ body:has(#startOverlay:not(.hidden)) .masthead { visibility: hidden }
 .boss-track { height: 4px; margin-top: 3px; border-radius: 5px; overflow: hidden; background: #423b6e }
 #bossFill { width: 100%; height: 100%; background: linear-gradient(90deg, var(--periwinkle), var(--pink)) }
 .masthead > span { flex: none }
+.masthead:lang(zh-CN) > span::before { content: "《" }
+.masthead:lang(zh-CN) > span::after { content: "》" }
 .floating-label {
   min-width: 0;
   margin-inline-start: auto;
@@ -421,7 +423,7 @@ noscript { position: fixed; z-index: 30; inset: auto 12px 12px; padding: 12px; b
   #choiceOverlay { padding-block: 55px 13px }
 }
 @media (max-height: 530px) and (orientation: landscape) {
-  .shell { width: min(100%,600px,104dvh); --frame-top: calc(env(safe-area-inset-top) + 30px); --dock-height: 58px }
+  .shell { width: min(100%,600px,104dvh); --frame-top: calc(env(safe-area-inset-top) + 30px); --dock-height: 58px; --field-top: 10px }
   .home-brand { min-height: 100px }
   .home-decor { display: none }
   .upgrade-card { min-height: 68px }

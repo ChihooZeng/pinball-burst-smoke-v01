@@ -266,7 +266,7 @@
   // outer stroke starts at SVG y=1.8 and lands exactly at the resting muzzle.
   const barrelScale=.49;
   const turretParts={
-    ground:{x:-59,y:26,w:118,h:26},
+    ground:{x:-59,y:19,w:118,h:31},
     barrel:{x:-22*barrelScale,y:-TUR_MUZZLE-1.8*barrelScale,w:44*barrelScale,h:78*barrelScale},
     body:{x:-28,y:-12,w:56,h:56},
     core:{x:-28,y:-12,w:56,h:56}

@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 50">
   <defs>
     <filter id="glow" x="-20%" y="-100%" width="140%" height="300%">
-      <feGaussianBlur stdDeviation="3.2"/>
+      <feGaussianBlur stdDeviation="3"/>
     </filter>
     <linearGradient id="rim" x2="0" y2="100%">
       <stop stop-color="#45caff" stop-opacity=".65"/>
@@ -9,6 +9,6 @@
       <stop offset="1" stop-color="#cefaff"/>
     </linearGradient>
   </defs>
-  <ellipse cx="80" cy="25" rx="66" ry="12" fill="#159aff" fill-opacity=".38" stroke="#19dfff" stroke-width="7" filter="url(#glow)"/>
-  <ellipse cx="80" cy="25" rx="67" ry="11.5" fill="#2198dc" fill-opacity=".19" stroke="url(#rim)" stroke-width="3.3"/>
+  <ellipse cx="80" cy="25" rx="66" ry="13.7" fill="#159aff" fill-opacity=".38" stroke="#19dfff" stroke-width="7" filter="url(#glow)"/>
+  <ellipse cx="80" cy="25" rx="67" ry="13.4" fill="#2198dc" fill-opacity=".19" stroke="url(#rim)" stroke-width="3.8"/>
 </svg>
