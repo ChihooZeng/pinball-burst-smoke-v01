@@ -53,14 +53,16 @@ try{
       return draw.apply(this,args);
     };
   `});
-  for(const [width,height] of [[360,640],[390,844],[1440,920]]){
+  for(const [width,height] of [[360,640],[390,844],[1440,900]]){
     await page.viewport(width,height,2,width<500);
     await page.goto(url);
     await page.eval("__pinballTest.begin();__pinballTest.spawnWave(19);__pinballTest.fillBallBudget()");
-    if(width<500){
-      const expected=[2*width,2*height];
-      assert.deepEqual(await page.eval("(()=>{const c=document.querySelector('#game');return [c.width,c.height]})()"),expected);
-    }
+    const canvas=await page.eval(`(()=>{
+      const c=document.querySelector("#game"),r=c.getBoundingClientRect(),s=__pinballState();
+      const backingWidth=Math.round(Math.min(r.width,r.height*s.worldWidth/s.worldHeight)*2);
+      return {actual:[c.width,c.height],expected:[backingWidth,Math.round(backingWidth*s.worldHeight/s.worldWidth)]};
+    })()`);
+    assert.deepEqual(canvas.actual,canvas.expected);
     await metrics(`dense-${width}x${height}`);
   }
   await page.viewport(360,640,2,true);

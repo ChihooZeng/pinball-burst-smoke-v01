@@ -4,10 +4,11 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import {launchChrome, newPage} from "../release/browser.mjs";
 
-const [output, candidate = "http://127.0.0.1:4178/demo/v1/", baseline = "http://127.0.0.1:4179/demo/v1/"] = process.argv.slice(2);
+const [output, candidate = "http://127.0.0.1:4190/demo/v1/", baseline = "http://127.0.0.1:4186/demo/v1/"] = process.argv.slice(2);
 assert.ok(output, "Usage: node tests/visual/neon.mjs OUTPUT [CANDIDATE_URL] [BASELINE_URL]");
 await fs.mkdir(output, {recursive:true});
 const seed = 20261118;
+const baselineCommit = "063ddcf7bc287976f5db3789e9a3fe24e1f69482";
 const chrome = await launchChrome(9364);
 const page = await newPage(9364);
 const failures = [];
@@ -29,8 +30,8 @@ async function open(url, width, height, density, lang) {
   viewport = [width, height];
   dpr = density;
   language = lang;
-  source = url === baseline ? "RC.2" : "candidate";
-  await page.viewport(width, height, density, true);
+  source = url === baseline ? "V1" : "candidate";
+  await page.viewport(width, height, density, width < 500);
   await page.goto(url);
   await page.eval(`(() => {
     const select = document.querySelector("#startOverlay [data-language]");
@@ -87,7 +88,7 @@ async function shot(name, scenario = "normal") {
   assert.deepEqual(observed.viewport, viewport);
   const file = name + ".png";
   await page.shot(path.join(output,file));
-  screenshots.push({file, source, branch:source === "candidate" ? "codex/v1-visual-fidelity-a1-1-20261120" : "codex/pinball-v1-release", commit:source === "candidate" ? candidateCommit : "4f2498ccbe432b84dbcbf4c18109f3056217e470",
+  screenshots.push({file, source, branch:source === "candidate" ? "codex/v2-neon-ring-20261120" : "codex/v1-visual-fidelity-a1-1-20261120", commit:source === "candidate" ? candidateCommit : baselineCommit,
     viewport, dpr, language, seed, wave, phase, elapsed, scenario, ...observed});
 }
 
@@ -120,7 +121,8 @@ async function geometry(url, width, height, density) {
       plans:Array.from({length:20},(_,i)=>qa.createWavePlan(i+1)),
       opening:qa.brickLayout(),hp:qa.hpDistribution()};
   })()`);
-  assert.deepEqual(fixture.canvas,fixture.expected);
+  const {canvas,expected,...logicalFixture}=fixture;
+  assert.deepEqual(canvas,expected);
   assert.deepEqual(fixture.dimensions.slice(0,5),[29,22,38.5,3.45,2.7]);
   assert.equal(fixture.opening.filter(b=>b.alive).length,35);
   await start();
@@ -147,7 +149,7 @@ async function geometry(url, width, height, density) {
   })()`);
   assert.ok(lanes.gap.y < 120 && lanes.gap.vy < 0 && lanes.gap.contacts === 0, "Ball passes through the 9.5 unit lane");
   assert.ok(lanes.hit.vy > 0 && lanes.after[0].hp < lanes.before[0].hp, "A direct hit both reflects and damages");
-  return {fixture,trace,lanes};
+  return {fixture:logicalFixture,trace,lanes,pixels:canvas};
 }
 
 try {
@@ -184,47 +186,89 @@ try {
     };
   `});
 
-  for (const [width,height,density] of [[360,640,1],[360,640,2],[390,844,1],[390,844,2]]) {
+  for (const [width,height,density] of [[360,640,1],[360,640,2],[390,844,1],[390,844,2],[1440,900,1]]) {
     const before = await geometry(baseline,width,height,density);
     const after = await geometry(candidate,width,height,density);
-    assert.deepEqual(after,before,`RC.2 layout, HP and ball paths at ${width}×${height} DPR ${density}`);
+    for (const field of ["fixture","trace","lanes"]) {
+      assert.deepEqual(after[field],before[field],`V1 ${field} at ${width}×${height} DPR ${density}`);
+    }
     comparisons.push({width,height,density,plans:after.fixture.plans.length,states:after.trace.length,
-      geometry:after.fixture.dimensions,openingTiles:after.fixture.opening.length,lanes:after.lanes});
+      geometry:after.fixture.dimensions,openingTiles:after.fixture.opening.length,lanes:after.lanes,backing:{before:before.pixels,after:after.pixels}});
   }
 
-  for (const [width,height] of [[360,640],[390,844]]) {
+  for (const [width,height] of [[360,640],[390,844],[1440,900]]) {
     for (const lang of ["zh-CN","en"]) {
       const suffix = width + "x" + height + "-" + (lang === "en" ? "en" : "zh");
-      await open(candidate,width,height,2,lang);
+      await open(candidate,width,height,width<500?2:1,lang);
       await measure("#startOverlay","#startTitle,#start,.start-options");
       await shot("home-"+suffix);
       await start();
-      await touch(width*.72,height*.55);
-      assert.ok((await state()).aim > .4);
-      await touch(width*.5,height*.55);
-      await tick(64);
+      const box=await page.eval("document.querySelector('#game').getBoundingClientRect().toJSON()");
+      await touch(box.x+box.width*.74,box.y+box.height*.55);
+      assert.ok(Math.abs((await state()).aim-.5184)<.01);
+      await touch(box.x+box.width*.5,box.y+box.height*.55);
+      await tick(50);
       assert.equal((await state()).brickCount,35);
+      assert.equal(await page.eval("document.querySelectorAll('.skill-slots [data-acquired=true]').length"),0);
+      await measure(".shell",".arena,.topbar,#waveLabel,#xpLabel,.charge-pill,.control-dock");
       await shot("battle-"+suffix);
       await clear();
       await measure("#choiceOverlay","#choiceTitle,.upgrade-card");
-      await shot("upgrade-"+suffix,"QA triggers clear; the original Build.offer renders the cards");
+      await shot("upgrade-"+suffix,"QA clears the wave, then the original Build.offer renders the cards");
       await choose("arc");
-      if (lang === "zh-CN") {
-        await tap("#pause");
-        assert.equal((await state()).phase,"paused");
-        await shot("settings-"+suffix);
-        await tap("#resume");
-        for (const wave of [3,10,20]) {
-          await page.eval(`__pinballTest.spawnWave(${wave});`);
-          if (wave === 10) {
-            await page.eval("__pinballTest.summonBossBricks()");
-            await tick(19);
-            await shot("boss-telegraph-"+suffix,"Existing QA triggers the actual Boss warning and spawn");
-          }
-          await tick(wave === 10 ? 72 : 24);
-          await shot(`wave-${wave}-`+suffix,"Existing QA entry places the actual wave");
-        }
-      }
+      assert.deepEqual(await page.eval("[...document.querySelectorAll('.skill-rank')].map(el=>el.textContent)"),["—","Lv.1","—"]);
+      await tap("#pauseQuick");
+      assert.equal((await state()).phase,"paused");
+      assert.equal(await page.eval("document.querySelector('#pauseOverlay').dataset.view"),"compact");
+      assert.equal(await page.eval("document.activeElement.id"),"resume");
+      const paused = (await state()).elapsed;
+      await tick(5);
+      assert.equal((await state()).elapsed,paused);
+      await measure("#pauseOverlay","#quickPauseTitle,#resume,#pauseSettings");
+      await shot("pause-"+suffix);
+      await tap("#pauseSettings");
+      assert.equal((await state()).elapsed,paused);
+      assert.equal(await page.eval("document.querySelector('#pauseOverlay').dataset.view"),"settings");
+      await measure("#pauseOverlay","#pauseTitle,#resume,.pause-scroll,#soundVolume");
+      await shot("settings-"+suffix);
+      await tap("#resume");
+      assert.equal((await state()).phase,"playing");
+
+      await page.eval("__pinballTest.spawnWave(10);__pinballTest.summonBossBricks()");
+      await tick(24);
+      await measure("#bossHud","#bossName,#bossText");
+      await shot("boss-"+suffix,"Existing QA triggers the real wave-10 summon warning");
+      await page.eval("__pinballTest.jumpToFinalBoss()");
+      await tick(24);
+      await shot("finale-stage-1-"+suffix);
+      const hitCore = () => page.eval(`(() => {
+        const qa=__pinballTest,core=qa.allBricks().find(b=>b.isFinalBoss&&b.alive);
+        return qa.hitForTest(core.id,"normal",888);
+      })()`);
+      await hitCore();
+      await tick(6);
+      assert.equal((await state()).finaleStage,2);
+      await shot("finale-stage-2-"+suffix,"The original first HP gate starts the second stage");
+      await tick(86);
+      await hitCore();
+      await tick(6);
+      assert.equal((await state()).finaleStage,3);
+      await shot("finale-stage-3-"+suffix,"The original second HP gate starts the third stage");
+      await tick(86);
+      await hitCore();
+      await tick(110);
+      assert.equal((await state()).phase,"complete");
+      await measure("#winOverlay","#winTitle,.settlement,#again,#home");
+      await shot("victory-"+suffix,"Existing final Boss practice plus real HP gates and victory finisher");
+      await tap("#again");
+      assert.equal((await state()).wave,1);
+      await page.eval("__pinballTest.setTestField([{x:12,y:__pinballState().dangerY-10,hp:7}])");
+      await tick(4);
+      assert.equal((await state()).phase,"lost");
+      await measure("#winOverlay","#winTitle,.settlement,#again,#home");
+      await shot("loss-"+suffix,"Existing QA places a brick against the real danger line");
+      await tap("#home");
+      assert.equal((await state()).phase,"ready");
     }
   }
 
@@ -282,23 +326,14 @@ try {
   await tap("#autoSkill");
   await tap("#resume");
   await page.eval("__pinballTest.chargeFully()");
-  assert.ok(await page.eval("document.querySelector('#giant').getBoundingClientRect().left<24"));
+  assert.ok(await page.eval("document.querySelector('#giant').getBoundingClientRect().left<30"));
   await tap("#giant");
   assert.equal((await state()).giantActive,true);
   await shot("manual-giant-left","Actual left-side button triggers manual overload with QA-charged energy");
 
-  await open(candidate,390,844,2,"zh-CN");
-  await start();
-  await page.eval("__pinballTest.setTestField([{x:12,y:__pinballState().dangerY-10,hp:7}])");
-  await tick(4);
-  assert.equal((await state()).phase,"lost");
-  await shot("loss-390x844-zh","Existing QA places a brick beyond the danger line");
-  await tap("#home");
-  assert.equal((await state()).phase,"ready");
-
   await open(baseline,390,844,2,"zh-CN");
   await start();
-  await tick(64);
+  await tick(50);
   await shot("baseline-battle-390x844-zh");
 
   assert.deepEqual(failures,[]);

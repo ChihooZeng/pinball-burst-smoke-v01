@@ -63,8 +63,32 @@ try {
   }
   const state=await page.eval("PinballGameAudio.getState()");
   for(const id of ["gun_fire","giant","boss_defeated","clear_upgrade"])assert.ok(state.plays[id]>0,JSON.stringify({id,plays:state.plays,loaded:state.loaded,errors, snapshot:await page.eval("(()=>{const {phase,elapsed,bossDefeats,screenClears,brickCount}=__pinballState();return {phase,elapsed,bossDefeats,screenClears,brickCount,events:__pinballTest.exportData().events.slice(-8)};})()")}));
-  const before=state.plays.brick_hit||0;
-  await page.eval("document.querySelector('#pause').click();document.querySelector('#mute').click();__pinballTest.playSfx('hit')");
+  await page.eval("document.querySelector('#pause').click()");
+  const paused=await page.eval("PinballGameAudio.getBgmState().elements.loop");
+  assert.equal(paused.paused,true);
+  const events=await page.eval("PinballGameAudio.EVENT_IDS");
+  for(let i=0;i<40;i++){
+    if(await page.eval("PinballGameAudio.EVENT_IDS.every(id=>PinballGameAudio.hasBuffer(id))"))break;
+    await sleep(100);
+  }
+  assert.equal(await page.eval("PinballGameAudio.EVENT_IDS.every(id=>PinballGameAudio.hasBuffer(id))"),true);
+  const cooldown=await page.eval("Math.max(...Object.values(PinballGameAudio.EVENTS).map(event=>event.cooldown))");
+  await sleep(cooldown+50);
+  const cueDeltas=await page.eval(`(() => {
+    const audio=PinballGameAudio,before=audio.getState().plays;
+    for(const id of audio.EVENT_IDS) __pinballTest.playSfx(id);
+    const after=audio.getState().plays;
+    return Object.fromEntries(audio.EVENT_IDS.map(id=>[id,(after[id]||0)-(before[id]||0)]));
+  })()`);
+  assert.deepEqual(cueDeltas,Object.fromEntries(events.map(id=>[id,1])));
+  await page.eval(`(() => {
+    const slider=document.querySelector("#soundVolume");
+    slider.value=51;
+    slider.dispatchEvent(new Event("input",{bubbles:true}));
+  })()`);
+  assert.equal(await page.eval("PinballGameAudio.getState().master"),.51);
+  const before=await page.eval("PinballGameAudio.getState().plays.brick_hit");
+  await page.eval("document.querySelector('#mute').click();__pinballTest.playSfx('hit')");
   const muted=await page.eval("PinballGameAudio.getState()");
   assert.equal(muted.masterMuted,true);
   assert.equal(muted.plays.brick_hit||0,before);
@@ -78,7 +102,9 @@ try {
   await page.goto(url);
   assert.equal(await page.eval("document.querySelector('#mute').checked"),true);
   assert.deepEqual(errors,[]);
-  console.log("PASS real first-touch playback, BGM media time, new combat cues, mute, persistence and mixed audio capture");
+  assert.equal(await page.eval("Number(document.querySelector('#soundVolume').value)"),51);
+  console.log(JSON.stringify({cueDeltas,errors}));
+  console.log("PASS real first-touch playback, all mapped SFX, BGM pause, volume, mute, persistence and capture");
 } finally {
   await page.close();
   chrome.kill();

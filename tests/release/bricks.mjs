@@ -31,7 +31,7 @@ try {
       return roundRect.call(this,x,y,w,h,...args);
     };
     CanvasRenderingContext2D.prototype.stroke = function(...args){
-      if(window.captureLabels && rounded && Math.abs(rounded.w-27.7)<.01 && Math.abs(rounded.h-20.7)<.01){
+      if(this.canvas.id==="game" && this.lineWidth>=1 && window.captureLabels && rounded && Math.abs(rounded.w-27.7)<.01 && Math.abs(rounded.h-20.7)<.01){
         const target=window.__pinballTest.allBricks().find(b=>b.alive && Math.abs(b.x+.65-rounded.x)<.01 && Math.abs(b.y+.65-rounded.y)<.01);
         if(target?.hp===1 && !target.special && !target.isElite && !target.bossSupport) lowBrickColors.add(this.strokeStyle);
       }
@@ -74,7 +74,8 @@ try {
       await page.eval("window.captureLabels=false");
       if(wave<=4 && mode==="after"){
         waveData[wave-1].renderedLowBrickColors=await page.eval("[...lowBrickColors].sort()");
-        assert.equal(waveData[wave-1].renderedLowBrickColors.length,3,`wave ${wave} should render three ordinary 1HP colors`);
+        assert.deepEqual(waveData[wave-1].renderedLowBrickColors,["#6ee7ff","#7cc8ff","#a1a8ff","#c68aff","#ff8aef"],
+          `wave ${wave} must render the complete approved palette`);
       }
       if(wave===1 && mode==="after") {
         assert.equal(await page.eval("canvasLabels.some(label=>label.text==='1')"),false,"ordinary 1HP must render without a number");
