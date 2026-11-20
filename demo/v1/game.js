@@ -59,7 +59,12 @@
   function showCards(seed=false){
     $("choiceTitle").textContent=translate(!build.seedAbility?"selectSpecialty":"selectUpgrade");
     $("choiceWave").textContent=!build.seedAbility?translate("firstUpgrade"):translate("upgradeHeader",{wave,level});
-    for(let i=0;i<3;i++){const card=Build.card(build,choiceSet[i]);$("choiceTitle"+i).textContent=card.title;$("choiceDesc"+i).textContent=card.description;}
+    for(let i=0;i<3;i++){
+      const id=choiceSet[i],card=Build.card(build,id);
+      $("choice"+i).dataset.family=Build.DEFS[id]?.family||"";
+      $("choiceTitle"+i).textContent=card.title;
+      $("choiceDesc"+i).textContent=card.description;
+    }
     ui.choice.classList.remove("hidden");
   }
   const bestRunKey="pinball-v1-best-runs";
@@ -96,6 +101,7 @@
     if(outcome!=="lost"&&outcome!=="complete")return;
     const won=outcome==="complete";
     $("winLabel").textContent=translate(won?"wonLabel":"lostLabel");
+    $("winLabel").dataset.outcome=outcome;
     $("winTitle").textContent=translate(won?"winTitle":"lossTitle");
     const time=durationText(elapsed);
     const name=Build.DEFS[build.coreBranch||build.seedAbility]?.name||translate("cannon");
@@ -175,29 +181,35 @@
     {cut:[.23,.55,.89],tiers:[[1,1],[9,21],[25,43],[46,62]]},
     {cut:[.23,.55,.88],tiers:[[1,1],[11,24],[30,50],[53,72]]}
   ];
-  // Fixed HP bands with three face colors for ordinary 1HP bricks in waves 1–4.
+  // Rendering colors share the CSS tokens. HP bands and the early color index stay unchanged.
+  const visualTokens=getComputedStyle(document.documentElement);
+  const readColor=name=>visualTokens.getPropertyValue(name).trim();
+  const [cyan,blue,periwinkle,purple,pink]=["--cyan","--blue","--periwinkle","--purple","--pink"].map(readColor);
+  const arenaArt={base:readColor("--base"),canvas:readColor("--canvas"),lit:readColor("--canvas-lit"),grid:readColor("--grid"),danger:readColor("--danger")};
+  function brickPaint(edge,top,bottom){
+    return {edge,ft:withAlpha(edge,top),fb:withAlpha(edge,bottom)};
+  }
   const BRICK_ART={
     ramp:[
-      {max:1,        edge:"#6AFF80", ft:"#189655", fb:"#075638"},
-      {max:2,        edge:"#5397FF", ft:"#2569D8", fb:"#153D89"},
-      {max:6,        edge:"#FFD54B", ft:"#AA7C04", fb:"#644600"},
-      {max:12,       edge:"#FF65D6", ft:"#BB3D9E", fb:"#6C185D"},
-      {max:24,       edge:"#FF9C49", ft:"#C95D1E", fb:"#6C2B0B"},
-      {max:48,       edge:"#A992FF", ft:"#674ACA", fb:"#352075"},
-      {max:Infinity, edge:"#FF6073", ft:"#BA354F", fb:"#691629"}
+      {max:1,        ...brickPaint(cyan,.96,.81)},
+      {max:2,        ...brickPaint(blue,.84,.65)},
+      {max:6,        ...brickPaint(periwinkle,.81,.61)},
+      {max:12,       ...brickPaint(purple,.79,.58)},
+      {max:24,       ...brickPaint(pink,.75,.53)},
+      {max:48,       ...brickPaint(purple,.65,.43)},
+      {max:Infinity, ...brickPaint(pink,.64,.40)}
     ],
-    special:{edge:"#2DF7DA", ft:"#008875", fb:"#005746", border:1.3, blur:8},
-    elite:{edge:"#FFF1CA", ft:"#81704C", fb:"#49402A", border:1.6, blur:10},
-    summon:{edge:"#CDE6FF", ft:"#527993", fb:"#314B66", border:1.3, blur:8},
-    // Boss 保持深色底 + 霓虹框（与普通砖拉开层级）
-    boss:{edge:"#B26CFF", glow:"#A855F7", base:"#1D0B3A"},
-    finalBoss:{edge:"#FF7AD9", glow:"#F472B6", base:"#2E0A2A"},
+    special:{...brickPaint(cyan,.65,.39),blur:3},
+    elite:{...brickPaint(blue,.52,.29),border:1.6,blur:4},
+    summon:{...brickPaint(periwinkle,.56,.34),blur:3},
+    boss:{edge:purple,glow:periwinkle,base:"#221b4d"},
+    finalBoss:{edge:pink,glow:pink,base:"#2e163d"},
     radius:4
   };
   const EARLY_ONE_HP_ART=[
     BRICK_ART.ramp[0],
-    {edge:"#FF805C", ft:"#CF4A2F", fb:"#83261B"},
-    {edge:"#E483FF", ft:"#A43BC2", fb:"#5D1F79"}
+    brickPaint(pink,.95,.80),
+    brickPaint(purple,.94,.79)
   ];
   function earlyOneHpStyle(brick){
     if(wave>4||brick.hp!==1||brick.special||brick.isElite||brick.bossSupport||brick.isBoss)return null;
@@ -250,23 +262,20 @@
   };
   const shooter = {x: W / 2, y: H - 37};
 
-  /* V3.1 炮台：底座/主体/核心固定，只有炮管绕锚点旋转。
-     素材由 experiments/turret-v31-preview/turret.svg 分层导出，1 游戏单位 = 6 素材像素。
-     锚点 (256,196) 在出球基准点上方 8 单位，炮口 (256,56) 距锚点 23.33 单位。
-     x/y/w/h 必须填素材在 512 画布里的**裁剪原点与尺寸**（viewBox 单位），不能随手改成"看起来居中"的数：
-     源图里机体中心 255.75、底座中心 255.75、核心中心 255.5、炮管中心 256，全部同轴，
-     按裁剪原点落位后三条中心轴才会与旋转轴 (256) 重合。 */
   const TUR_PIVOT_LIFT=8, TUR_MUZZLE=23.33, TUR_RECOIL=2;
-  const turretParts=[
-    {src:"./assets/turret-v31/assembly@2x.png",x:138,y:160,w:272,h:292,img:null},
-    {src:"./assets/turret-v31/barrel@2x.png",x:214,y:44,w:84,h:176,img:null}
-  ];
-  let turretReady=0;
-  for(const part of turretParts){
+  // All offsets are relative to the existing physical pivot. The barrel's
+  // outer stroke starts at SVG y=1.8 and lands exactly at the resting muzzle.
+  const barrelScale=.46;
+  const turretParts={
+    ground:{x:-42,y:29,w:84,h:19},
+    barrel:{x:-22*barrelScale,y:-TUR_MUZZLE-1.8*barrelScale,w:44*barrelScale,h:78*barrelScale},
+    body:{x:-28,y:-12,w:56,h:56},
+    core:{x:-28,y:-12,w:56,h:56}
+  };
+  for(const [name,part] of Object.entries(turretParts)){
     const img=new Image();
-    img.onload=()=>{part.img=img;part.lx=(part.x-256)/6;part.ly=(part.y-196)/6;part.lw=part.w/6;part.lh=part.h/6;turretReady++;};
-    img.onerror=()=>{part.failed=true;turretReady++;};
-    img.src=part.src;
+    img.onload=()=>{part.img=img;};
+    img.src="./assets/neon/turret-a1-1/"+name+".svg";
   }
   const palette = ["#498cc2", "#518eae", "#8475c9", "#ba8e5a", "#637ab0"];
   const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
@@ -1591,23 +1600,20 @@
     ctx.closePath();
   }
 
-  /* —— 砖块绘制基础件：所有砖块共用同一套"深色底 + 霓虹边 + 数字"语言 —— */
   function withAlpha(hex,a){
     const n=parseInt(hex.slice(1),16);
     return "rgba("+((n>>16)&255)+","+((n>>8)&255)+","+(n&255)+","+a+")";
   }
   function brickTile(x,y,w,h,r,style,blur){
-    // Opaque color face with a soft halo and a crisp edge.
-    ctx.save();
-    ctx.shadowColor=withAlpha(style.edge,.64);ctx.shadowBlur=blur;
     const g=ctx.createLinearGradient(0,y,0,y+h);
     g.addColorStop(0,style.ft);g.addColorStop(1,style.fb);
-    ctx.fillStyle=g;rounded(x,y,w,h,r);ctx.fill();
-    ctx.restore();
-    // 顶部内侧高光：让砖块有厚度，但不加纹理
-    ctx.save();ctx.globalAlpha=.13;ctx.fillStyle="#ffffff";
-    rounded(x+1.6,y+1.4,w-3.2,Math.min(5.5,h*.28),Math.max(1,r-1));ctx.fill();ctx.restore();
-    // 霓虹描边：精英砖 1.6px，其余 1.3px（V1.0 规范）
+    ctx.fillStyle=g;
+    rounded(x,y,w,h,r);
+    if(blur){
+      ctx.save();
+      ctx.shadowColor=withAlpha(style.edge,.32);ctx.shadowBlur=blur;
+      ctx.fill();ctx.restore();
+    }else ctx.fill();
     const bw=style.border||1.3;
     ctx.strokeStyle=style.edge;ctx.lineWidth=bw;
     rounded(x+bw*.5,y+bw*.5,w-bw,h-bw,r);ctx.stroke();
@@ -1753,16 +1759,17 @@
       ctx.translate((Math.random()-.5)*amp*2,(Math.random()-.5)*amp*2);
     }
     juice.applyCamera(ctx);
-    const bg = ctx.createLinearGradient(0,0,0,H);
-    bg.addColorStop(0,"#0c2039");bg.addColorStop(1,"#081526");
+    const bg=ctx.createLinearGradient(0,0,0,H);
+    bg.addColorStop(0,arenaArt.lit);bg.addColorStop(.7,arenaArt.canvas);bg.addColorStop(1,arenaArt.base);
     ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
-    ctx.strokeStyle="#ffffff08";ctx.lineWidth=1;
-    for(let x=0;x<W;x+=30){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
-    for(let y=0;y<H;y+=30){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+    ctx.strokeStyle=arenaArt.grid;ctx.lineWidth=1;ctx.beginPath();
+    for(let x=0;x<W;x+=30){ctx.moveTo(x+.5,0);ctx.lineTo(x+.5,H);}
+    for(let y=0;y<H;y+=30){ctx.moveTo(0,y+.5);ctx.lineTo(W,y+.5);}
+    ctx.stroke();
     ctx.save();
-    ctx.setLineDash([8,5]);ctx.strokeStyle="#ff667c";ctx.lineWidth=2;
+    ctx.setLineDash([8,5]);ctx.strokeStyle=arenaArt.danger;ctx.lineWidth=1.6;
     ctx.beginPath();ctx.moveTo(0,DANGER_Y);ctx.lineTo(W,DANGER_Y);ctx.stroke();ctx.setLineDash([]);
-    ctx.fillStyle="#ffb3bd";ctx.font="bold 10px system-ui";ctx.textAlign="left";ctx.fillText(translate("danger"),7,DANGER_Y-8);
+    ctx.fillStyle=arenaArt.danger;ctx.font="bold 11px system-ui";ctx.textAlign="left";ctx.fillText(translate("danger"),10,DANGER_Y-8);
     if(clearFlash>0){ctx.fillStyle="rgba(80,246,216,"+(clearFlash*.12)+")";ctx.fillRect(0,0,W,H);}
     ctx.restore();
     // Lightweight telegraph: a flickering outline appears before a Boss brick
@@ -1839,7 +1846,7 @@
       // 特殊砖使用独立配色和图标。
       const style=brick.special?BRICK_ART.special:
         (brick.isElite?BRICK_ART.elite:(brick.bossSupport?BRICK_ART.summon:earlyOneHpStyle(brick)||brickStyle(brick.hp,false)));
-      const blur=renderQuality==="full"?(style.blur||8):0;
+      const blur=renderQuality==="full"?(style.blur||0):0;
       brickTile(brick.x,brick.y,brick.w,brick.h,brick.isElite?5:BRICK_ART.radius,style,blur);
       if(brick.cracked)brickCracks(brick);
       brickFlash(brick);
@@ -1868,12 +1875,23 @@
       }
       ctx.restore();
     }
-    ctx.fillStyle="#93b6d23d";ctx.fillRect(0,H-78,W,1);
+    const railY=H-26;
+    ctx.fillStyle=withAlpha(blue,.08);ctx.strokeStyle=withAlpha(blue,.38);ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(0,railY);ctx.lineTo(W*.29,railY);
+    ctx.quadraticCurveTo(W*.32,railY,W*.35,railY-11);
+    ctx.quadraticCurveTo(W*.37,railY-17,W*.40,railY-17);
+    ctx.lineTo(W*.60,railY-17);
+    ctx.quadraticCurveTo(W*.63,railY-17,W*.65,railY-11);
+    ctx.quadraticCurveTo(W*.68,railY,W*.71,railY);ctx.lineTo(W,railY);
+    ctx.stroke();ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.closePath();ctx.fill();
+    const cannonAim=cannonAngle();
     if(phase==="playing"){
-      ctx.save();ctx.setLineDash([6,8]);ctx.lineWidth=2;ctx.strokeStyle="#9eeaff88";
-      ctx.beginPath();ctx.moveTo(shooter.x,shooter.y-17);
-      ctx.lineTo(shooter.x+Math.sin(aim)*220,shooter.y-17-Math.cos(aim)*220);
-      ctx.stroke();ctx.restore();
+      const guideLength=Math.max(218,H*.52);
+      ctx.save();ctx.translate(shooter.x,shooter.y-TUR_PIVOT_LIFT);ctx.rotate(cannonAim);
+      ctx.setLineDash([6,6]);ctx.lineWidth=1.45;ctx.strokeStyle=withAlpha(cyan,.8);
+      ctx.beginPath();ctx.moveTo(0,-TUR_MUZZLE-3);ctx.lineTo(0,-guideLength);ctx.stroke();
+      ctx.fillStyle=cyan;ctx.beginPath();ctx.moveTo(0,-guideLength-8);ctx.lineTo(4,-guideLength);ctx.lineTo(-4,-guideLength);ctx.fill();
+      ctx.restore();
     }
     for(const b of balls){
       b.trail.forEach((p,i)=>{const t=1-i/b.trail.length;ctx.fillStyle="rgba(139,224,250,"+(.18*t)+")";
@@ -1962,27 +1980,34 @@
       ctx.restore();
       ctx.globalAlpha=1;
     }
-    // V3.1：机体（底座+主体+核心）固定不转，炮管绕锚点独立旋转
-    const cannonAim=cannonAngle();
-    const turretX=shooter.x,turretY=shooter.y-TUR_PIVOT_LIFT;
-    if(turretReady===2&&turretParts[0].img&&turretParts[1].img){
-      const A=turretParts[0],B=turretParts[1];
-      ctx.drawImage(A.img,turretX+A.lx,turretY+A.ly,A.lw,A.lh);
-      ctx.save();ctx.translate(turretX,turretY);ctx.rotate(cannonAim);
-      if(turretRecoil>0)ctx.translate(0,turretRecoil*TUR_RECOIL);
-      ctx.drawImage(B.img,B.lx,B.ly,B.lw,B.lh);
-      if(gunFlash>0){ctx.fillStyle=Build.tuning(build).isGun?"#ffda84":"#9ce9ff";ctx.beginPath();ctx.arc(0,-TUR_MUZZLE-3,2+gunFlash*34,0,Math.PI*2);ctx.fill();}
-      ctx.restore();
-    }else{
-      // 素材未就绪/加载失败：保留旧胶囊炮塔
-      ctx.save();ctx.translate(shooter.x,shooter.y);ctx.rotate(cannonAim);
-      if(gunFlash>0){ctx.fillStyle=Build.tuning(build).isGun?"#ffda84":"#9ce9ff";ctx.beginPath();ctx.arc(0,-32,3+gunFlash*50,0,Math.PI*2);ctx.fill();}
-      ctx.shadowColor="#5be9fb";ctx.shadowBlur=16;ctx.fillStyle="#398ba4";
-      rounded(-15,-10,30,30,9);ctx.fill();ctx.fillStyle="#b7edff";
-      rounded(-5,-29,10,27,4);ctx.fill();ctx.restore();
+    drawTurret(cannonAim);
+    ctx.restore();
+  }
+  function drawTurret(angle){
+    const {ground,barrel,body,core}=turretParts;
+    ctx.save();
+    ctx.translate(shooter.x,shooter.y-TUR_PIVOT_LIFT);
+    if(ground.img)ctx.drawImage(ground.img,ground.x,ground.y,ground.w,ground.h);
+    ctx.save();
+    ctx.rotate(angle);
+    if(turretRecoil>0)ctx.translate(0,turretRecoil*TUR_RECOIL);
+    if(barrel.img)ctx.drawImage(barrel.img,barrel.x,barrel.y,barrel.w,barrel.h);
+    else{
+      ctx.fillStyle=cyan;
+      rounded(-5,-TUR_MUZZLE,10,30,3);ctx.fill();
     }
-    ctx.fillStyle="#a6c5d9";ctx.textAlign="center";ctx.font="12px system-ui";
-    
+    if(gunFlash>0){ctx.fillStyle=Build.tuning(build).isGun?"#ffda84":"#9ce9ff";ctx.beginPath();ctx.arc(0,-TUR_MUZZLE-3,2+gunFlash*34,0,Math.PI*2);ctx.fill();}
+    ctx.restore();
+    if(body.img)ctx.drawImage(body.img,body.x,body.y,body.w,body.h);
+    else{
+      ctx.fillStyle="#165494";ctx.strokeStyle="#d1f9ff";ctx.lineWidth=1.6;
+      rounded(-24.6,-8.6,49.2,49.2,12);ctx.fill();ctx.stroke();
+    }
+    if(core.img)ctx.drawImage(core.img,core.x,core.y,core.w,core.h);
+    else{
+      ctx.fillStyle=cyan;ctx.beginPath();ctx.arc(0,16,13.4,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle="#cbfcff";ctx.beginPath();ctx.arc(0,16,8.4,0,Math.PI*2);ctx.fill();
+    }
     ctx.restore();
   }
   function renderBuildPanel(){
