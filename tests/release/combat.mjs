@@ -66,7 +66,8 @@ try {
   await sleep(500);
   const next=await page.eval(getFloor);
   assert.ok(next.gap<start.gap);
-  assert.ok(start.gap*(next.elapsed-start.elapsed)/(start.gap-next.gap)>=25.5);
+  const responseSeconds=start.gap*(next.elapsed-start.elapsed)/(start.gap-next.gap);
+  assert.ok(Math.abs(responseSeconds-17.0)<.25,"wave 19 uses the tuned pressure window: "+responseSeconds);
   console.log("PASS per-target gun pressure and wave 19 response window");
   console.log("PASS Arc retargeting, ordinary armor, overload synergy and Focus damage");
 } finally {

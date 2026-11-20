@@ -24,7 +24,7 @@
   let H=MIN_WORLD_HEIGHT, DANGER_Y=455;
   let pausedFrom=null, focusBeforePause=null, battleTime=0, waveMetrics=null, waveReports=[], bankDamage=0;
   let precisionTurns=0,focusDamage=0,gunBonusDamage=0,weakpointDamage=0,weakpointCharge=0,damageDealt=0,shotsWithContact=0;
-  let waveFallMultiplier=1;
+  let waveFallMultiplier=1, cleanupGuideAfter=12;
   const FIRST_SKILL_KEY='pinball-overload-first-skill-v1',SIDE_KEY='pinball-overload-skill-side-v1',AUTO_KEY='pinball-overload-auto-skill-v1';
   let firstSkillUsed=false,skillSide='right',autoSkill=true;
   try{firstSkillUsed=localStorage.getItem(FIRST_SKILL_KEY)==='done';skillSide=localStorage.getItem(SIDE_KEY)==='left'?'left':'right';autoSkill=localStorage.getItem(AUTO_KEY)!=='no';}catch(e){}
@@ -546,6 +546,13 @@
     }
     return result;
   }
+  // Time for the starting bottom row to reach the line if the field is untouched.
+  // Ordinary waves use the actual opening gap so the same pressure applies to
+  // short and tall courts. Boss 10 and 20 retain their separate movement clocks.
+  const WAVE_RESPONSE_SECONDS=[
+    35,31.5,29.6,28.2,27,25.9,24.9,24.1,23.5,null,
+    22.3,21.6,20.9,20.2,19.5,18.8,18.2,17.6,17.0,null
+  ];
   function normalDropSpeed(n){
     const latePressure=n>=11&&n<=19?1+(n-10)*.022:1;
     return Math.min(8.4,FALL_BASE+Math.max(0,n-1)*.09)*CFG.fallScale*latePressure;
@@ -560,20 +567,21 @@
       {...tile,special:tile.special,summonAge:0,summonSource:"wave"}));
     if(isBossWave(n))bossSpawn();
     if(n>1){record("wave_start");if(isBossWave(n))record("boss_start");}
-    // Compensate for added 5px vertical pitch so the same phone does not
-    // suddenly lose ~40px of its original warning time.
     const bottom=Math.max(...bricks.map(b=>b.y+b.h));
     const gap=Math.max(0,DANGER_Y-bottom);
-    const extraHeight=(n===1?4:n===5?6:n===10||n===20?7:8)*(WAVE_ROW_GAP-28);
-    const virtualOldGap=gap+extraHeight;
-    const oldReferenceGap=455-(84+8*28+BRICK_H);
-    const oldHeightFactor=Math.max(1,Math.min(3.2,1+Math.max(0,virtualOldGap/oldReferenceGap-1)*.70));
-    waveFallMultiplier=n===1?1:oldHeightFactor*Math.max(.58,gap/Math.max(1,virtualOldGap));
-    // Give the last dense formations enough response time on short screens.
-    // The actual HP, positions, and Boss pressure stay intact.
-    const responseTime=n===18?22:n===19?26:0;
-    if(responseTime>0&&gap>0)waveFallMultiplier=Math.min(waveFallMultiplier,gap/(normalDropSpeed(n)*responseTime));
-    record("wave_pressure",{wave:n,fallMultiplier:+waveFallMultiplier.toFixed(3),gap:+gap.toFixed(1)});
+    const responseSeconds=WAVE_RESPONSE_SECONDS[n-1];
+    // The generic late cleanup assist is less immediate on advanced waves.
+    // Build-earned pursuit and independent Boss pacing keep their own rules.
+    cleanupGuideAfter=responseSeconds?12+Math.max(0,n-10)*1.2:12;
+    if(responseSeconds){
+      waveFallMultiplier=gap/(responseSeconds*normalDropSpeed(n));
+    }else{
+      const virtualOldGap=gap+7*(WAVE_ROW_GAP-28);
+      const oldReferenceGap=455-(84+8*28+BRICK_H);
+      const heightFactor=Math.max(1,Math.min(3.2,1+Math.max(0,virtualOldGap/oldReferenceGap-1)*.70));
+      waveFallMultiplier=heightFactor*Math.max(.58,gap/Math.max(1,virtualOldGap));
+    }
+    record("wave_pressure",{wave:n,fallMultiplier:+waveFallMultiplier.toFixed(3),gap:+gap.toFixed(1),responseSeconds});
     waveStartingTargets=livingCount();
     clearPreview=[];clearPreviewShown=false;clearWindowActive=false;
     waveSpawnCount++;clearBurstCount=Math.max(0,n-1);clearBurstTiles=tiles.length;
@@ -1065,7 +1073,7 @@
   function updateBall(ball,dt){
     const sparse=livingCount()>0&&livingCount()<=5;
     const pursuing=ball.mini&&ball.pursuitLeft>0;
-    if(sparse&&(pursuing||waveElapsed>12)&&elapsed>=(ball.guideAt??0)){
+    if(sparse&&(pursuing||waveElapsed>cleanupGuideAfter)&&elapsed>=(ball.guideAt??0)){
       const target=bricks.filter(b=>b.alive).sort((a,b)=>Math.hypot(a.x+a.w/2-ball.x,a.y+a.h/2-ball.y)-Math.hypot(b.x+b.w/2-ball.x,b.y+b.h/2-ball.y))[0];
       const dx=target.x+target.w/2-ball.x,dy=target.y+target.h/2-ball.y,d=Math.hypot(dx,dy),v=Math.hypot(ball.vx,ball.vy);
       if(d>target.w*.7){ball.vx=v*dx/d;ball.vy=v*dy/d;precisionTurns++;if(pursuing)ball.pursuitLeft--;}
