@@ -156,65 +156,6 @@ const EVENTS = Object.freeze({
     maxVoices: 1,
     priority: 2
   },
-  arc: {
-    id: "arc",
-    name: "连锁闪电",
-    hint: "电弧每跳一次都会触发，已限流 220ms / 单层",
-    /* 11-11：第一批（噪声+带通一条路线）全部被否，这批换六种不同构造，实测暂无定论。
-       增益不是拍脑袋给的，是按「播放后 30ms 短时响度对齐 0.030」倒推的，
-       比击破（0.056）低约 5dB —— 它一次连锁要连响好几声，不能按单发音量配。 */
-    variants: Object.freeze([
-      Object.freeze({
-        id: "arc-b01-electrified-wood",
-        label: "ARC-B1 · 电化木裂（0.10s）",
-        detail: "砖块击破木料加速 1.35 + 高通 380Hz，尾补火花 / 质心 561Hz",
-        url: "audio/arc-b01-electrified-wood.wav",
-        gain: .23
-      }),
-      Object.freeze({
-        id: "arc-b02-metal-snap",
-        label: "ARC-B2 · 铁皮弹击（0.11s）",
-        detail: "金属共振 1650/2475/920Hz + 木质点击 / 质心 623Hz",
-        url: "audio/arc-b02-metal-snap.wav",
-        gain: .27
-      }),
-      Object.freeze({
-        id: "arc-b03-precharge",
-        label: "ARC-B3 · 反向预充（0.10s）",
-        detail: "26ms 吸气再炸开 / 质心 657Hz / 唯一有蓄电过程",
-        url: "audio/arc-b03-precharge.wav",
-        gain: .16
-      }),
-      Object.freeze({
-        id: "arc-b04-razor-buzz",
-        label: "ARC-B4 · 电钻嗡（0.10s）",
-        detail: "真实录音 razor_buzz 880ms 处最平滑的一段 / 质心 1451Hz / 4kHz 以上 2.9%",
-        url: "audio/arc-b04-razor-buzz.wav",
-        gain: .33
-      }),
-      Object.freeze({
-        id: "arc-b05-crack-snap",
-        label: "ARC-B5 · 干裂脆响（0.075s）",
-        detail: "真实录音 snap 主击穿处 / 质心 1154Hz",
-        url: "audio/arc-b05-crack-snap.wav",
-        gain: .19
-      }),
-      Object.freeze({
-        id: "arc-b06-low-pulse",
-        label: "ARC-B6 · 低频电击（0.12s）",
-        detail: "112Hz 冲击 + 640Hz 身体 + 4ms 电花 / 质心 111Hz",
-        url: "audio/arc-b06-low-pulse.wav",
-        gain: .16
-      }),
-    ]),
-    defaultVariant: "arc-b02-metal-snap",
-    duck: .8,
-    maxDuration: .16,
-    cooldown: 220,
-    maxVoices: 1,
-    priority: 2
-  },
-
   /* ---- 以下三类为 2026-11-09 用户拍板的系统音，固定素材，不提供候选 ---- */
   ui_start: {
     id: "ui_start",
@@ -277,14 +218,13 @@ const EVENTS = Object.freeze({
     maxVoices: 3,
     priority: 1
   },
-  combo: cue("combo","连击","audio/combo-chime.wav",.24,.15,600,3,.78),
-  gun_fire: cue("gun_fire","机枪","audio/cannon-feed.wav",.18,.14,130,1,.86),
   giant: cue("giant","超载","audio/overload-launch.wav",.55,.55,900,4,.60),
-  boss_defeated: cue("boss_defeated","核心击破","audio/core-break.wav",.60,.70,1200,5,.42),
   victory: cue("victory","挑战完成","audio/victory-chime.wav",.50,1.3,1500,5,.35)
 });
 
 const EVENT_IDS = Object.keys(EVENTS);
+// These gameplay events are still dispatched. Consume them without a sample or fallback.
+const SILENT_EVENTS = new Set(["arc", "combo", "gun_fire", "boss_defeated"]);
 /* 旧事件名 -> V2.1 事件。砖甲受击由普通命中与装甲命中合并而来。 */
 const ALIAS = Object.freeze({
   hit: "brick_hit",
@@ -533,6 +473,7 @@ function setEnabled(on) {
    false 表示这是合成音事件，交回 game.js 的旧 beep 分支。 */
 function play(kind, master) {
   const eventId = ALIAS[kind] || kind;
+  if (SILENT_EVENTS.has(eventId)) return true;
   const event = EVENTS[eventId];
   if (!event) return false;
   if (typeof master === "number") setVolume(master);

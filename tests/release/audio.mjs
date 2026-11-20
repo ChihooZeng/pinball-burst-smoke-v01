@@ -6,6 +6,11 @@ const [output,url="http://127.0.0.1:4180/demo/v1/"] = process.argv.slice(2);
 const chrome=await launchChrome(9348);
 const page=await newPage(9348);
 const errors=[];
+const retired=["arc","combo","gun_fire","boss_defeated"];
+const requests=[];
+page.on(event=>{
+  if(event.method==="Network.requestWillBeSent")requests.push(event.params.request.url);
+});
 page.on(event=>{
   if(event.method==="Runtime.exceptionThrown") errors.push(event.params.exceptionDetails.exception?.description);
   if(event.method==="Log.entryAdded"&&event.params.entry.level==="error") errors.push(event.params.entry.text);
@@ -14,6 +19,7 @@ try {
   await page.send("Page.enable");
   await page.send("Runtime.enable");
   await page.send("Log.enable");
+  await page.send("Network.enable");
   await page.send("Page.addScriptToEvaluateOnNewDocument",{source:`
     window.__PINBALL_TEST__=true;
     const connect=AudioNode.prototype.connect;
@@ -62,11 +68,20 @@ try {
     await sleep(250);
   }
   const state=await page.eval("PinballGameAudio.getState()");
-  for(const id of ["gun_fire","giant","boss_defeated","clear_upgrade"])assert.ok(state.plays[id]>0,JSON.stringify({id,plays:state.plays,loaded:state.loaded,errors, snapshot:await page.eval("(()=>{const {phase,elapsed,bossDefeats,screenClears,brickCount}=__pinballState();return {phase,elapsed,bossDefeats,screenClears,brickCount,events:__pinballTest.exportData().events.slice(-8)};})()")}));
+  for(const id of ["giant","clear_upgrade"])assert.ok(state.plays[id]>0,JSON.stringify({id,plays:state.plays,loaded:state.loaded,errors, snapshot:await page.eval("(()=>{const {phase,elapsed,bossDefeats,screenClears,brickCount}=__pinballState();return {phase,elapsed,bossDefeats,screenClears,brickCount,events:__pinballTest.exportData().events.slice(-8)};})()")}));
   await page.eval("document.querySelector('#pause').click()");
   const paused=await page.eval("PinballGameAudio.getBgmState().elements.loop");
   assert.equal(paused.paused,true);
   const events=await page.eval("PinballGameAudio.EVENT_IDS");
+  assert.equal(events.length,10);
+  const silence=await page.eval(`(() => {
+    const engine=PinballGameAudio;
+    return ${JSON.stringify(retired)}.map(id=>{
+      const handled=engine.play(id);
+      return {id,handled,played:engine.getState().plays[id]||0,loaded:engine.hasBuffer(id)};
+    });
+  })()`);
+  for(const result of silence)assert.deepEqual(result,{id:result.id,handled:true,played:0,loaded:false});
   for(let i=0;i<40;i++){
     if(await page.eval("PinballGameAudio.EVENT_IDS.every(id=>PinballGameAudio.hasBuffer(id))"))break;
     await sleep(100);
@@ -103,7 +118,8 @@ try {
   assert.equal(await page.eval("document.querySelector('#mute').checked"),true);
   assert.deepEqual(errors,[]);
   assert.equal(await page.eval("Number(document.querySelector('#soundVolume').value)"),51);
-  console.log(JSON.stringify({cueDeltas,errors}));
+  assert.ok(!requests.some(url=>/arc-b0[1-6]|combo-chime|cannon-feed|core-break/.test(url)));
+  console.log(JSON.stringify({cueDeltas,silence,errors}));
   console.log("PASS real first-touch playback, all mapped SFX, BGM pause, volume, mute, persistence and capture");
 } finally {
   await page.close();
