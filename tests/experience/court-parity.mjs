@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import {entry,instrument} from "./browser.mjs";
 
-const [out,base,candidate]=process.argv.slice(2);
+const [out,base,candidate,mode]=process.argv.slice(2);
 const {page,errors,close}=await instrument(9463);
 const views=[[360,640],[390,844],[430,932],[1440,900]];
 const captures=[];
@@ -74,7 +74,16 @@ try{
       playing.push(await page.eval(simulate));
     }
     const [before,after]=playing;
-    assert.deepEqual(after,before,"whole engine output must match V2.1 for "+width+"x"+height);
+    if(mode==="release-polish"){
+      const restoredMuzzle={...before.muzzle,y:before.muzzle.y-(26.76-23.33)};
+      assert.ok(Math.abs(after.muzzle.y-restoredMuzzle.y)<1e-9);
+      assert.deepEqual(after.muzzle,{...restoredMuzzle,y:after.muzzle.y});
+      for(const key of ["initial","waves","left","right","ceiling","drain","column","row","hit","hp","giant","states","haptics","dense"]){
+        assert.deepEqual(after[key],before[key],key+" "+width+"x"+height);
+      }
+    }else{
+      assert.deepEqual(after,before,"whole engine output must match V2.1 for "+width+"x"+height);
+    }
     assert.ok(after.left.vx>0&&after.right.vx<0&&after.ceiling.vy>0);
     assert.equal(after.drain,null);
     assert.ok(after.column.contacts===0&&after.column.y<120);
@@ -91,5 +100,5 @@ try{
   }
   assert.deepEqual(errors,[]);
   await fs.writeFile(out,JSON.stringify({captures,errors},null,2)+"\n");
-  console.log("PASS exact V2.1 parity across 80 waves and four viewports");
+  console.log(`PASS ${mode==="release-polish"?"C geometry, frozen collisions and the approved muzzle difference":"exact V2.1 parity"} across 80 waves and four viewports`);
 }finally{await close();}

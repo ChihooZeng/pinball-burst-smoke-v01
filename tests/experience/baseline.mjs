@@ -65,7 +65,7 @@ try{
         const hit=step(144.5,154,0,-330,7);
         const shot=q.makeTestBall();
         return {left,right,top,gap,hit,r,hp:q.hpDistribution()[0].hp,
-          muzzle:{x:shot.x,y:shot.y},expected:{x:180,y:s.shooterY-8-23.33}};
+          muzzle:{x:shot.x,y:shot.y},expected:{x:180,y:s.shooterY-8-26.76}};
       })()`);
       assert.ok(runtimeChecks.left.vx>0&&runtimeChecks.right.vx<0&&runtimeChecks.top.vy>0);
       assert.ok(runtimeChecks.left.x>=runtimeChecks.r&&runtimeChecks.right.x<=360-runtimeChecks.r&&runtimeChecks.top.y>=4+runtimeChecks.r);

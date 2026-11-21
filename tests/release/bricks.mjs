@@ -74,7 +74,7 @@ try {
       await page.eval("window.captureLabels=false");
       if(wave<=4 && mode==="after"){
         waveData[wave-1].renderedLowBrickColors=await page.eval("[...lowBrickColors].sort()");
-        assert.deepEqual(waveData[wave-1].renderedLowBrickColors,["#6ee7ff","#7cc8ff","#a1a8ff","#d6a8ff","#ff8aef"],
+        assert.deepEqual(waveData[wave-1].renderedLowBrickColors,["#6ee7ff","#7cc8ff","#a1a8ff","#d69aff","#ff8aef"],
           `wave ${wave} must render the complete approved palette`);
       }
       if(wave===1 && mode==="after") {

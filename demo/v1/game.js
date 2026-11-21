@@ -31,7 +31,7 @@
   function store(key,value){try{localStorage.setItem(key,value);}catch(e){}}
   function applySkillSide(){document.querySelector('.shell').classList.toggle('skill-left',skillSide==='left');}
   function markSkillUsed(){if(firstSkillUsed)return;firstSkillUsed=true;store(FIRST_SKILL_KEY,'done');document.getElementById('skillGuide').classList.add('hidden');}
-  let build,events=[],counters,arcCharge=0,lastArcRelease=-99,fanClock=0,gunFlash=0,turretRecoil=0,brickClock=0,lastShotAngle=0;
+  let build,events=[],counters,arcCharge=0,lastArcRelease=-99,fanClock=0,gunFlash=0,brickClock=0,lastShotAngle=0;
   let collisionChecks=0,physicsCostMs=0,physicsSteps=0,maxPhysicsMs=0;
   const initialSeed=Number.isFinite(window.__PINBALL_SEED__)?window.__PINBALL_SEED__>>>0:null;
   function record(type,data={}){
@@ -192,15 +192,18 @@
   function brickPaint(edge,top=.98,bottom=.82){
     return {edge,ft:withAlpha(edge,top),fb:withAlpha(edge,bottom)};
   }
+  function purplePaint(top,bottom){
+    return {edge:purple,ft:withAlpha("#edbdff",top),fb:withAlpha("#dda5ff",bottom)};
+  }
   const numberedBlue={edge:blue,ft:"#43a9f6",fb:"#257cd6"};
   const BRICK_ART={
     ramp:[
       {max:1,        ...brickPaint(cyan)},
       {max:2,        ...numberedBlue},
       {max:6,        ...brickPaint(periwinkle,.90,.71)},
-      {max:12,       ...brickPaint(purple,.88,.69)},
+      {max:12,       ...purplePaint(.98,.92)},
       {max:24,       ...brickPaint(pink,.86,.68)},
-      {max:48,       ...brickPaint(purple,.83,.64)},
+      {max:48,       ...purplePaint(.96,.89)},
       {max:Infinity, ...brickPaint(pink,.82,.63)}
     ],
     special:brickPaint(cyan,.81,.59),
@@ -211,7 +214,7 @@
     radius:Number(readToken("--brick-radius")),
     glow:Number(readToken("--brick-glow"))
   };
-  const EARLY_ONE_HP_ART=[periwinkle,pink,cyan,purple,blue].map(color=>brickPaint(color));
+  const EARLY_ONE_HP_ART=[periwinkle,pink,cyan,purple,blue].map(color=>color===purple?purplePaint(1,.96):brickPaint(color));
   function earlyOneHpStyle(brick){
     if(wave>4||brick.hp!==1||brick.special||brick.isElite||brick.bossSupport||brick.isBoss)return null;
     const column=Math.round((brick.x-12)/BRICK_STEP_X);
@@ -275,13 +278,13 @@
   };
   const shooter = {x: W / 2, y: H - 37};
 
-  const TUR_PIVOT_LIFT=8, TUR_MUZZLE=23.33, TUR_RECOIL=2;
+  const TUR_PIVOT_LIFT=8, TUR_MUZZLE=26.76;
   // All offsets are relative to the existing physical pivot. The barrel's
   // outer stroke starts at SVG y=1.8 and lands exactly at the resting muzzle.
   const barrelScale=.49;
   const turretParts={
     ground:{x:-59,y:19,w:118,h:31},
-    barrel:{x:-22*barrelScale,y:-TUR_MUZZLE-1.8*barrelScale,w:44*barrelScale,h:78*barrelScale},
+    barrel:{x:-22*barrelScale,y:-TUR_MUZZLE-1.8*barrelScale,w:44*barrelScale,h:85*barrelScale},
     body:{x:-28,y:-12,w:56,h:56},
     core:{x:-28,y:-12,w:56,h:56}
   };
@@ -599,7 +602,7 @@
     resetWorldSize();
     pausedFrom=null;battleTime=0;waveReports=[];bankDamage=0;lockBackground(false);$("pauseOverlay").classList.add("hidden");
     window.PinballGameAudio?.stopBgm?.(0);
-    precisionTurns=focusDamage=gunBonusDamage=weakpointDamage=weakpointCharge=damageDealt=shotsWithContact=0;build=Build.createState(initialSeed===null?Math.floor(Math.random()*4294967296):initialSeed);events=[];arcCharge=0;lastArcRelease=-99;fanClock=0;gunFlash=0;turretRecoil=0;brickClock=0;
+    precisionTurns=focusDamage=gunBonusDamage=weakpointDamage=weakpointCharge=damageDealt=shotsWithContact=0;build=Build.createState(initialSeed===null?Math.floor(Math.random()*4294967296):initialSeed);events=[];arcCharge=0;lastArcRelease=-99;fanClock=0;gunFlash=0;brickClock=0;
     counters={splitChildren:0,arcReleases:0,arcSingleDamage:0,budgetReclaims:0,suppressedShots:0,suppressedChildren:0,maxBallsAlive:0,wallBounces:0,shotsByBuild:{base:0,split:0,arc:0,gun:0}};
     collisionChecks=0;physicsCostMs=0;physicsSteps=0;maxPhysicsMs=0;
     wave=1;score=0;phase="ready";charge=0;elapsed=0;level=1;xp=0;xpGoal=34;
@@ -887,7 +890,7 @@
     lastShotAngle=aim+offset;const shot=makeBall(lastShotAngle);
     if(drillLevel>0&&shotNumber%(drillLevel===1?4:3)===0){shot.drill=true;shot.drillLeft=drillLevel===1?3:5;shot.r=SHOT_HIT_RADIUS*1.35;shot.visualR=SHOT_RADIUS*1.35;powerShots++;}
     if(t.isGun)playSfx("gun_fire");
-    balls.push(shot);gunFlash=.07;turretRecoil=1;counters.shotsByBuild[Build.preferred(build)||'base']++;
+    balls.push(shot);gunFlash=.07;counters.shotsByBuild[Build.preferred(build)||'base']++;
     counters.maxBallsAlive=Math.max(counters.maxBallsAlive,balls.length);
     record("shot",{angle:+(aim+offset).toFixed(5),ttl:shot.maxLife,interval:t.interval});
     return true;
@@ -1588,7 +1591,7 @@
     generateSurvival(dt);
     if(phase!=="playing")return;
     if(!emptyLatch&&!bossVictory){
-      fanClock+=dt;gunFlash=Math.max(0,gunFlash-dt);turretRecoil=Math.max(0,turretRecoil-dt*5);brickClock+=dt;
+      fanClock+=dt;gunFlash=Math.max(0,gunFlash-dt);brickClock+=dt;
       if(autoSkill&&build.seedAbility&&charge>=MAX_CHARGE&&!giant)activateEquippedSkill();
       const fireInterval=Build.tuning(build).interval/Build.buffModifiers(build).rate;
       if(shootClock>=fireInterval){shootClock-=fireInterval;fire();}
@@ -2063,11 +2066,10 @@
     if(ground.img)ctx.drawImage(ground.img,ground.x,ground.y,ground.w,ground.h);
     ctx.save();
     ctx.rotate(angle);
-    if(turretRecoil>0)ctx.translate(0,turretRecoil*TUR_RECOIL);
     if(barrel.img)ctx.drawImage(barrel.img,barrel.x,barrel.y,barrel.w,barrel.h);
     else{
       ctx.fillStyle=cyan;
-      rounded(-5,-TUR_MUZZLE,10,30,3);ctx.fill();
+      rounded(-5,-TUR_MUZZLE,10,TUR_MUZZLE+6.67,3);ctx.fill();
     }
     if(gunFlash>0){ctx.fillStyle=Build.tuning(build).isGun?"#ffda84":"#9ce9ff";ctx.beginPath();ctx.arc(0,-TUR_MUZZLE-3,2+gunFlash*34,0,Math.PI*2);ctx.fill();}
     ctx.restore();
